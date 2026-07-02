@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UNS Catalog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Helvetica:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    ::-webkit-scrollbar { width: 9px; height: 9px; }
+    ::-webkit-scrollbar-thumb { background: oklch(0.34 0.02 254); border-radius: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes popIn { from { opacity: 0; transform: translateY(6px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  </style>
+</helmet>
+
+<div style="width:100%; height:100vh; background:oklch(0.17 0.014 254); color:oklch(0.93 0.006 254); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; display:flex; flex-direction:column; overflow:hidden;">
+
+  <!-- TOP BAR -->
+  <div style="height:52px; min-height:52px; display:flex; align-items:center; gap:14px; padding:0 20px; background:oklch(0.155 0.012 254); border-bottom:1px solid oklch(0.3 0.02 254);">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div style="font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600; letter-spacing:1.5px; color:oklch(0.88 0.008 254);">UNS·CATALOG</div>
+      <div style="width:1px; height:16px; background:oklch(0.32 0.02 254);"></div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="width:6px; height:6px; border-radius:50%; background:oklch(0.72 0.16 150);"></span>
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:oklch(0.55 0.012 254);">mqtt://broker.acme.local:8883</span>
+      </div>
+    </div>
+    <div style="flex:1;"></div>
+
+    <sc-if value="{{ isAdmin }}">
+      <div style="position:relative;">
+        <button onClick="{{ toggleManageMenu }}" style="display:flex; align-items:center; gap:7px; background:transparent; border:1px solid oklch(0.32 0.02 254); color:oklch(0.85 0.008 254); font-size:13px; padding:7px 12px; border-radius:6px; cursor:pointer;">
+          Manage <span style="font-size:10px;">▾</span>
+        </button>
+        <sc-if value="{{ manageMenuOpen }}">
+          <div style="position:absolute; top:calc(100% + 6px); right:0; background:oklch(0.22 0.016 254); border:1px solid oklch(0.34 0.02 254); border-radius:8px; padding:6px; min-width:170px; z-index:60; box-shadow:0 8px 24px oklch(0.05 0 0 / 0.5);">
+            <button onClick="{{ openManageTags }}" style="all:unset; box-sizing:border-box; display:block; width:100%; text-align:left; padding:8px 10px; border-radius:5px; font-size:13px; color:oklch(0.88 0.008 254); cursor:pointer;">Tags</button>
+            <button onClick="{{ openManageSchemas }}" style="all:unset; box-sizing:border-box; display:block; width:100%; text-align:left; padding:8px 10px; border-radius:5px; font-size:13px; color:oklch(0.88 0.008 254); cursor:pointer;">Schemas</button>
+            <button onClick="{{ openManageRules }}" style="all:unset; box-sizing:border-box; display:block; width:100%; text-align:left; padding:8px 10px; border-radius:5px; font-size:13px; color:oklch(0.88 0.008 254); cursor:pointer;">Rules</button>
+            <button onClick="{{ openManageProducers }}" style="all:unset; box-sizing:border-box; display:block; width:100%; text-align:left; padding:8px 10px; border-radius:5px; font-size:13px; color:oklch(0.88 0.008 254); cursor:pointer;">Producers</button>
+            <button onClick="{{ openManageConsumers }}" style="all:unset; box-sizing:border-box; display:block; width:100%; text-align:left; padding:8px 10px; border-radius:5px; font-size:13px; color:oklch(0.88 0.008 254); cursor:pointer;">Consumers</button>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <div style="display:flex; background:oklch(0.17 0.014 254); border:1px solid oklch(0.32 0.02 254); border-radius:7px; padding:3px;">
+      <button onClick="{{ setRoleViewer }}" style="border:none; cursor:pointer; font-size:12.5px; font-weight:500; padding:6px 14px; border-radius:5px; background:{{ viewerBtnBg }}; color:{{ viewerBtnColor }};">Viewer</button>
+      <button onClick="{{ setRoleAdmin }}" style="border:none; cursor:pointer; font-size:12.5px; font-weight:500; padding:6px 14px; border-radius:5px; background:{{ adminBtnBg }}; color:{{ adminBtnColor }};">Admin</button>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div style="flex:1; display:flex; min-height:0;">
+
+    <!-- SIDEBAR -->
+    <div style="width:280px; min-width:280px; background:oklch(0.20 0.015 254); border-right:1px solid oklch(0.32 0.02 254); display:flex; flex-direction:column; overflow:hidden;">
+
+      <div style="padding:14px 14px 10px 14px; display:flex; flex-direction:column; gap:10px; border-bottom:1px solid oklch(0.28 0.018 254);">
+        <input placeholder="search topics, producers, tags... (supports * ? + #)" value="{{ search }}" onChange="{{ onSearchChange }}" style="width:100%; background:oklch(0.17 0.014 254); border:1px solid oklch(0.32 0.02 254); border-radius:6px; padding:8px 10px; color:oklch(0.93 0.006 254); font-size:12.5px; font-family:'IBM Plex Mono',monospace; outline:none;" />
+
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+          <sc-for list="{{ tagChips }}" as="tag" hint-placeholder-count="4">
+            <button onClick="{{ tag.onClick }}" style="border:1px solid {{ tag.borderColor }}; background:{{ tag.bg }}; color:{{ tag.color }}; font-size:11px; font-weight:500; padding:3px 9px; border-radius:99px; cursor:pointer; white-space:nowrap;">{{ tag.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+
+      <sc-if value="{{ hasUntracked }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ filterUntracked }}" style="margin:12px 14px 4px 14px; text-align:left; background:oklch(0.28 0.06 80); border:1px solid oklch(0.5 0.1 80); border-radius:7px; padding:9px 11px; cursor:pointer; color:oklch(0.93 0.1 80);">
+          <div style="font-size:12.5px; font-weight:600;">⚠ {{ untrackedCount }} untracked topics</div>
+          <div style="font-size:11px; color:oklch(0.8 0.08 80); margin-top:2px;">seen on broker, not yet catalogued</div>
+        </button>
+      </sc-if>
+
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 14px 6px 14px;">
+        <div style="font-size:10.5px; font-weight:600; letter-spacing:0.6px; color:oklch(0.5 0.012 254); text-transform:uppercase;">Namespace</div>
+        <sc-if value="{{ hasFolderFilter }}">
+          <button onClick="{{ clearFolderFilter }}" style="background:none; border:none; color:oklch(0.75 0.13 200); font-size:11px; cursor:pointer;">reset</button>
+        </sc-if>
+      </div>
+
+      <div style="padding:0 14px 8px 14px; display:flex; flex-wrap:wrap; align-items:center; gap:2px; font-size:11.5px; font-family:'IBM Plex Mono',monospace;">
+        <sc-for list="{{ namespaceBreadcrumbs }}" as="bc" hint-placeholder-count="1">
+          <button onClick="{{ bc.onClick }}" style="background:none; border:none; cursor:pointer; padding:2px 3px; color:{{ bc.color }}; font-weight:{{ bc.weight }}; font-family:'IBM Plex Mono',monospace; font-size:11.5px;">{{ bc.label }}</button>
+          <span style="color:oklch(0.4 0.012 254);">/</span>
+        </sc-for>
+      </div>
+
+      <div style="flex:1; overflow-y:auto; padding:0 8px 14px 8px;">
+        <div style="font-size:10px; color:oklch(0.45 0.012 254); text-transform:uppercase; letter-spacing:0.4px; padding:4px 9px 6px 9px;">{{ currentLevelName }}</div>
+        <sc-for list="{{ namespaceChildren }}" as="child" hint-placeholder-count="4">
+          <button onClick="{{ child.onClick }}" style="width:100%; display:flex; align-items:center; justify-content:space-between; text-align:left; background:transparent; border:none; border-radius:6px; padding:7px 9px; cursor:pointer; margin-bottom:1px;">
+            <span style="font-size:12.5px; font-family:'IBM Plex Mono',monospace; color:oklch(0.85 0.008 254); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ child.name }}</span>
+            <span style="display:flex; align-items:center; gap:5px; flex-shrink:0;">
+              <sc-if value="{{ child.hasUntracked }}"><span style="width:6px; height:6px; border-radius:50%; background:oklch(0.78 0.15 80);"></span></sc-if>
+              <span style="font-size:10.5px; color:oklch(0.5 0.012 254);">{{ child.count }}</span>
+            </span>
+          </button>
+        </sc-for>
+        <sc-if value="{{ hasChildren }}" hint-placeholder-val="{{ true }}"></sc-if>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div style="flex:1; overflow-y:auto; min-width:0;">
+
+      <sc-if value="{{ showDetail }}" hint-placeholder-val="{{ false }}">
+        <!-- DETAIL VIEW -->
+        <div style="padding:24px 32px 48px 32px; max-width:1180px;">
+          <button onClick="{{ backToList }}" style="background:oklch(0.20 0.015 254); border:1px solid oklch(0.32 0.02 254); color:oklch(0.85 0.008 254); font-size:12.5px; font-weight:500; cursor:pointer; padding:7px 13px; border-radius:7px; margin-bottom:16px; display:flex; align-items:center; gap:6px;">← Back to topics</button>
+
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:oklch(0.55 0.012 254); margin-bottom:4px;">{{ detail.crumbLabel }}</div>
+          <div style="display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:6px;">
+            <div style="font-size:26px; font-weight:600;">{{ detail.leaf }}</div>
+            <sc-if value="{{ detail.compliant }}">
+              <span style="font-size:11px; font-weight:600; padding:3px 9px; border-radius:99px; background:oklch(0.26 0.06 150); color:oklch(0.85 0.15 150); border:1px solid oklch(0.4 0.1 150);">COMPLIANT</span>
+            </sc-if>
+            <sc-if value="{{ detail.nonCompliant }}">
+              <span style="font-size:11px; font-weight:600; padding:3px 9px; border-radius:99px; background:oklch(0.28 0.08 25); color:oklch(0.85 0.18 25); border:1px solid oklch(0.45 0.14 25);">{{ detail.violationCount }} VIOLATIONS</span>
+            </sc-if>
+            <sc-if value="{{ detail.unknownCompliance }}">
+              <span style="font-size:11px; font-weight:600; padding:3px 9px; border-radius:99px; background:oklch(0.28 0.018 254); color:oklch(0.6 0.012 254); border:1px solid oklch(0.4 0.02 254);">NO SCHEMA — UNKNOWN</span>
+            </sc-if>
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:oklch(0.6 0.012 254); margin-bottom:16px;">{{ detail.path }}</div>
+
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:26px;">
+            <sc-for list="{{ detail.tagPills }}" as="tag" hint-placeholder-count="2">
+              <span style="display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:500; padding:4px 10px; border-radius:99px; background:{{ tag.bg }}; color:{{ tag.color }}; border:1px solid {{ tag.borderColor }};">{{ tag.label }}</span>
+            </sc-for>
+            <sc-if value="{{ isAdmin }}">
+              <button onClick="{{ toggleTagPicker }}" style="font-size:11.5px; padding:4px 10px; border-radius:99px; background:none; border:1px dashed oklch(0.4 0.02 254); color:oklch(0.6 0.012 254); cursor:pointer;">+ tag</button>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{ tagPickerOpen }}">
+            <div style="display:flex; gap:7px; flex-wrap:wrap; margin:-16px 0 24px 0; padding:10px; background:oklch(0.20 0.015 254); border:1px solid oklch(0.3 0.02 254); border-radius:8px;">
+              <sc-for list="{{ tagPickerOptions }}" as="opt" hint-placeholder-count="4">
+                <button onClick="{{ opt.onClick }}" style="font-size:11.5px; font-weight:500; padding:4px 10px; border-radius:99px; cursor:pointer; background:{{ opt.bg }}; color:{{ opt.color }}; border:1px solid {{ opt.borderColor }}; opacity:{{ opt.opacity }};">{{ opt.label }}</button>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+
+            <div style="background:oklch(0.20 0.015 254); border:1px solid oklch(0.28 0.018 254); border-radius:10px; padding:16px 18px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                <div style="font-size:11px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; color:oklch(0.55 0.012 254);">Producer</div>
+                <sc-if value="{{ detail.canChangeProducer }}">
+                  <button onClick="{{ openProducerModalForSelected }}" style="font-size:11px; font-weight:500; background:none; border:1px solid oklch(0.36 0.02 254); color:oklch(0.75 0.13 200); padding:3px 9px; border-radius:5px; cursor:pointer;">Change</button>
+                </sc-if>
+              </div>
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:14px; font-weight:600;">{{ detail.producer }}</div>
+              <sc-if value="{{ detail.hasProducerDescription }}">
+                <div style="font-size:12px; color:oklch(0.65 0.012 254); margin-top:4px; line-height:1.4;">{{ detail.producerDescription }}</div>
+              </sc-if>
+              <div style="font-size:12px; color:oklch(0.55 0.012 254); margin-top:3px;">{{ detail.protocol }}</div>
+            </div>
+
+            <div style="background:oklch(0.20 0.015 254); border:1px solid oklch(0.28 0.018 254); border-radius:10px; padding:16px 18px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                <div style="font-size:11px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; color:oklch(0.55 0.012 254);">Consumers ({{ detail.consumerCount }})</div>
+                <sc-if value="{{ isAdmin }}">
+                  <button onClick="{{ toggleConsumerPicker }}" style="font-size:11px; font-weight:500; background:none; border:1px solid oklch(0.36 0.02 254); color:oklch(0.75 0.13 200); padding:3px 9px; border-radius:5px; cursor:pointer;">+ consumer</button>
+                </sc-if>
+              </div>
+              <sc-for list="{{ detail.consumers }}" as="c" hint-placeholder-count="2">
+                <div title="{{ c.description }}" style="display:flex; align-items:center; gap:7px; font-size:13px; padding:3px 0;">
+                  <span style="width:6px; height:6px; border-radius:50%; background:oklch(0.75 0.13 200);"></span>{{ c.name }}
+                </div>
+              </sc-for>
+              <sc-if value="{{ detail.noConsumers }}">
+                <div style="font-size:12.5px; color:oklch(0.5 0.012 254); font-style:italic;">no known consumers</div>
+              </sc-if>
+              <sc-if value="{{ consumerPickerOpen }}">
+                <div style="margin-top:10px; padding-top:10px; border-top:1px solid oklch(0.28 0.018 254);">
+                  <input value="{{ consumerPickerCombo.search }}" onChange="{{ consumerPickerCombo.onSearchChange }}" placeholder="type to search consumers..." style="width:100%; background:oklch(0.15 0.012 254); border:1px solid oklch(0.32 0.02 254); border-radius:6px; padding:6px 9px; color:oklch(0.9 0.006 254); font-size:11.5px; margin-bottom:8px; outline:none;" />
+                  <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <sc-for list="{{ consumerPickerCombo.options }}" as="opt" hint-placeholder-count="3">
+                      <button onClick="{{ opt.onClick }}" style="font-size:11px; font-weight:500; padding:4px 9px; border-radius:99px; cursor:pointer; background:oklch(0.27 0.03 220); color:oklch(0.8 0.02 220); border:1px solid oklch(0.4 0.04 220); opacity:{{ opt.opacity }};">{{ opt.label }}</button>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+
+            <div style="background:oklch(0.20 0.015 254); border:1px solid oklch(0.28 0.018 254); border-radius:10px; padding:16px 18px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                <div style="font-size:11px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; color:oklch(0.55 0.012 254);">Schema</div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.55 0.012 254);">{{ detail.schemaVersion }}</span>
+                  <sc-if value="{{ detail.canEditSchema }}">
+                    <button onClick="{{ openSchemaModal }}" style="font-size:11px; font-weight:500; background:none; border:1px solid oklch(0.36 0.02 254); color:oklch(0.75 0.13 200); padding:3px 9px; border-radius:5px; cursor:pointer;">{{ detail.schemaEditLabel }}</button>
+                  </sc-if>
+                </div>
+              </div>
+              <div style="font-size:12.5px; color:oklch(0.75 0.01 254); margin-bottom:10px;">{{ detail.schemaName }}</div>
+              <pre style="margin:0; font-family:'IBM Plex Mono',monospace; font-size:12px; line-height:1.6; color:oklch(0.8 0.02 200); background:oklch(0.15 0.012 254); border-radius:6px; padding:12px; overflow-x:auto;">{{ detail.schemaText }}</pre>
+              <div style="margin-top:12px; display:flex; flex-direction:column; gap:6px;">
+                <sc-for list="{{ detail.schemaHistory }}" as="h" hint-placeholder-count="2">
+                  <div style="display:flex; align-items:center; gap:8px; font-size:11.5px; color:oklch(0.55 0.012 254);">
+                    <span style="width:6px; height:6px; border-radius:50%; background:{{ h.dotColor }};"></span>
+                    <span style="font-family:'IBM Plex Mono',monospace;">{{ h.version }}</span> · {{ h.date }}
+                    <sc-if value="{{ h.current }}"><span style="color:oklch(0.75 0.13 200); font-weight:600;">current</span></sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="background:oklch(0.20 0.015 254); border:1px solid oklch(0.28 0.018 254); border-radius:10px; padding:16px 18px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                <div style="font-size:11px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; color:oklch(0.55 0.012 254);">Last Message</div>
+                <sc-if value="{{ detail.retained }}"><span style="font-size:10.5px; font-family:'IBM Plex Mono',monospace; color:oklch(0.7 0.1 240); border:1px solid oklch(0.4 0.08 240); padding:1px 6px; border-radius:4px;">RETAINED</span></sc-if>
+              </div>
+              <pre style="margin:0; font-family:'IBM Plex Mono',monospace; font-size:12px; line-height:1.6; color:oklch(0.85 0.02 150); background:oklch(0.15 0.012 254); border-radius:6px; padding:12px; overflow-x:auto;">{{ detail.payloadText }}</pre>
+              <div style="font-size:11.5px; color:oklch(0.5 0.012 254); margin-top:8px;">{{ detail.lastSeen }}</div>
+            </div>
+
+            <div style="background:oklch(0.20 0.015 254); border:1px solid oklch(0.28 0.018 254); border-radius:10px; padding:16px 18px;">
+              <div style="font-size:11px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; color:oklch(0.55 0.012 254); margin-bottom:10px;">Compliance</div>
+              <div style="display:flex; align-items:center; gap:16px;">
+                <div>
+                  <div style="font-size:30px; font-weight:700; font-family:'IBM Plex Mono',monospace; color:{{ detail.violationNumberColor }};">{{ detail.violationCount }}</div>
+                  <div style="font-size:11px; color:oklch(0.5 0.012 254);">violations since last cleared</div>
+                  <div style="font-size:11px; color:oklch(0.45 0.012 254); margin-top:2px;">last cleared: {{ detail.lastCleared }}</div>
+                </div>
+                <sc-if value="{{ detail.canClear }}">
+                  <button onClick="{{ clearViolations }}" style="margin-left:auto; background:oklch(0.28 0.018 254); border:1px solid oklch(0.36 0.02 254); color:oklch(0.85 0.008 254); font-size:12.5px; padding:7px 12px; border-radius:6px; cursor:pointer;">Clear</button>
+                </sc-if>
+              </div>
+              <sc-if value="{{ detail.hasMismatches }}">
+                <div style="margin-top:12px; padding-top:12px; border-top:1px solid oklch(0.28 0.018 254); display:flex; flex-direction:column; gap:4px;">
+                  <div style="font-size:11px; color:oklch(0.6 0.012 254); margin-bottom:2px;">current message fails schema:</div>
+                  <sc-for list="{{ detail.mismatches }}" as="m" hint-placeholder-count="1">
+                    <div style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:oklch(0.75 0.16 25);">· {{ m.text }}</div>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+
+            <div style="background:oklch(0.20 0.015 254); border:1px solid oklch(0.28 0.018 254); border-radius:10px; padding:16px 18px;">
+              <div style="font-size:11px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; color:oklch(0.55 0.012 254); margin-bottom:10px;">Activity · msgs/hr, last 24h</div>
+              <div style="display:flex; align-items:flex-end; gap:2.5px; height:52px;">
+                <sc-for list="{{ detail.activity }}" as="bar" hint-placeholder-count="24">
+                  <div title="{{ bar.tooltip }}" style="flex:1; height:{{ bar.pct }}%; background:oklch(0.75 0.13 200); border-radius:2px; opacity:0.75; cursor:default;"></div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="background:oklch(0.20 0.015 254); border:1px solid oklch(0.28 0.018 254); border-radius:10px; padding:16px 18px; grid-column:1 / -1;">
+              <div style="font-size:11px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; color:oklch(0.55 0.012 254); margin-bottom:10px;">Related topics · same parent</div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <sc-for list="{{ detail.related }}" as="r" hint-placeholder-count="2">
+                  <button onClick="{{ r.onClick }}" style="font-family:'IBM Plex Mono',monospace; font-size:12px; padding:6px 11px; border-radius:6px; background:oklch(0.17 0.014 254); border:1px solid oklch(0.3 0.02 254); color:oklch(0.8 0.01 254); cursor:pointer;">{{ r.leaf }}</button>
+                </sc-for>
+                <sc-if value="{{ detail.noRelated }}">
+                  <div style="font-size:12.5px; color:oklch(0.5 0.012 254); font-style:italic;">no siblings under this cell</div>
+                </sc-if>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showList }}" hint-placeholder-val="{{ true }}">
+        <!-- LIST VIEW -->
+        <div style="padding:20px 28px 40px 28px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+            <div style="font-size:13.5px; color:oklch(0.55 0.012 254);">{{ resultsLabel }}</div>
+            <div style="display:flex; background:oklch(0.20 0.015 254); border:1px solid oklch(0.3 0.02 254); border-radius:7px; padding:3px;">
+              <button onClick="{{ setGroupHierarchy }}" style="border:none; cursor:pointer; font-size:12px; font-weight:500; padding:5px 12px; border-radius:5px; background:{{ groupHierarchyBg }}; color:{{ groupHierarchyColor }};">Hierarchy</button>
+              <button onClick="{{ setGroupFlat }}" style="border:none; cursor:pointer; font-size:12px; font-weight:500; padding:5px 12px; border-radius:5px; background:{{ groupFlatBg }}; color:{{ groupFlatColor }};">List</button>
+            </div>
+          </div>
+
+          <sc-for list="{{ displayGroups }}" as="group" hint-placeholder-count="1">
+            <div style="margin-bottom:22px;">
+              <sc-if value="{{ group.showLabel }}">
+                <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:oklch(0.55 0.012 254); margin-bottom:8px; padding-left:4px;">{{ group.label }}</div>
+              </sc-if>
+              <div style="border:1px solid oklch(0.28 0.018 254); border-radius:10px; overflow:hidden;">
+                <div style="display:grid; grid-template-columns:2.2fr 1fr 0.9fr 1.3fr 1fr 1fr; gap:12px; padding:9px 16px; background:oklch(0.20 0.015 254); font-size:10.5px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; color:oklch(0.5 0.012 254);">
+                  <div>Topic</div><div>Producer</div><div>Consumers</div><div>Tags</div><div>Last Message</div><div>Compliance</div>
+                </div>
+
+                <sc-for list="{{ group.topics }}" as="t" hint-placeholder-count="4">
+                  <sc-if value="{{ t.tracked }}">
+                    <button onClick="{{ t.onClick }}" style="all:unset; box-sizing:border-box; cursor:pointer; display:grid; grid-template-columns:2.2fr 1fr 0.9fr 1.3fr 1fr 1fr; gap:12px; align-items:center; width:100%; padding:11px 16px; border-top:1px solid oklch(0.26 0.016 254); background:oklch(0.185 0.014 254);">
+                      <div style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:oklch(0.9 0.006 254); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ t.path }}</div>
+                      <div style="font-size:12.5px; color:oklch(0.7 0.01 254); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ t.producer }}</div>
+                      <div style="font-size:12.5px; color:oklch(0.6 0.012 254);">{{ t.consumerCount }}</div>
+                      <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                        <sc-for list="{{ t.tagPills }}" as="tag" hint-placeholder-count="2">
+                          <span style="font-size:10.5px; font-weight:500; padding:2px 7px; border-radius:99px; background:{{ tag.bg }}; color:{{ tag.color }}; border:1px solid {{ tag.borderColor }};">{{ tag.label }}</span>
+                        </sc-for>
+                      </div>
+                      <div style="font-size:12px; color:oklch(0.55 0.012 254);">{{ t.lastSeen }}</div>
+                      <div>
+                        <sc-if value="{{ t.compliant }}"><span style="font-size:11px; font-weight:600; padding:3px 8px; border-radius:99px; background:oklch(0.26 0.06 150); color:oklch(0.85 0.15 150);">PASS</span></sc-if>
+                        <sc-if value="{{ t.nonCompliant }}"><span style="font-size:11px; font-weight:600; padding:3px 8px; border-radius:99px; background:oklch(0.28 0.08 25); color:oklch(0.85 0.18 25);">{{ t.violationCount }} FAIL</span></sc-if>
+                      </div>
+                    </button>
+                  </sc-if>
+                  <sc-if value="{{ t.untracked }}">
+                    <div style="display:grid; grid-template-columns:2.2fr 1fr 0.9fr 1.3fr 1fr 1fr; gap:12px; align-items:center; width:100%; padding:11px 16px; border-top:1px solid oklch(0.26 0.016 254); border-left:3px solid oklch(0.6 0.12 80); background:oklch(0.22 0.03 80);">
+                      <div style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+                        <span style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:oklch(0.9 0.05 80); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ t.path }}</span>
+                      </div>
+                      <div style="font-size:10.5px; font-weight:600; padding:2px 8px; border-radius:99px; background:oklch(0.3 0.08 80); color:oklch(0.9 0.1 80); white-space:nowrap; justify-self:start;">UNTRACKED</div>
+                      <div style="font-size:12px; color:oklch(0.6 0.08 80);">—</div>
+                      <div style="font-size:12px; color:oklch(0.6 0.08 80);">—</div>
+                      <div style="font-size:12px; color:oklch(0.7 0.08 80); white-space:nowrap;">{{ t.lastSeen }}</div>
+                      <div style="justify-self:start; display:flex; gap:6px; align-items:center;">
+                        <sc-if value="{{ isAdmin }}">
+                          <sc-if value="{{ t.hasMatchingRule }}">
+                            <button onClick="{{ t.onQuickApplyRule }}" style="font-size:11.5px; font-weight:500; padding:6px 10px; border-radius:6px; background:none; border:1px solid oklch(0.5 0.1 80); color:oklch(0.85 0.13 80); cursor:pointer; white-space:nowrap;">⚡ Apply rule</button>
+                          </sc-if>
+                          <sc-if value="{{ t.hasRuleConflict }}">
+                            <span title="Multiple rules match this topic — open Configure to choose" style="font-size:11px; font-weight:600; padding:5px 9px; border-radius:6px; background:oklch(0.3 0.09 25); color:oklch(0.85 0.15 25); white-space:nowrap;">⚠ {{ t.ruleConflictCount }} rules match</span>
+                          </sc-if>
+                          <button onClick="{{ t.onConfigure }}" style="font-size:12px; font-weight:500; padding:6px 12px; border-radius:6px; background:oklch(0.78 0.15 80); color:oklch(0.18 0.02 80); border:none; cursor:pointer; white-space:nowrap;">Configure →</button>
+                        </sc-if>
+                        <sc-if value="{{ isViewer }}">
+                          <span style="font-size:11px; color:oklch(0.6 0.08 80);">view only</span>
+                        </sc-if>
+                      </div>
+                    </div>
+                  </sc-if>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+
+          <sc-if value="{{ noResults }}">
+            <div style="text-align:center; padding:60px 0; color:oklch(0.5 0.012 254); font-size:13.5px;">No topics match your filters.</div>
+          </sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <!-- CONFIGURE MODAL -->
+  <sc-if value="{{ configureOpen }}">
+    <div style="position:fixed; inset:0; background:oklch(0.1 0.01 254 / 0.6); display:flex; align-items:center; justify-content:center; z-index:50; animation:fadeIn 0.15s ease;" onClick="{{ closeConfigureBackdrop }}">
+      <div style="width:520px; max-width:92vw; background:oklch(0.20 0.015 254); border:1px solid oklch(0.32 0.02 254); border-radius:12px; padding:22px; animation:popIn 0.15s ease; max-height:85vh; overflow-y:auto;" onClick="{{ stopPropagation }}">
+        <div style="font-size:16px; font-weight:600; margin-bottom:4px;">Configure Topic</div>
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:oklch(0.78 0.1 80); background:oklch(0.26 0.05 80); border:1px solid oklch(0.4 0.08 80); border-radius:6px; padding:8px 10px; margin:10px 0 14px 0;">{{ configureForm.path }}</div>
+
+        <sc-if value="{{ configureForm.hasRelinkCandidate }}">
+          <div style="background:oklch(0.24 0.05 200); border:1px solid oklch(0.4 0.09 200); border-radius:8px; padding:10px 12px; margin-bottom:12px;">
+            <div style="font-size:12.5px; color:oklch(0.88 0.09 200); line-height:1.4;">🔗 {{ configureForm.relinkCandidateLabel }}</div>
+            <button onClick="{{ configureForm.applyRelink }}" style="margin-top:8px; font-size:11.5px; font-weight:600; padding:5px 11px; border-radius:5px; background:oklch(0.75 0.13 200); color:oklch(0.15 0.02 200); border:none; cursor:pointer;">Relink & inherit</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ configureForm.hasMatchingRule }}">
+          <div style="background:oklch(0.26 0.05 80); border:1px solid oklch(0.4 0.08 80); border-radius:8px; padding:10px 12px; margin-bottom:14px;">
+            <div style="font-size:12.5px; color:oklch(0.88 0.1 80); line-height:1.4;">⚡ {{ configureForm.matchingRuleLabel }}</div>
+            <button onClick="{{ configureForm.applyRule }}" style="margin-top:8px; font-size:11.5px; font-weight:600; padding:5px 11px; border-radius:5px; background:oklch(0.78 0.15 80); color:oklch(0.18 0.02 80); border:none; cursor:pointer;">Apply rule</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ configureForm.hasRuleConflict }}">
+          <div style="background:oklch(0.28 0.08 25); border:1px solid oklch(0.44 0.12 25); border-radius:8px; padding:10px 12px; margin-bottom:14px;">
+            <div style="font-size:12.5px; color:oklch(0.9 0.15 25); font-weight:600; margin-bottom:6px;">⚠ Multiple rules match this topic — pick one:</div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <sc-for list="{{ configureForm.ruleConflictOptions }}" as="opt" hint-placeholder-count="2">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; background:oklch(0.22 0.02 25); border-radius:6px; padding:7px 9px;">
+                  <div style="min-width:0;">
+                    <div style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:oklch(0.9 0.02 25); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ opt.pattern }}<sc-if value="{{ opt.recommended }}"><span style="color:oklch(0.75 0.13 200); font-weight:600;"> · most specific</span></sc-if></div>
+                    <div style="font-size:11px; color:oklch(0.75 0.05 25);">→ producer: {{ opt.producerLabel }}</div>
+                  </div>
+                  <button onClick="{{ opt.onApply }}" style="font-size:11px; font-weight:600; padding:5px 10px; border-radius:5px; background:oklch(0.78 0.15 80); color:oklch(0.18 0.02 80); border:none; cursor:pointer; white-space:nowrap;">Use this</button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div>
+            <div style="font-size:11.5px; font-weight:600; color:oklch(0.6 0.012 254); margin-bottom:5px;">Producer</div>
+            <input value="{{ configureForm.producerCombo.search }}" onChange="{{ configureForm.producerCombo.onSearchChange }}" placeholder="type to search producers..." style="width:100%; background:oklch(0.15 0.012 254); border:1px solid oklch(0.32 0.02 254); border-radius:6px 6px 0 0; padding:7px 9px; color:oklch(0.9 0.006 254); font-size:12px; font-family:'IBM Plex Mono',monospace; outline:none;" />
+            <div style="display:flex; flex-direction:column; gap:4px; max-height:130px; overflow-y:auto; border:1px solid oklch(0.32 0.02 254); border-top:none; border-radius:0 0 6px 6px; padding:6px;">
+              <sc-for list="{{ configureForm.producerCombo.options }}" as="opt" hint-placeholder-count="3">
+                <button onClick="{{ opt.onClick }}" style="all:unset; box-sizing:border-box; cursor:pointer; display:flex; align-items:center; gap:8px; padding:7px 9px; border-radius:5px; background:{{ opt.selectedBg }};">
+                  <span style="width:12px; height:12px; border-radius:50%; border:1.5px solid oklch(0.6 0.012 254); background:{{ opt.dotColor }};"></span>
+                  <span style="font-size:12.5px; color:oklch(0.85 0.008 254); font-family:'IBM Plex Mono',monospace;">{{ opt.label }}</span>
+                </button>
+              </sc-for>
+              <sc-if value="{{ configureForm.producerCombo.noMatches }}">
+                <div style="font-size:11.5px; color:oklch(0.5 0.012 254); font-style:italic; padding:6px 9px;">no matches</div>
+              </sc-if>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11.5px; font-weight:600; color:oklch(0.6 0.012 254); margin-bottom:6px;">Consumers</div>
+            <input value="{{ configureForm.consumerCombo.search }}" onChange="{{ configureForm.consumerCombo.onSearchChange }}" placeholder="type to search consumers..." style="width:100%; background:oklch(0.15 0.012 254); border:1px solid oklch(0.32 0.02 254); border-radius:6px; padding:7px 9px; color:oklch(0.9 0.006 254); font-size:12px; margin-bottom:7px; outline:none;" />
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <sc-for list="{{ configureForm.consumerCombo.options }}" as="opt" hint-placeholder-count="3">
+                <button onClick="{{ opt.onClick }}" style="font-size:11.5px; font-weight:500; padding:4px 10px; border-radius:99px; cursor:pointer; background:oklch(0.27 0.03 220); color:oklch(0.8 0.02 220); border:1px solid oklch(0.4 0.04 220); opacity:{{ opt.opacity }};">{{ opt.label }}</button>
+              </sc-for>
+              <sc-if value="{{ configureForm.consumerCombo.noMatches }}">
+                <div style="font-size:11.5px; color:oklch(0.5 0.012 254); font-style:italic;">no matches</div>
+              </sc-if>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11.5px; font-weight:600; color:oklch(0.6 0.012 254); margin-bottom:5px;">Schema</div>
+            <input value="{{ configureForm.schemaCombo.search }}" onChange="{{ configureForm.schemaCombo.onSearchChange }}" placeholder="type to search schemas..." style="width:100%; background:oklch(0.15 0.012 254); border:1px solid oklch(0.32 0.02 254); border-radius:6px 6px 0 0; padding:7px 9px; color:oklch(0.9 0.006 254); font-size:12px; font-family:'IBM Plex Mono',monospace; outline:none;" />
+            <div style="display:flex; flex-direction:column; gap:5px; max-height:150px; overflow-y:auto; border:1px solid oklch(0.32 0.02 254); border-top:none; border-radius:0 0 6px 6px; padding:6px;">
+              <sc-for list="{{ configureForm.schemaCombo.options }}" as="opt" hint-placeholder-count="3">
+                <button onClick="{{ opt.onClick }}" style="all:unset; box-sizing:border-box; cursor:pointer; display:flex; align-items:center; gap:8px; padding:7px 9px; border-radius:5px; background:{{ opt.selectedBg }};">
+                  <span style="width:12px; height:12px; border-radius:50%; border:1.5px solid oklch(0.6 0.012 254); background:{{ opt.dotColor }};"></span>
+                  <span style="font-size:12.5px; color:oklch(0.85 0.008 254);">{{ opt.label }}</span>
+                </button>
+              </sc-for>
+              <sc-if value="{{ configureForm.schemaCombo.noMatches }}">
+                <div style="font-size:11.5px; color:oklch(0.5 0.012 254); font-style:italic; padding:6px 9px;">no matches</div>
+              </sc-if>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11.5px; font-weight:600; color:oklch(0.6 0.012 254); margin-bottom:6px;">Tags</div>
+            <div style="display:flex; gap:7px; flex-wrap:wrap;">
+              <sc-for list="{{ configureForm.tagOptions }}" as="opt" hint-placeholder-count="4">
+                <button onClick="{{ opt.onClick }}" style="font-size:11.5px; font-weight:500; padding:4px 10px; border-radius:99px; cursor:pointer; background:{{ opt.bg }}; color:{{ opt.color }}; border:1px solid {{ opt.borderColor }}; opacity:{{ opt.opacity }};">{{ opt.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:22px;">
+          <button onClick="{{ closeConfigure }}" style="background:none; border:1px solid oklch(0.36 0.02 254); color:oklch(0.8 0.008 254); font-size:13px; padding:8px 14px; border-radius:7px; cursor:pointer;">Cancel</button>
+          <button onClick="{{ saveConfigure }}" style="background:oklch(0.75 0.13 200); border:none; color:oklch(0.15 0.02 200); font-size:13px; font-weight:600; padding:8px 16px; border-radius:7px; cursor:pointer;">Mark as Managed</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- SCHEMA ASSIGN MODAL -->
+  <sc-if value="{{ schemaModalOpen }}">
+    <div style="position:fixed; inset:0; background:oklch(0.1 0.01 254 / 0.6); display:flex; align-items:center; justify-content:center; z-index:50; animation:fadeIn 0.15s ease;" onClick="{{ closeSchemaModalBackdrop }}">
+      <div style="width:460px; max-width:92vw; background:oklch(0.20 0.015 254); border:1px solid oklch(0.32 0.02 254); border-radius:12px; padding:22px; animation:popIn 0.15s ease; max-height:85vh; overflow-y:auto;" onClick="{{ stopPropagation }}">
+        <div style="font-size:16px; font-weight:600; margin-bottom:4px;">Assign Schema</div>
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:oklch(0.6 0.012 254); margin-bottom:14px;">{{ schemaModalPath }}</div>
+
+        <input value="{{ schemaAssignCombo.search }}" onChange="{{ schemaAssignCombo.onSearchChange }}" placeholder="type to search schemas..." style="width:100%; background:oklch(0.15 0.012 254); border:1px solid oklch(0.3 0.02 254); border-radius:8px 8px 0 0; padding:8px 10px; color:oklch(0.9 0.006 254); font-size:12.5px; font-family:'IBM Plex Mono',monospace; outline:none;" />
+        <div style="display:flex; flex-direction:column; gap:4px; max-height:260px; overflow-y:auto; border:1px solid oklch(0.3 0.02 254); border-top:none; border-radius:0 0 8px 8px; padding:6px;">
+          <sc-for list="{{ schemaAssignCombo.options }}" as="opt" hint-placeholder-count="4">
+            <button onClick="{{ opt.onClick }}" style="all:unset; box-sizing:border-box; cursor:pointer; display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:6px; background:{{ opt.selectedBg }};">
+              <span style="width:13px; height:13px; border-radius:50%; border:1.5px solid oklch(0.6 0.012 254); background:{{ opt.dotColor }};"></span>
+              <span style="font-size:13px; color:oklch(0.9 0.006 254);">{{ opt.label }}</span>
+            </button>
+          </sc-for>
+          <sc-if value="{{ schemaAssignCombo.noMatches }}">
+            <div style="font-size:12px; color:oklch(0.5 0.012 254); font-style:italic; padding:8px 10px;">no matches</div>
+          </sc-if>
+        </div>
+
+        <button onClick="{{ openManageSchemasFromAssign }}" style="background:none; border:none; color:oklch(0.75 0.13 200); font-size:12px; cursor:pointer; padding:10px 2px 0 2px;">+ define a new schema</button>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+          <button onClick="{{ closeSchemaModal }}" style="background:none; border:1px solid oklch(0.36 0.02 254); color:oklch(0.8 0.008 254); font-size:13px; padding:8px 14px; border-radius:7px; cursor:pointer;">Cancel</button>
+          <button onClick="{{ saveSchemaModal }}" style="background:oklch(0.75 0.13 200); border:none; color:oklch(0.15 0.02 200); font-size:13px; font-weight:600; padding:8px 16px; border-radius:7px; cursor:pointer;">Assign</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- PRODUCER ASSIGN MODAL -->
+  <sc-if value="{{ producerModalOpen }}">
+    <div style="position:fixed; inset:0; background:oklch(0.1 0.01 254 / 0.6); display:flex; align-items:center; justify-content:center; z-index:50; animation:fadeIn 0.15s ease;" onClick="{{ closeProducerModalBackdrop }}">
+      <div style="width:420px; max-width:92vw; background:oklch(0.20 0.015 254); border:1px solid oklch(0.32 0.02 254); border-radius:12px; padding:22px; animation:popIn 0.15s ease; max-height:85vh; overflow-y:auto;" onClick="{{ stopPropagation }}">
+        <div style="font-size:16px; font-weight:600; margin-bottom:4px;">Change Producer</div>
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:oklch(0.6 0.012 254); margin-bottom:14px;">{{ producerModalPath }}</div>
+
+        <input value="{{ producerAssignCombo.search }}" onChange="{{ producerAssignCombo.onSearchChange }}" placeholder="type to search producers..." style="width:100%; background:oklch(0.15 0.012 254); border:1px solid oklch(0.3 0.02 254); border-radius:8px 8px 0 0; padding:8px 10px; color:oklch(0.9 0.006 254); font-size:12.5px; font-family:'IBM Plex Mono',monospace; outline:none;" />
+        <div style="display:flex; flex-direction:column; gap:4px; max-height:260px; overflow-y:auto; border:1px solid oklch(0.3 0.02 254); border-top:none; border-radius:0 0 8px 8px; padding:6px;">
+          <sc-for list="{{ producerAssignCombo.options }}" as="opt" hint-placeholder-count="4">
+            <button onClick="{{ opt.onClick }}" style="all:unset; box-sizing:border-box; cursor:pointer; display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:6px; background:{{ opt.selectedBg }};">
+              <span style="width:13px; height:13px; border-radius:50%; border:1.5px solid oklch(0.6 0.012 254); background:{{ opt.dotColor }};"></span>
+              <span style="font-size:13px; color:oklch(0.9 0.006 254); font-family:'IBM Plex Mono',monospace;">{{ opt.label }}</span>
+            </button>
+          </sc-for>
+          <sc-if value="{{ producerAssignCombo.noMatches }}">
+            <div style="font-size:12px; color:oklch(0.5 0.012 254); font-style:italic; padding:8px 10px;">no matches</div>
+          </sc-if>
+        </div>
+
+        <button onClick="{{ openManageProducersFromAssign }}" style="background:none; border:none; color:oklch(0.75 0.13 200); font-size:12px; cursor:pointer; padding:10px 2px 0 2px;">+ add a new producer</button>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+          <button onClick="{{ closeProducerModal }}" style="background:none; border:1px solid oklch(0.36 0.02 254); color:oklch(0.8 0.008 254); font-size:13px; padding:8px 14px; border-radius:7px; cursor:pointer;">Cancel</button>
+          <button onClick="{{ saveProducerModal }}" style="background:oklch(0.75 0.13 200); border:none; color:oklch(0.15 0.02 200); font-size:13px; font-weight:600; padding:8px 16px; border-radius:7px; cursor:pointer;">Save</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- MANAGE PRODUCERS MODAL -->
+  <sc-if value="{{ manageProducersOpen }}">
+    <div style="position:fixed; inset:0; background:oklch(0.1 0.01 254 / 0.6); display:flex; align-items:center; justify-content:center; z-index:50; animation:fadeIn 0.15s ease;" onClick="{{ closeManageProducersBackdrop }}">
+      <div style="width:460px; max-width:92vw; background:oklch(0.20 0.015 254); border:1px solid oklch(0.32 0.02 254); border-radius:12px; padding:22px; animation:popIn 0.15s ease; max-height:85vh; overflow-y:auto;" onClick="{{ stopPropagation }}">
+        <div style="font-size:16px; font-weight:600; margin-bottom:12px;">Manage Producers</div>
+
+        <input value="{{ producerSearch }}" onChange="{{ onProducerSearchChange }}" placeholder="filter producers..." style="width:100%; background:oklch(0.17 0.014 254); border:1px solid oklch(0.32 0.02 254); border-radius:6px; padding:8px 10px; color:oklch(0.93 0.006 254); font-size:12.5px; font-family:'IBM Plex Mono',monospace; outline:none; margin-bottom:12px;" />
+
+        <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:20px; max-height:220px; overflow-y:auto;">
+          <sc-for list="{{ allProducersList }}" as="p" hint-placeholder-count="5">
+            <div style="display:flex; align-items:center; gap:10px; padding:8px 10px; background:oklch(0.17 0.014 254); border-radius:7px;">
+              <div style="flex:1; min-width:0;">
+                <div style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:oklch(0.9 0.006 254);">{{ p.name }}</div>
+                <sc-if value="{{ p.hasDescription }}">
+                  <div style="font-size:11.5px; color:oklch(0.65 0.012 254); margin-top:2px;">{{ p.description }}</div>
+                </sc-if>
+                <div style="font-size:10.5px; color:oklch(0.48 0.012 254); margin-top:2px;">used by {{ p.usageCount }} topics</div>
+              </div>
+              <button onClick="{{ p.onEdit }}" style="background:none; border:1px solid oklch(0.36 0.02 254); color:oklch(0.8 0.008 254); font-size:11.5px; padding:5px 10px; border-radius:5px; cursor:pointer;">Edit</button>
+              <button onClick="{{ p.onDelete }}" style="background:none; border:none; color:oklch(0.5 0.012 254); cursor:pointer; font-size:15px; line-height:1;">×</button>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="border-top:1px solid oklch(0.28 0.018 254); padding-top:16px;">
+          <div style="font-size:11.5px; font-weight:600; color:oklch(0.6 0.012 254); margin-bottom:6px;">{{ producerFormHeading }}</div>
+          <input value="{{ newProducerName }}" onChange="{{ onNewProducerNameChange }}" placeholder="producer name" style="width:100%; background:oklch(0.17 0.014 254); border:1px solid oklch(0.32 0.02 254); border-radius:6px; padding:8px 10px; color:oklch(0.93 0.006 254); font-size:13px; font-family:'IBM Plex Mono',monospace; margin-bottom:8px; outline:none;" />
+          <textarea value="{{ newProducerDescription }}" onChange="{{ onNewProducerDescriptionChange }}" placeholder="description (optional)" rows="2" style="width:100%; background:oklch(0.17 0.014 254); border:1px solid oklch(0.32 0.02 254); border-radius:6px; padding:8px 10px; color:oklch(0.85 0.008 254); font-size:12.5px; margin-bottom:10px; outline:none; resize:vertical;"></textarea>
+          <div style="display:flex; gap:8px;">
+            <button onClick="{{ saveProducerForm }}" style="flex:1; background:oklch(0.75 0.13 200); border:none; color:oklch(0.15 0.02 200); font-size:13px; font-weight:600; padding:9px; border-radius:7px; cursor:pointer;">{{ saveProducerLabel }}</button>
+            <sc-if value="{{ isEditingProducer }}">
+              <button onClick="{{ cancelEditProducer }}" style="background:none; border:1px solid oklch(0.36 0.02 254); color:oklch(0.8 0.008 254); font-size:13px; padding:9px 14px; border-radius:7px; cursor:pointer;">Cancel</button>
+            </sc-if>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+          <button onClick="{{ closeManageProducers }}" style="background:none; border:1px solid oklch(0.36 0.02 254); color:oklch(0.8 0.008 254); font-size:13px; padding:8px 14px; border-radius:7px; cursor:pointer;">Done</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- MANAGE CONSUMERS MODAL -->
+  <sc-if value="{{ manageConsumersOpen }}">
+    <div style="position:fixed; inset:0; background:oklch(0.1 0.01 254 / 0.6); display:flex; align-items:center; justify-content:center; z-index:50; animation:fadeIn 0.15s ease;" onClick="{{ closeManageConsumersBackdrop }}">
+      <div style="width:460px; max-width:92vw; background:oklch(0.20 0.015 254); border:1px solid oklch(0.32 0.02 254); border-radius:12px; padding:22px; animation:popIn 0.15s ease; max-height:85vh; overflow-y:auto;" onClick="{{ stopPropagation }}">
+        <div style="font-size:16px; font-weight:600; margin-bottom:12px;">Manage Consumers</div>
+
+        <input value="{{ consumerSearch }}" onChange="{{ onConsumerSearchChange }}" placeholder="filter consumers..." style="width:100%; background:oklch(0.17 0.014 254); border:1px solid oklch(0.32 0.02 254); border-radius:6px; padding:8px 10px; color:oklch(0.93 0.006 254); font-size:12.5px; font-family:'IBM Plex Mono',monospace; outline:none; margin-bottom:12px;" />
+
+        <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:20px; max-height:220px; overflow-y:auto;">
+          <sc-for list="{{ allConsumersList }}" as="c" hint-placeholder-count="5">
+            <div style="display:flex; align-items:center; gap:10px; padding:8px 10px; background:oklch(0.17 0.014 254); border-radius:7px;">
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:12.5px; color:oklch(0.9 0.006 254);">{{ c.name }}</div>
+                <sc-if value="{{ c.hasDescription }}">
+                  <div style="font-size:11.5px; color:oklch(0.65 0.012 254); margin-top:2px;">{{ c.description }}</div>
+                </sc-if>
+                <div style="font-size:10.5px; color:oklch(0.48 0.012 254); margin-top:2px;">used by {{ c.usageCount }} topics</div>
+              </div>
+              <button onClick="{{ c.onEdit }}" style="background:none; border:1px solid oklch(0.36 0.02 254); color:oklch(0.8 0.008 254); font-size:11.5px; padding:5px 10px; border-radius:5px; cursor:pointer;">Edit</button>
+              <button onClick="{{ c.onDelete }}" style="background:none; border:none; color:oklch(0.5 0.012 254); cursor:pointer; font-size:15px; line-height:1;">×</button>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="border-top:1px solid oklch(0.28 0.018 254); padding-top:16px;">
+          <div style="font-size:11.5px; font-weight:600; color:oklch(0.6 0.012 254); margin-bottom:6px;">{{ consumerFormHeading }}</div>
+          <input value="{{ newConsumerName }}" onChange="{{ onNewConsumerNameChange }}" placeholder="consumer name" style="width:100%; background:oklch(0.17 0.014 254); border:1px solid oklch(0.32 0.02 254); border-radius:6px; padding:8px 10px; color:oklch(0.93 0.006 254); font-size:13px; margin-bottom:8px; outline:none;" />
+          <textarea value="{{ newConsumerDescription }}" onChange="{{ onNewConsumerDescriptionChange }}" placeholder="description (optional)" rows="2" style="width:100%; background:oklch(0.17 0.014 254); border:1px solid oklch(0.32 0.02 254); border-radius:6px; padding:8px 10px; color:oklch(0.85 0.008 254); font-size:12.5px; margin-bottom:10px; outline:none; resize:vertical;"></textarea>
+          <div style="display:flex; gap:8px;">
+            <button onClick="{{ saveConsumerForm }}" style="flex:1; background:oklch(0.75 0.13 200); border:none; color:oklch(0.15 0.02 200); font-size:13px; font-weight:600; padding:9px; border-radius:7px; cursor:pointer;">{{ saveConsumerLabel }}</button>
+            <sc-if value="{{ isEditingConsumer }}">
+              <button onClick="{{ cancelEditConsumer }}" style="background:none; border:1px solid oklch(0.36 0.02 254); color:oklch(0.8 0.008 254); font-size:13px; padding:9px 14px; border-radius:7px; cursor:pointer;">Cancel</button>
+            </sc-if>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+          <button onClick="{{ closeManageConsumers }}" style="background:none; border:1px solid oklch(0.36 0.02 254); color:oklch(0.8 0.008 254); font-size:13px; padding:8px 14px; border-radius:7px; cursor:pointer;">Done</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- MANAGE SCHEMAS MODAL -->
+  <sc-if value="{{ manageSchemasOpen }}">
+    <div style="position:fixed; inset:0; background:oklch(0.1 0.01 254 / 0.6); display:flex; align-items:center; justify-content:center; z-index:50; animation:fadeIn 0.15s ease;" onClick="{{ closeManageSchemasBackdrop }}">
+      <div style="width:520px; max-width:92vw; background:oklch(0.20 0.015 254); border:1px solid oklch(0.32 0.02 254); border-radius:12px; padding:22px; animation:popIn 0.15s ease; max-height:85vh; overflow-y:auto;" onClick="{{ stopPropagation }}">
+        <div style="font-size:16px; font-weight:600; margin-bottom:12px;">Manage Schemas</div>
+
+        <input value="{{ schemaSearch }}" onChange="{{ onSchemaSearchChange }}" placeholder="filter schemas..." style="width:100%; background:oklch(0.17 0.014 254); border:1px solid oklch(0.32 0.02 254); border-radius:6px; padding:8px 10px; color:oklch(0.93 0.006 254); font-size:12.5px; font-family:'IBM Plex Mono',monospace; outline:none; margin-bottom:12px;" />
+
+        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px; max-height:220px; overflow-y:auto;">
+          <sc-for list="{{ allSchemasList }}" as="sc" hint-placeholder-count="4">
+            <div style="display:flex; align-items:center; gap:10px; padding:8px 10px; background:oklch(0.17 0.014 254); border-radius:7px;">
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:13px; font-weight:600;">{{ sc.name }} <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.55 0.012 254); font-weight:400;">{{ sc.version }}</span></div>
+                <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:oklch(0.55 0.012 254); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ sc.fieldsPreview }}</div>
+                <div style="font-size:10.5px; color:oklch(0.48 0.012 254); margin-top:2px;">used by {{ sc.usageCount }} topics</div>
+              </div>
+              <button onClick="{{ sc.onEdit }}" style="background:none; border:1px solid oklch(0.36 0.02 254); color:oklch(0.8 0.008 254); font-size:11.5px; padding:5px 10px; border-radius:5px; cursor:pointer;">Edit</button>
+              <button onClick="{{ sc.onDelete }}" style="background:none; border:none; color:oklch(0.5 0.012 254); cursor:pointer; font-size:15px; line-height:1;">×</button>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="border-top:1px solid oklch(0.28 0.018 254); padding-top:16px;">
+          <div style="font-size:11.5px; font-weight:600; color:oklch(0.6 0.012 254); margin-bottom:6px;">{{ schemaFormHeading }}</div>
+          <input value="{{ newSchemaName }}" onChange="{{ onNewSchemaNameChange }}" placeholder="schema name" style="width:100%; background:oklch(0.17 0.014 254); border:1px solid oklch(0.32 0.02 254); border-radius:6px; padding:8px 10px; color:oklch(0.93 0.006 254); font-size:13px; margin-bottom:9px; outline:none;" />
+          <textarea value="{{ newSchemaDefText }}" onChange="{{ onNewSchemaDefChange }}" placeholder="{ &quot;value&quot;: &quot;number&quot;, &quot;unit&quot;: &quot;string&quot; }" rows="5" style="width:100%; background:oklch(0.17 0.014 254); border:1px solid oklch(0.32 0.02 254); border-radius:6px; padding:8px 10px; color:oklch(0.85 0.02 200); font-size:12.5px; font-family:'IBM Plex Mono',monospace; outline:none; resize:vertical; margin-bottom:9px;"></textarea>
+          <sc-if value="{{ newSchemaDefError }}">
+            <div style="font-size:12px; color:oklch(0.75 0.16 25); margin-bottom:9px;">{{ newSchemaDefError }}</div>
+          </sc-if>
+          <div style="display:flex; gap:8px;">
+            <button onClick="{{ saveSchemaForm }}" style="flex:1; background:oklch(0.75 0.13 200); border:none; color:oklch(0.15 0.02 200); font-size:13px; font-weight:600; padding:9px; border-radius:7px; cursor:pointer;">{{ saveSchemaLabel }}</button>
+            <sc-if value="{{ isEditingSchema }}">
+              <button onClick="{{ cancelEditSchema }}" style="background:none; border:1px solid oklch(0.36 0.02 254); color:oklch(0.8 0.008 254); font-size:13px; padding:9px 14px; border-radius:7px; cursor:pointer;">Cancel</button>
+            </sc-if>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+          <button onClick="{{ closeManageSchemas }}" style="background:none; border:1px solid oklch(0.36 0.02 254); color:oklch(0.8 0.008 254); font-size:13px; padding:8px 14px; border-radius:7px; cursor:pointer;">Done</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- MANAGE RULES MODAL -->
+  <sc-if value="{{ manageRulesOpen }}">
+    <div style="position:fixed; inset:0; background:oklch(0.1 0.01 254 / 0.6); display:flex; align-items:center; justify-content:center; z-index:50; animation:fadeIn 0.15s ease;" onClick="{{ closeManageRulesBackdrop }}">
+      <div style="width:560px; max-width:92vw; background:oklch(0.20 0.015 254); border:1px solid oklch(0.32 0.02 254); border-radius:12px; padding:22px; animation:popIn 0.15s ease; max-height:85vh; overflow-y:auto;" onClick="{{ stopPropagation }}">
+        <div style="font-size:16px; font-weight:600; margin-bottom:4px;">Manage Rules</div>
+        <div style="font-size:12px; color:oklch(0.55 0.012 254); margin-bottom:16px; line-height:1.4;">Auto-assign producer &amp; tags to topics matching an MQTT-style pattern (+ = one level, # = rest). Use for bulk-managing many topics from the same producer, or to survive a namespace reshuffle.</div>
+
+        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px; max-height:220px; overflow-y:auto;">
+          <sc-for list="{{ allRulesList }}" as="r" hint-placeholder-count="2">
+            <div style="display:flex; align-items:center; gap:10px; padding:9px 10px; background:oklch(0.17 0.014 254); border-radius:7px;">
+              <div style="flex:1; min-width:0;">
+                <div style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:oklch(0.9 0.006 254);">{{ r.pattern }}</div>
+                <div style="font-size:11.5px; color:oklch(0.6 0.012 254); margin-top:2px;">producer: {{ r.producer }}</div>
+                <div style="display:flex; gap:4px; margin-top:5px; flex-wrap:wrap;">
+                  <sc-for list="{{ r.tagPills }}" as="tag" hint-placeholder-count="1">
+                    <span style="font-size:10.5px; font-weight:500; padding:2px 7px; border-radius:99px; background:{{ tag.bg }}; color:{{ tag.color }}; border:1px solid {{ tag.borderColor }};">{{ tag.label }}</span>
+                  </sc-for>
+                </div>
+              </div>
+              <sc-if value="{{ r.hasMatches }}">
+                <button onClick="{{ r.onApplyNow }}" style="font-size:11px; font-weight:600; background:oklch(0.78 0.15 80); border:none; color:oklch(0.18 0.02 80); padding:6px 10px; border-radius:5px; cursor:pointer; white-space:nowrap;">Apply to {{ r.matchCount }} now</button>
+              </sc-if>
+              <button onClick="{{ r.onDelete }}" style="background:none; border:none; color:oklch(0.5 0.012 254); cursor:pointer; font-size:15px; line-height:1;">×</button>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="border-top:1px solid oklch(0.28 0.018 254); padding-top:16px;">
+          <div style="font-size:11.5px; font-weight:600; color:oklch(0.6 0.012 254); margin-bottom:6px;">New rule</div>
+          <input value="{{ newRulePattern }}" onChange="{{ onNewRulePatternChange }}" placeholder="acme/+/+/+/+/+/press-01/#" style="width:100%; background:oklch(0.17 0.014 254); border:1px solid oklch(0.32 0.02 254); border-radius:6px; padding:8px 10px; color:oklch(0.85 0.02 200); font-family:'IBM Plex Mono',monospace; font-size:12.5px; margin-bottom:9px; outline:none;" />
+          <input value="{{ newRuleProducerCombo.search }}" onChange="{{ newRuleProducerCombo.onSearchChange }}" placeholder="type to search producers..." style="width:100%; background:oklch(0.15 0.012 254); border:1px solid oklch(0.32 0.02 254); border-radius:6px 6px 0 0; padding:6px 8px; color:oklch(0.9 0.006 254); font-size:11.5px; font-family:'IBM Plex Mono',monospace; outline:none;" />
+          <div style="display:flex; flex-direction:column; gap:4px; max-height:120px; overflow-y:auto; border:1px solid oklch(0.32 0.02 254); border-top:none; border-radius:0 0 6px 6px; padding:6px; margin-bottom:9px;">
+            <sc-for list="{{ newRuleProducerCombo.options }}" as="opt" hint-placeholder-count="3">
+              <button onClick="{{ opt.onClick }}" style="all:unset; box-sizing:border-box; cursor:pointer; display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:5px; background:{{ opt.selectedBg }};">
+                <span style="width:11px; height:11px; border-radius:50%; border:1.5px solid oklch(0.6 0.012 254); background:{{ opt.dotColor }};"></span>
+                <span style="font-size:12px; color:oklch(0.85 0.008 254); font-family:'IBM Plex Mono',monospace;">{{ opt.label }}</span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="display:flex; gap:7px; flex-wrap:wrap; margin-bottom:12px;">
+            <sc-for list="{{ newRuleTagOptions }}" as="opt" hint-placeholder-count="4">
+              <button onClick="{{ opt.onClick }}" style="font-size:11.5px; font-weight:500; padding:4px 10px; border-radius:99px; cursor:pointer; background:{{ opt.bg }}; color:{{ opt.color }}; border:1px solid {{ opt.borderColor }}; opacity:{{ opt.opacity }};">{{ opt.label }}</button>
+            </sc-for>
+          </div>
+          <button onClick="{{ addRule }}" style="width:100%; background:oklch(0.75 0.13 200); border:none; color:oklch(0.15 0.02 200); font-size:13px; font-weight:600; padding:9px; border-radius:7px; cursor:pointer;">Add rule</button>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+          <button onClick="{{ closeManageRules }}" style="background:none; border:1px solid oklch(0.36 0.02 254); color:oklch(0.8 0.008 254); font-size:13px; padding:8px 14px; border-radius:7px; cursor:pointer;">Done</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- MANAGE TAGS MODAL -->
+  <sc-if value="{{ manageTagsOpen }}">
+    <div style="position:fixed; inset:0; background:oklch(0.1 0.01 254 / 0.6); display:flex; align-items:center; justify-content:center; z-index:50; animation:fadeIn 0.15s ease;" onClick="{{ closeManageTagsBackdrop }}">
+      <div style="width:440px; max-width:92vw; background:oklch(0.20 0.015 254); border:1px solid oklch(0.32 0.02 254); border-radius:12px; padding:22px; animation:popIn 0.15s ease; max-height:85vh; overflow-y:auto;" onClick="{{ stopPropagation }}">
+        <div style="font-size:16px; font-weight:600; margin-bottom:16px;">Manage Tags</div>
+
+        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px; max-height:240px; overflow-y:auto;">
+          <sc-for list="{{ allTagsList }}" as="tag" hint-placeholder-count="5">
+            <div style="display:flex; align-items:center; gap:10px; padding:7px 9px; background:oklch(0.17 0.014 254); border-radius:7px;">
+              <span style="font-size:11.5px; font-weight:500; padding:3px 10px; border-radius:99px; background:{{ tag.bg }}; color:{{ tag.color }}; border:1px solid {{ tag.borderColor }};">{{ tag.label }}</span>
+              <div style="flex:1;"></div>
+              <button onClick="{{ tag.onDelete }}" style="background:none; border:none; color:oklch(0.5 0.012 254); cursor:pointer; font-size:15px; line-height:1;">×</button>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="border-top:1px solid oklch(0.28 0.018 254); padding-top:16px;">
+          <div style="font-size:11.5px; font-weight:600; color:oklch(0.6 0.012 254); margin-bottom:6px;">New tag</div>
+          <input value="{{ newTagLabel }}" onChange="{{ onNewTagLabelChange }}" placeholder="label" style="width:100%; background:oklch(0.17 0.014 254); border:1px solid oklch(0.32 0.02 254); border-radius:6px; padding:8px 10px; color:oklch(0.93 0.006 254); font-size:13px; margin-bottom:9px; outline:none;" />
+          <div style="display:flex; gap:7px; margin-bottom:14px;">
+            <sc-for list="{{ colorSwatches }}" as="sw" hint-placeholder-count="8">
+              <button onClick="{{ sw.onClick }}" style="width:24px; height:24px; border-radius:50%; background:{{ sw.color }}; cursor:pointer; border:2px solid {{ sw.borderColor }};"></button>
+            </sc-for>
+          </div>
+          <button onClick="{{ addTag }}" style="width:100%; background:oklch(0.75 0.13 200); border:none; color:oklch(0.15 0.02 200); font-size:13px; font-weight:600; padding:9px; border-radius:7px; cursor:pointer;">Add tag</button>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+          <button onClick="{{ closeManageTags }}" style="background:none; border:1px solid oklch(0.36 0.02 254); color:oklch(0.8 0.008 254); font-size:13px; padding:8px 14px; border-radius:7px; cursor:pointer;">Done</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const TAGS = [
+  { id: 'production',  label: 'production',     hue: 200 },
+  { id: 'critical',    label: 'critical',       hue: 25  },
+  { id: 'pilot',       label: 'pilot',          hue: 300 },
+  { id: 'deprecated',  label: 'deprecated',     hue: null },
+  { id: 'high-freq',   label: 'high-frequency', hue: 240 },
+];
+
+function tagColor(hue) {
+  if (hue === null) return { color: 'oklch(0.7 0.01 254)', bg: 'oklch(0.28 0.01 254)', borderColor: 'oklch(0.4 0.012 254)' };
+  return {
+    color: `oklch(0.85 0.1 ${hue})`,
+    bg: `oklch(0.27 0.06 ${hue})`,
+    borderColor: `oklch(0.42 0.09 ${hue})`,
+  };
+}
+
+function mkTopic(o) { return o; }
+
+const SCHEMAS = [
+  { id: 'sensor-reading', name: 'Sensor Reading (value+unit+quality)', definition: { value: 'number', unit: 'string', quality: 'string' }, version: 'v2', history: [{ version: 'v1', date: '2025-02-11' }, { version: 'v2', date: '2025-09-03' }] },
+  { id: 'value-unit', name: 'Value + Unit', definition: { value: 'number', unit: 'string' }, version: 'v1', history: [{ version: 'v1', date: '2025-01-20' }] },
+  { id: 'machine-status', name: 'Machine Status (state+fault)', definition: { state: 'string', fault_code: 'number' }, version: 'v3', history: [{ version: 'v1', date: '2024-11-02' }, { version: 'v2', date: '2025-03-18' }, { version: 'v3', date: '2025-10-01' }] },
+  { id: 'counter', name: 'Counter', definition: { count: 'number' }, version: 'v1', history: [{ version: 'v1', date: '2024-11-02' }] },
+  { id: 'position-3axis', name: '3-Axis Position', definition: { x: 'number', y: 'number', z: 'number' }, version: 'v1', history: [{ version: 'v1', date: '2025-06-14' }] },
+  { id: 'position-3axis-quality', name: '3-Axis Position + Quality', definition: { x: 'number', y: 'number', z: 'number', quality: 'string' }, version: 'v2', history: [{ version: 'v1', date: '2024-08-01' }, { version: 'v2', date: '2025-05-20' }] },
+  { id: 'simple-status', name: 'Simple Status', definition: { state: 'string' }, version: 'v1', history: [{ version: 'v1', date: '2023-12-01' }] },
+];
+
+function validateSchema(schema, payload) {
+  if (!schema) return null;
+  const mismatches = [];
+  Object.keys(schema).forEach(key => {
+    const expected = schema[key];
+    if (!(key in (payload || {}))) { mismatches.push(`'${key}' missing`); return; }
+    const actual = typeof payload[key];
+    if (actual !== expected) mismatches.push(`'${key}' expected ${expected}, got ${actual}`);
+  });
+  return mismatches;
+}
+
+const STALE_THRESHOLD_MIN = 720; // 12h silent = likely moved/retired
+
+function wildcardToRegex(pattern) {
+  const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&');
+  const withGlob = escaped.replace(/\*/g, '.*').replace(/\?/g, '.');
+  return new RegExp(withGlob, 'i');
+}
+
+function matchTopic(pattern, topic) {
+  if (!pattern) return false;
+  const p = pattern.split('/');
+  const t = topic.split('/');
+  for (let i = 0; i < p.length; i++) {
+    if (p[i] === '#') return true;
+    if (i >= t.length) return false;
+    if (p[i] === '+') continue;
+    if (p[i] !== t[i]) return false;
+  }
+  return p.length === t.length;
+}
+
+function findRelinkCandidate(target, topics) {
+  const K = 6; // match on last K segments (device internals) to survive a namespace relocation
+  const targetTail = target.seg.slice(-K).join('/');
+  return topics.find(t => t.tracked && t.id !== target.id && t.seg.slice(-K).join('/') === targetTail && t.seg.join('/') !== target.seg.join('/') && t.agoMin > STALE_THRESHOLD_MIN) || null;
+}
+
+function ruleSpecificity(pattern) {
+  // more literal (non wildcard) segments = more specific; # costs more than +
+  return pattern.split('/').reduce((n, seg) => n + (seg === '#' ? 0 : seg === '+' ? 0.5 : 1), 0);
+}
+
+function findMatchingRules(topicPath, rules) {
+  return rules
+    .filter(r => matchTopic(r.pattern, topicPath))
+    .sort((a, b) => ruleSpecificity(b.pattern) - ruleSpecificity(a.pattern));
+}
+
+const LEVEL_NAMES = ['enterprise','region','country','site','area','line','cell','equipment','module','subsystem','sensor','measurement'];
+
+const RULES = [
+  { id: 'r1', pattern: 'acme/+/+/+/+/+/press-01/#', producer: 'press-01-edge-gateway', tags: ['production'] },
+  { id: 'r2', pattern: 'acme/+/+/+/+/+/hvac-01/#', producer: 'hvac-01-bms', tags: ['production'] },
+];
+
+const PRODUCERS = [
+  ['press-01-edge-gateway','Edge gateway on press line 1, plant A'],
+  ['conveyor-plc-01','Siemens PLC controlling conveyor 02'],
+  ['welder-01-controller','Welder cell controller, line 2'],
+  ['robot-03-controller','Fanuc robot controller, cell 3'],
+  ['robot-01-controller','Fanuc robot controller, plant B line 1'],
+  ['packer-02-plc','Legacy packer PLC, slated for retirement'],
+  ['scanner-01-gateway','Barcode scanner gateway, plant B line 2'],
+  ['hvac-01-bms','Building management system, plant B'],
+].map(([id, description]) => ({ id, name: id, description }));
+
+const CONSUMERS = [
+  ['Line1 Historian','Time-series store for line 1 telemetry'],
+  ['Predictive Maintenance','ML pipeline flagging early failure signs'],
+  ['OEE Dashboard','Plant-floor OEE visualization'],
+  ['SCADA','Central plant SCADA system'],
+  ['Andon Board','Shop-floor andon status board'],
+  ['Robot Fleet Monitor','Cross-plant robot health monitor'],
+  ['Historian-B','Time-series store, plant B'],
+  ['Line Historian B','Time-series store, plant B line 1'],
+  ['Quality Dashboard','Quality/defect tracking dashboard'],
+  ['Facilities Dashboard','Facilities & environmental monitoring'],
+].map(([name, description]) => ({ id: name, name, description }));
+
+function hourLabel(hoursAgo) {  const d = new Date();
+  d.setMinutes(0, 0, 0);
+  d.setHours(d.getHours() - hoursAgo);
+  const h = d.getHours();
+  const start = (h % 12 === 0 ? 12 : h % 12) + (h < 12 ? 'am' : 'pm');
+  return start;
+}
+
+const RAW_TOPICS = [
+  mkTopic({ seg: ['acme','emea','germany','plant-a','fab1','line1','press-01','drive-unit','spindle','bearing-1','temp-sensor','temperature'], producer:'press-01-edge-gateway', consumers:['Line1 Historian','Predictive Maintenance'], schemaId:'sensor-reading', payload:{value:78.4,unit:'C',quality:'GOOD'}, violations:0, tags:['production','critical'], tracked:true, agoMin:2, retained:false,
+    activity:[40,45,50,48,55,60,58,62,70,68,72,65,60,58,55,50,48,52,60,64,58,55,50,46] }),
+  mkTopic({ seg: ['acme','emea','germany','plant-a','fab1','line1','press-01','hydraulics','pump','accumulator','pressure-sensor','pressure'], producer:'press-01-edge-gateway', consumers:['Line1 Historian'], schemaId:'value-unit', payload:{value:4.2,unit:'bar'}, violations:0, tags:['production'], tracked:true, agoMin:2, retained:false,
+    activity:[30,35,38,40,42,44,40,38,36,40,45,50,48,44,40,38,35,34,36,40,44,42,38,36] }),
+  mkTopic({ seg: ['acme','emea','germany','plant-a','fab1','line1','press-01','drive-unit','spindle','bearing-1','vib-sensor','vibration_raw'], producer:null, consumers:[], schemaId:null, payload:{v:0.021,axis:'x'}, violations:0, tags:[], tracked:false, agoMin:1, retained:false, activity:[] }),
+  mkTopic({ seg: ['acme','emea','germany','plant-a','fab1','line1','conveyor-02','drive-motor','gearbox','output-shaft','encoder','speed'], producer:'conveyor-plc-01', consumers:['Line1 Historian','OEE Dashboard'], schemaId:'value-unit', payload:{value:'142',unit:'mm/s'}, violations:12, lastClearedAt:'2025-11-02T09:00:00Z', tags:['production'], tracked:true, agoMin:5, retained:false,
+    activity:[60,62,58,55,50,52,58,64,70,72,68,64,60,58,55,52,50,48,50,55,60,64,60,56] }),
+  mkTopic({ seg: ['acme','emea','germany','plant-a','fab1','line1','conveyor-02','drive-motor','stator','winding-a','current-sensor','motor_current'], producer:null, consumers:[], schemaId:null, payload:{amps:12.4}, violations:0, tags:[], tracked:false, agoMin:3, retained:false, activity:[] }),
+  mkTopic({ seg: ['acme','emea','germany','plant-a','fab2','line2','welder-01','weld-head','controller','main-board','status-reg','status'], producer:'welder-01-controller', consumers:['SCADA','Andon Board'], schemaId:'machine-status', payload:{state:'RUNNING',fault_code:0}, violations:0, tags:['production','critical'], tracked:true, agoMin:1, retained:true,
+    activity:[70,72,68,65,62,60,58,60,64,68,72,75,70,66,62,60,58,60,64,68,70,68,64,60] }),
+  mkTopic({ seg: ['acme','emea','germany','plant-a','fab2','line2','welder-01','weld-head','controller','main-board','counter-reg','cycle_count'], producer:'welder-01-controller', consumers:['OEE Dashboard'], schemaId:'counter', payload:{count:48213}, violations:0, tags:['production'], tracked:true, agoMin:1, retained:true,
+    activity:[20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,48,46,44,42,40,38,36,34] }),
+  mkTopic({ seg: ['acme','emea','germany','plant-a','fab2','line2','robot-03','arm','wrist','joint-6','encoder','position'], producer:'robot-03-controller', consumers:['Robot Fleet Monitor'], schemaId:'position-3axis', payload:{x:120.5,y:44.2,z:12.0}, violations:0, tags:['pilot'], tracked:true, agoMin:4320, retained:false,
+    activity:[50,52,55,58,60,58,55,52,50,48,50,55,60,62,60,55,50,48,46,48,52,55,50,48] }),
+  mkTopic({ seg: ['acme','emea','poland','plant-c','fab1','line3','robot-03','arm','wrist','joint-6','encoder','position'], producer:null, consumers:[], schemaId:null, payload:{x:201.2,y:88.4,z:15.0}, violations:0, tags:[], tracked:false, agoMin:2, retained:false, activity:[] }),
+  mkTopic({ seg: ['acme','amer','usa','plant-b','fab1','line1','robot-01','arm','wrist','joint-6','encoder','position'], producer:'robot-01-controller', consumers:['Robot Fleet Monitor','Historian-B'], schemaId:'position-3axis-quality', payload:{x:88.1,y:20.4,z:5.6}, violations:4, lastClearedAt:null, tags:['production'], tracked:true, agoMin:4, retained:false,
+    activity:[40,42,45,48,50,48,45,42,40,38,40,45,50,52,50,45,40,38,36,38,42,45,40,38] }),
+  mkTopic({ seg: ['acme','amer','usa','plant-b','fab1','line1','robot-01','arm','wrist','joint-3','torque-sensor','torque'], producer:'robot-01-controller', consumers:['Historian-B'], schemaId:'value-unit', payload:{value:14.2,unit:'Nm'}, violations:0, tags:['production'], tracked:true, agoMin:4, retained:false,
+    activity:[30,32,35,38,40,38,35,32,30,28,30,35,40,42,40,35,30,28,26,28,32,35,30,28] }),
+  mkTopic({ seg: ['acme','amer','usa','plant-b','fab1','line1','packer-02','plc-cabinet','io-rack','module-1','status-reg','status'], producer:'packer-02-plc', consumers:['Line Historian B'], schemaId:'simple-status', payload:{state:'IDLE'}, violations:0, tags:['deprecated'], tracked:true, agoMin:6, retained:true,
+    activity:[15,16,18,20,18,16,15,14,16,18,20,22,20,18,16,15,14,16,18,20,18,16,15,14] }),
+  mkTopic({ seg: ['acme','amer','usa','plant-b','fab2','line2','scanner-01','camera-unit','controller','main-board','counter','read_rate'], producer:'scanner-01-gateway', consumers:['Quality Dashboard'], schemaId:'value-unit', payload:{value:340,unit:'reads/min'}, violations:0, tags:['high-freq'], tracked:true, agoMin:1, retained:false,
+    activity:[80,82,85,88,90,88,85,82,80,78,80,85,90,92,90,85,80,78,76,78,82,85,80,78] }),
+  mkTopic({ seg: ['acme','amer','usa','plant-b','fab2','line2','scanner-01','camera-unit','controller','main-board','error-reg','error_count'], producer:'scanner-01-gateway', consumers:['Quality Dashboard'], schemaId:'counter', payload:{count:'3'}, violations:2, lastClearedAt:'2026-06-20T14:30:00Z', tags:['high-freq','critical'], tracked:true, agoMin:1, retained:false,
+    activity:[5,6,8,10,8,6,5,4,6,8,10,12,10,8,6,5,4,6,8,10,8,6,5,4] }),
+  mkTopic({ seg: ['acme','amer','usa','plant-b','facilities','hvac-line','hvac-01','air-handler','coil-unit','sensor-rack','temp-sensor','temperature'], producer:'hvac-01-bms', consumers:['Facilities Dashboard'], schemaId:'value-unit', payload:{value:21.5,unit:'C'}, violations:0, tags:['production'], tracked:true, agoMin:8, retained:true,
+    activity:[45,46,47,48,49,50,49,48,47,46,45,46,47,48,49,50,49,48,47,46,45,46,47,48] }),
+  mkTopic({ seg: ['acme','amer','usa','plant-b','facilities','hvac-line','hvac-01','air-handler','controller','main-board','setpoint-reg','setpoint'], producer:'hvac-01-bms', consumers:['Facilities Dashboard'], schemaId:'value-unit', payload:{value:22.0,unit:'C'}, violations:0, tags:['production'], tracked:true, agoMin:8, retained:true,
+    activity:[50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50] }),
+];
+
+class Component extends DCLogic {
+  state = {
+    role: 'admin',
+    groupBy: 'hierarchy',
+    search: '',
+    tagFilter: null,
+    selectedId: null,
+    tagPickerOpen: false,
+    configureId: null,
+    configureForm: { producer: null, schemaId: null, tagIds: [], consumerIds: [], relinkFromId: null },
+    manageTagsOpen: false,
+    schemaModalId: null,
+    schemaModalSelectedId: undefined,
+    manageSchemasOpen: false,
+    editingSchemaId: null,
+    newSchemaName: '',
+    newSchemaDefText: '',
+    newSchemaDefError: '',
+    schemaSearch: '',
+    newTagLabel: '',
+    newTagHue: 200,
+    tags: TAGS.map(t => ({ ...t })),
+    schemas: SCHEMAS.map(s => ({ ...s, history: s.history.map(h => ({ ...h })) })),
+    rules: RULES.map(r => ({ ...r, tags: [...r.tags] })),
+    manageRulesOpen: false,
+    editingRuleId: null,
+    newRulePattern: '',
+    newRuleProducerId: null,
+    newRuleTagIds: [],
+    producers: PRODUCERS.map(p => ({ ...p })),
+    consumers: CONSUMERS.map(c => ({ ...c })),
+    manageProducersOpen: false,
+    producerSearch: '',
+    editingProducerId: null,
+    newProducerName: '',
+    newProducerDescription: '',
+    manageConsumersOpen: false,
+    consumerSearch: '',
+    editingConsumerId: null,
+    newConsumerName: '',
+    newConsumerDescription: '',
+    producerModalId: null, // topic id whose producer is being reassigned from detail view
+    producerModalSelectedId: undefined,
+    consumerPickerOpen: false,
+    manageMenuOpen: false,
+    pickerSearch: {
+      configureProducer: '', configureSchema: '', configureConsumer: '',
+      schemaAssign: '', producerAssign: '', consumerAssign: '', ruleProducer: '',
+    },
+    folderPath: [],
+    topics: RAW_TOPICS.map(t => ({ ...t, id: t.seg.join('/') })),
+  };
+
+  setPickerSearch(key, val) {
+    this.setState(s => ({ pickerSearch: { ...s.pickerSearch, [key]: val } }));
+  }
+
+  relTime(min) {
+    if (min < 1) return 'just now';
+    if (min < 60) return min + 'm ago';
+    const h = Math.floor(min / 60);
+    if (h < 24) return h + 'h ago';
+    return Math.floor(h / 24) + 'd ago';
+  }
+
+  tagPillFor(tag) {
+    const c = tagColor(tag.hue);
+    return { label: tag.label, ...c };
+  }
+
+  matchesFilters(t) {
+    const { search, tagFilter, folderPath } = this.state;
+    if (folderPath && folderPath.length) {
+      for (let i = 0; i < folderPath.length; i++) {
+        if (t.seg[i + 1] !== folderPath[i]) return false;
+      }
+    }
+    if (tagFilter === '__untracked__') { if (t.tracked) return false; }
+    else if (tagFilter) { if (!t.tags.includes(tagFilter)) return false; }
+    if (search && search.trim()) {
+      const s = search.trim();
+      const hasWildcard = /[*?+#]/.test(s);
+      if (hasWildcard) {
+        const path = t.seg.join('/');
+        const matchesPath = s.includes('+') || s.includes('#') ? matchTopic(s, path) : wildcardToRegex(s).test(path);
+        if (!matchesPath) return false;
+      } else {
+        const hay = (t.seg.join('/') + ' ' + (this.producerName(t.producer) || '') + ' ' + this.consumerNames(t.consumers).join(' ') + ' ' + t.tags.join(' ')).toLowerCase();
+        if (!hay.includes(s.toLowerCase())) return false;
+      }
+    }
+    return true;
+  }
+
+  schemaFor(t) {
+    return t.schemaId ? this.state.schemas.find(s => s.id === t.schemaId) : null;
+  }
+
+  buildRowVM(t) {
+    const tagsById = {}; this.state.tags.forEach(tg => tagsById[tg.id] = tg);
+    const tagPills = t.tags.map(id => tagsById[id] ? this.tagPillFor(tagsById[id]) : null).filter(Boolean);
+    const schemaObj = this.schemaFor(t);
+    const mismatches = schemaObj ? validateSchema(schemaObj.definition, t.payload) : null;
+    const liveCompliant = schemaObj ? mismatches.length === 0 : null;
+    const matchingRules = !t.tracked ? findMatchingRules(t.seg.join('/'), this.state.rules) : [];
+    const singleRule = matchingRules.length === 1 ? matchingRules[0] : null;
+    return {
+      id: t.id, path: t.seg.join('/'), producer: this.producerName(t.producer) || '—',
+      consumerCount: t.consumers.length, tagPills,
+      lastSeen: this.relTime(t.agoMin), tracked: t.tracked, untracked: !t.tracked,
+      compliant: t.tracked && liveCompliant === true, nonCompliant: t.tracked && liveCompliant === false,
+      violationCount: t.violations,
+      hasMatchingRule: !!singleRule,
+      hasRuleConflict: matchingRules.length > 1,
+      ruleConflictCount: matchingRules.length,
+      onClick: () => this.setState({ selectedId: t.id, tagPickerOpen: false }),
+      onConfigure: () => this.openConfigureModal(t.id),
+      onQuickApplyRule: singleRule ? () => {
+        this.setState(s => ({
+          topics: s.topics.map(tp => tp.id !== t.id ? tp : { ...tp, tracked: true, producer: singleRule.producer, tags: [...singleRule.tags] }),
+        }));
+      } : null,
+    };
+  }
+
+  openConfigureModal(id) {
+    this.setState({ configureId: id, configureForm: { producer: null, schemaId: null, tagIds: [], consumerIds: [], relinkFromId: null } });
+  }
+
+  producerName(id) {
+    const p = this.state.producers.find(x => x.id === id);
+    return p ? p.name : null;
+  }
+
+  producerDescription(id) {
+    const p = this.state.producers.find(x => x.id === id);
+    return p ? p.description : '';
+  }
+
+  consumerNames(ids) {
+    const byId = {}; this.state.consumers.forEach(c => byId[c.id] = c.name);
+    return (ids || []).map(id => byId[id] || id);
+  }
+
+  consumerObjs(ids) {
+    const byId = {}; this.state.consumers.forEach(c => byId[c.id] = c);
+    return (ids || []).map(id => byId[id] ? { name: byId[id].name, description: byId[id].description || '' } : { name: id, description: '' });
+  }
+
+  comboVM(key, options) {
+    const search = this.state.pickerSearch[key] || '';
+    const filtered = search.trim() ? options.filter(o => o.label.toLowerCase().includes(search.toLowerCase())) : options;
+    return {
+      search,
+      onSearchChange: e => this.setPickerSearch(key, e.target.value),
+      options: filtered,
+      noMatches: filtered.length === 0,
+    };
+  }
+
+  renderVals() {
+    const { role, groupBy, search, selectedId, topics, tags, schemas, rules, tagFilter, folderPath, configureId, configureForm, manageTagsOpen, newTagLabel, newTagHue, tagPickerOpen, schemaModalId, schemaModalSelectedId, manageSchemasOpen, editingSchemaId, newSchemaName, newSchemaDefText, newSchemaDefError, schemaSearch, manageRulesOpen, editingRuleId, newRulePattern, newRuleProducerId, newRuleTagIds, producers, consumers, manageProducersOpen, producerSearch, editingProducerId, newProducerName, newProducerDescription, manageConsumersOpen, consumerSearch, editingConsumerId, newConsumerName, newConsumerDescription, producerModalId, producerModalSelectedId, consumerPickerOpen, manageMenuOpen } = this.state;
+    const isAdmin = role === 'admin';
+    const tagsById = {}; tags.forEach(t => tagsById[t.id] = t);
+
+    const untrackedCount = topics.filter(t => !t.tracked).length;
+
+    // namespace drill-down (generic depth)
+    const depth = 1 + folderPath.length; // segments fixed so far, incl. enterprise
+    const prefixMatches = topics.filter(t => folderPath.every((seg, i) => t.seg[i + 1] === seg));
+    const childrenMap = {};
+    prefixMatches.forEach(t => {
+      if (t.seg.length > depth) {
+        const name = t.seg[depth];
+        childrenMap[name] = childrenMap[name] || { name, count: 0, untracked: 0 };
+        childrenMap[name].count++;
+        if (!t.tracked) childrenMap[name].untracked++;
+      }
+    });
+    const namespaceChildren = Object.values(childrenMap).sort((a, b) => a.name.localeCompare(b.name)).map(c => ({
+      name: c.name, count: c.count, hasUntracked: c.untracked > 0,
+      onClick: () => this.setState({ folderPath: [...folderPath, c.name], selectedId: null }),
+    }));
+    const namespaceBreadcrumbs = ['acme', ...folderPath].map((seg, i) => ({
+      label: seg, isLast: i === folderPath.length,
+      color: i === folderPath.length ? 'oklch(0.9 0.006 254)' : 'oklch(0.6 0.13 200)',
+      weight: i === folderPath.length ? '600' : '500',
+      onClick: () => this.setState({ folderPath: folderPath.slice(0, i), selectedId: null }),
+    }));
+    const currentLevelName = LEVEL_NAMES[depth] || 'level';
+
+    const tagChips = [
+      { label: 'all', bg: !tagFilter ? 'oklch(0.27 0.05 200)' : 'transparent', color: !tagFilter ? 'oklch(0.85 0.1 200)' : 'oklch(0.6 0.012 254)', borderColor: 'oklch(0.36 0.02 254)', onClick: () => this.setState({ tagFilter: null }) },
+      ...tags.map(t => {
+        const c = tagColor(t.hue);
+        const active = tagFilter === t.id;
+        return { label: t.label, bg: active ? c.bg : 'transparent', color: active ? c.color : 'oklch(0.6 0.012 254)', borderColor: c.borderColor, onClick: () => this.setState({ tagFilter: active ? null : t.id }) };
+      }),
+    ];
+
+    const filtered = topics.filter(t => this.matchesFilters(t));
+
+    let displayGroups;
+    if (groupBy === 'flat') {
+      const sorted = [...filtered].sort((a, b) => a.seg.join('/').localeCompare(b.seg.join('/')));
+      displayGroups = [{ label: '', showLabel: false, topics: sorted.map(t => this.buildRowVM(t)) }];
+    } else {
+      const bySiteLine = {};
+      const groupDepth = 7; // group by path through "cell" level
+      filtered.forEach(t => {
+        const key = t.seg.slice(1, groupDepth).join('/');
+        (bySiteLine[key] = bySiteLine[key] || []).push(t);
+      });
+      displayGroups = Object.keys(bySiteLine).sort().map(key => ({
+        label: 'acme / ' + key, showLabel: true,
+        topics: bySiteLine[key].map(t => this.buildRowVM(t)),
+      }));
+    }
+
+    const selected = selectedId ? topics.find(t => t.id === selectedId) : null;
+    let detail = null;
+    if (selected) {
+      const tagPills = selected.tags.map(id => tagsById[id] ? this.tagPillFor(tagsById[id]) : null).filter(Boolean);
+      const schemaObj = this.schemaFor(selected);
+      const related = topics.filter(t => t.id !== selected.id && t.seg.length === selected.seg.length && t.seg.slice(0, -1).join('/') === selected.seg.slice(0, -1).join('/'));
+      const schemaHistory = schemaObj ? schemaObj.history.map((h, i) => ({ ...h, current: i === schemaObj.history.length - 1, dotColor: i === schemaObj.history.length - 1 ? 'oklch(0.75 0.13 200)' : 'oklch(0.45 0.012 254)' })) : [];
+      const mismatches = schemaObj ? validateSchema(schemaObj.definition, selected.payload) : null;
+      const liveCompliant = schemaObj ? mismatches.length === 0 : null;
+      const rawActivity = (selected.activity && selected.activity.length ? selected.activity : new Array(24).fill(0));
+      const maxA = Math.max(1, ...rawActivity);
+      detail = {
+        crumbLabel: selected.seg.slice(0, -1).map((seg, i) => `${LEVEL_NAMES[i] || 'lvl'}:${seg}`).join('  '),
+        leaf: selected.seg[selected.seg.length - 1], path: selected.seg.join('/'),
+        compliant: liveCompliant === true, nonCompliant: liveCompliant === false, unknownCompliance: liveCompliant === null,
+        violationCount: selected.violations,
+        violationNumberColor: selected.violations > 0 ? 'oklch(0.7 0.18 25)' : 'oklch(0.75 0.13 200)',
+        lastCleared: selected.lastClearedAt ? this.relTime(Math.round((Date.now() - new Date(selected.lastClearedAt).getTime()) / 60000)) + ' ago' : 'never cleared',
+        mismatches: (mismatches || []).map(m => ({ text: m })),
+        hasMismatches: !!(mismatches && mismatches.length),
+        tagPills,
+        producer: this.producerName(selected.producer) || 'unknown', protocol: 'MQTT 5 · QoS 1',
+        canChangeProducer: isAdmin,
+        hasProducerDescription: !!this.producerDescription(selected.producer),
+        producerDescription: this.producerDescription(selected.producer) || '',
+        consumers: this.consumerObjs(selected.consumers), consumerCount: selected.consumers.length, noConsumers: selected.consumers.length === 0,
+        schemaName: schemaObj ? schemaObj.name : 'No schema assigned',
+        schemaVersion: schemaObj ? schemaObj.version : '—',
+        schemaText: schemaObj ? JSON.stringify(schemaObj.definition, null, 2) : '// no schema assigned — validation is unknown until one is assigned',
+        schemaHistory, hasSchema: !!schemaObj,
+        schemaEditLabel: schemaObj ? 'Change' : 'Assign schema',
+        canEditSchema: isAdmin,
+        payloadText: JSON.stringify(selected.payload, null, 2),
+        retained: !!selected.retained,
+        lastSeen: this.relTime(selected.agoMin),
+        canClear: isAdmin && selected.violations > 0,
+        activity: rawActivity.map((v, i) => ({ pct: Math.max(4, Math.round((v / maxA) * 100)), tooltip: `${hourLabel(23 - i)}: ${v} msgs` })),
+        related: related.map(r => ({ leaf: r.seg[r.seg.length - 1], onClick: () => this.setState({ selectedId: r.id }) })),
+        noRelated: related.length === 0,
+      };
+    }
+
+    const tagPickerOptions = selected ? tags.map(t => {
+      const c = tagColor(t.hue);
+      const active = selected.tags.includes(t.id);
+      return {
+        label: t.label, bg: c.bg, color: c.color, borderColor: c.borderColor, opacity: active ? 1 : 0.4,
+        onClick: () => {
+          this.setState(s => ({
+            topics: s.topics.map(tp => tp.id !== selected.id ? tp : {
+              ...tp, tags: tp.tags.includes(t.id) ? tp.tags.filter(x => x !== t.id) : [...tp.tags, t.id],
+            }),
+          }));
+        },
+      };
+    }) : [];
+
+    const consumerPickerOptionsRaw = selected ? consumers.map(cn => {
+      const active = selected.consumers.includes(cn.id);
+      return {
+        id: cn.id, label: cn.name, active, opacity: active ? 1 : 0.45,
+        onClick: () => {
+          this.setState(s => ({
+            topics: s.topics.map(tp => tp.id !== selected.id ? tp : {
+              ...tp, consumers: tp.consumers.includes(cn.id) ? tp.consumers.filter(x => x !== cn.id) : [...tp.consumers, cn.id],
+            }),
+          }));
+        },
+      };
+    }) : [];
+    const consumerPickerCombo = this.comboVM('consumerAssign', consumerPickerOptionsRaw);
+
+    // producer reassignment modal (per topic, from detail view)
+    const producerModalTopic = producerModalId ? topics.find(t => t.id === producerModalId) : null;
+    const currentProducerSel = producerModalTopic ? (producerModalSelectedId !== undefined ? producerModalSelectedId : producerModalTopic.producer) : null;
+    const producerAssignOptionsRaw = producerModalTopic ? [
+      { id: null, label: 'Unknown', selected: currentProducerSel === null },
+      ...producers.map(p => ({ id: p.id, label: p.name, selected: currentProducerSel === p.id })),
+    ].map(opt => ({
+      ...opt,
+      selectedBg: opt.selected ? 'oklch(0.27 0.05 200)' : 'transparent',
+      dotColor: opt.selected ? 'oklch(0.75 0.13 200)' : 'transparent',
+      onClick: () => this.setState({ producerModalSelectedId: opt.id }),
+    })) : [];
+    const producerAssignCombo = this.comboVM('producerAssign', producerAssignOptionsRaw);
+
+    // configure modal
+    const configTopic = configureId ? topics.find(t => t.id === configureId) : null;
+    const matchingRulesForConfig = configTopic ? findMatchingRules(configTopic.seg.join('/'), rules) : [];
+    const relinkCandidate = configTopic ? findRelinkCandidate(configTopic, topics) : null;
+    const configureSchemaOptions = (id => [
+      { id: null, label: 'No schema', selected: id === null },
+      ...schemas.map(s => ({ id: s.id, label: s.name, selected: id === s.id })),
+    ])(configureForm.schemaId).map(opt => ({
+      ...opt,
+      selectedBg: opt.selected ? 'oklch(0.27 0.05 200)' : 'transparent',
+      dotColor: opt.selected ? 'oklch(0.75 0.13 200)' : 'transparent',
+      onClick: () => this.setState(s => ({ configureForm: { ...s.configureForm, schemaId: opt.id } })),
+    }));
+    const configureSchemaCombo = this.comboVM('configureSchema', configureSchemaOptions);
+    const configureProducerOptions = (id => [
+      { id: null, label: 'Unknown', selected: id === null },
+      ...producers.map(p => ({ id: p.id, label: p.name, selected: id === p.id })),
+    ])(configureForm.producer).map(opt => ({
+      ...opt,
+      selectedBg: opt.selected ? 'oklch(0.27 0.05 200)' : 'transparent',
+      dotColor: opt.selected ? 'oklch(0.75 0.13 200)' : 'transparent',
+      onClick: () => this.setState(s => ({ configureForm: { ...s.configureForm, producer: opt.id } })),
+    }));
+    const configureProducerCombo = this.comboVM('configureProducer', configureProducerOptions);
+    const configureConsumerOptions = consumers.map(cn => {
+      const active = configureForm.consumerIds.includes(cn.id);
+      return {
+        label: cn.name, active, opacity: active ? 1 : 0.45,
+        onClick: () => this.setState(s => ({ configureForm: { ...s.configureForm, consumerIds: s.configureForm.consumerIds.includes(cn.id) ? s.configureForm.consumerIds.filter(x => x !== cn.id) : [...s.configureForm.consumerIds, cn.id] } })),
+      };
+    });
+    const configureConsumerCombo = this.comboVM('configureConsumer', configureConsumerOptions);
+    const configureFormVM = configTopic ? {
+      path: configTopic.seg.join('/'),
+      producerCombo: configureProducerCombo,
+      schemaCombo: configureSchemaCombo,
+      consumerCombo: configureConsumerCombo,
+      hasMatchingRule: matchingRulesForConfig.length === 1,
+      matchingRuleLabel: matchingRulesForConfig.length === 1 ? `Matches rule "${matchingRulesForConfig[0].pattern}" → producer: ${this.producerName(matchingRulesForConfig[0].producer) || 'none'}` : '',
+      applyRule: matchingRulesForConfig.length === 1 ? () => {
+        const r = matchingRulesForConfig[0];
+        this.setState(s => ({ configureForm: { ...s.configureForm, producer: r.producer, tagIds: [...new Set([...s.configureForm.tagIds, ...r.tags])] } }));
+      } : null,
+      hasRuleConflict: matchingRulesForConfig.length > 1,
+      ruleConflictOptions: matchingRulesForConfig.map((r, i) => ({
+        pattern: r.pattern,
+        producerLabel: this.producerName(r.producer) || 'none',
+        recommended: i === 0,
+        onApply: () => {
+          this.setState(s => ({ configureForm: { ...s.configureForm, producer: r.producer, tagIds: [...new Set([...s.configureForm.tagIds, ...r.tags])] } }));
+        },
+      })),
+      hasRelinkCandidate: !!relinkCandidate,
+      relinkCandidateLabel: relinkCandidate ? `Looks like a relocation of ${relinkCandidate.seg.join('/')} (silent ${this.relTime(relinkCandidate.agoMin)}) — inherit its producer, schema, tags & history?` : '',
+      applyRelink: relinkCandidate ? () => {
+        this.setState(s => ({ configureForm: { ...s.configureForm, producer: relinkCandidate.producer, schemaId: relinkCandidate.schemaId, tagIds: [...relinkCandidate.tags], consumerIds: [...relinkCandidate.consumers], relinkFromId: relinkCandidate.id } }));
+      } : null,
+      tagOptions: tags.map(t => {
+        const c = tagColor(t.hue);
+        const active = configureForm.tagIds.includes(t.id);
+        return {
+          label: t.label, bg: c.bg, color: c.color, borderColor: c.borderColor, opacity: active ? 1 : 0.4,
+          onClick: () => this.setState(s => ({ configureForm: { ...s.configureForm, tagIds: s.configureForm.tagIds.includes(t.id) ? s.configureForm.tagIds.filter(x => x !== t.id) : [...s.configureForm.tagIds, t.id] } })),
+        };
+      }),
+    } : { path: '', producerCombo: this.comboVM('configureProducer', []), schemaCombo: this.comboVM('configureSchema', []), consumerCombo: this.comboVM('configureConsumer', []), tagOptions: [], hasMatchingRule: false, hasRuleConflict: false, ruleConflictOptions: [], hasRelinkCandidate: false };
+
+    // schema assignment modal (per topic)
+    const schemaModalTopic = schemaModalId ? topics.find(t => t.id === schemaModalId) : null;
+    const currentSchemaSel = schemaModalTopic ? (schemaModalSelectedId !== undefined ? schemaModalSelectedId : schemaModalTopic.schemaId) : null;
+    const schemaAssignOptionsRaw = schemaModalTopic ? [
+      { id: null, label: 'No schema', selected: currentSchemaSel === null },
+      ...schemas.map(s => ({ id: s.id, label: s.name, selected: currentSchemaSel === s.id })),
+    ].map(opt => ({
+      ...opt,
+      selectedBg: opt.selected ? 'oklch(0.27 0.05 200)' : 'transparent',
+      dotColor: opt.selected ? 'oklch(0.75 0.13 200)' : 'transparent',
+      onClick: () => this.setState({ schemaModalSelectedId: opt.id }),
+    })) : [];
+    const schemaAssignCombo = this.comboVM('schemaAssign', schemaAssignOptionsRaw);
+
+    const allTagsList = tags.map(t => {
+      const c = tagColor(t.hue);
+      return { label: t.label, ...c, onDelete: () => this.setState(s => ({ tags: s.tags.filter(x => x.id !== t.id), topics: s.topics.map(tp => ({ ...tp, tags: tp.tags.filter(x => x !== t.id) })) })) };
+    });
+
+    const colorSwatches = [200, 25, 300, 240, 150, 80, 340, null].map(hue => {
+      const c = tagColor(hue);
+      return { color: hue === null ? 'oklch(0.55 0.01 254)' : `oklch(0.65 0.15 ${hue})`, borderColor: newTagHue === hue ? 'oklch(0.95 0 0)' : 'transparent', onClick: () => this.setState({ newTagHue: hue }) };
+    });
+
+    return {
+      isAdmin, isViewer: !isAdmin,
+      viewerBtnBg: !isAdmin ? 'oklch(0.75 0.13 200)' : 'transparent', viewerBtnColor: !isAdmin ? 'oklch(0.15 0.02 200)' : 'oklch(0.6 0.012 254)',
+      adminBtnBg: isAdmin ? 'oklch(0.75 0.13 200)' : 'transparent', adminBtnColor: isAdmin ? 'oklch(0.15 0.02 200)' : 'oklch(0.6 0.012 254)',
+      setRoleViewer: () => this.setState({ role: 'viewer' }), setRoleAdmin: () => this.setState({ role: 'admin' }),
+      openManageTags: () => this.setState({ manageTagsOpen: true, manageMenuOpen: false }),
+
+      search, onSearchChange: e => this.setState({ search: e.target.value }),
+      tagChips,
+      hasUntracked: untrackedCount > 0, untrackedCount,
+      filterUntracked: () => this.setState({ tagFilter: '__untracked__', folderPath: [], selectedId: null }),
+
+      hasFolderFilter: folderPath.length > 0,
+      clearFolderFilter: () => this.setState({ folderPath: [], selectedId: null }),
+      namespaceBreadcrumbs, namespaceChildren, currentLevelName,
+      hasChildren: namespaceChildren.length > 0,
+
+      showDetail: !!selected, showList: !selected,
+      detail,
+      tagPickerOpen, toggleTagPicker: () => this.setState(s => ({ tagPickerOpen: !s.tagPickerOpen })),
+      tagPickerOptions,
+      clearViolations: () => this.setState(s => ({ topics: s.topics.map(t => t.id === selectedId ? { ...t, violations: 0, lastClearedAt: new Date().toISOString() } : t) })),
+      backToList: () => this.setState({ selectedId: null, tagPickerOpen: false }),
+      openSchemaModal: () => this.setState({ schemaModalId: selectedId, schemaModalSelectedId: undefined }),
+
+      resultsLabel: `${filtered.length} topic${filtered.length === 1 ? '' : 's'}`,
+      groupHierarchyBg: groupBy === 'hierarchy' ? 'oklch(0.75 0.13 200)' : 'transparent', groupHierarchyColor: groupBy === 'hierarchy' ? 'oklch(0.15 0.02 200)' : 'oklch(0.6 0.012 254)',
+      groupFlatBg: groupBy === 'flat' ? 'oklch(0.75 0.13 200)' : 'transparent', groupFlatColor: groupBy === 'flat' ? 'oklch(0.15 0.02 200)' : 'oklch(0.6 0.012 254)',
+      setGroupHierarchy: () => this.setState({ groupBy: 'hierarchy' }), setGroupFlat: () => this.setState({ groupBy: 'flat' }),
+      displayGroups,
+      noResults: filtered.length === 0,
+
+      configureOpen: !!configTopic,
+      configureForm: configureFormVM,
+      closeConfigure: () => this.setState({ configureId: null }),
+      closeConfigureBackdrop: () => this.setState({ configureId: null }),
+      stopPropagation: e => e.stopPropagation(),
+      saveConfigure: () => {
+        const relinkFromId = configureForm.relinkFromId;
+        const relinkSrc = relinkFromId ? topics.find(t => t.id === relinkFromId) : null;
+        this.setState(s => ({
+          topics: s.topics
+            .filter(t => !relinkFromId || t.id !== relinkFromId)
+            .map(t => t.id !== configureId ? t : {
+              ...t, tracked: true, producer: configureForm.producer,
+              schemaId: configureForm.schemaId, tags: configureForm.tagIds, consumers: configureForm.consumerIds,
+              violations: relinkSrc ? relinkSrc.violations : t.violations,
+              lastClearedAt: relinkSrc ? relinkSrc.lastClearedAt : t.lastClearedAt,
+            }),
+          configureId: null,
+        }));
+      },
+
+      schemaModalOpen: !!schemaModalTopic,
+      schemaModalPath: schemaModalTopic ? schemaModalTopic.seg.join('/') : '',
+      schemaAssignCombo,
+      openManageSchemasFromAssign: () => this.setState({ schemaModalId: null, manageSchemasOpen: true }),
+      closeSchemaModal: () => this.setState({ schemaModalId: null, schemaModalSelectedId: undefined }),
+      closeSchemaModalBackdrop: () => this.setState({ schemaModalId: null, schemaModalSelectedId: undefined }),
+      saveSchemaModal: () => {
+        const nextId = currentSchemaSel;
+        this.setState(s => ({
+          topics: s.topics.map(t => t.id === schemaModalId ? { ...t, schemaId: nextId } : t),
+          schemaModalId: null, schemaModalSelectedId: undefined,
+        }));
+      },
+
+      openManageSchemas: () => this.setState({ manageSchemasOpen: true, manageMenuOpen: false, editingSchemaId: null, newSchemaName: '', newSchemaDefText: '', newSchemaDefError: '' }),
+      openManageRules: () => this.setState({ manageRulesOpen: true, manageMenuOpen: false, editingRuleId: null, newRulePattern: '', newRuleProducerId: null, newRuleTagIds: [] }),
+      openManageProducers: () => this.setState({ manageProducersOpen: true, manageMenuOpen: false, editingProducerId: null, newProducerName: '', newProducerDescription: '' }),
+      openManageConsumers: () => this.setState({ manageConsumersOpen: true, manageMenuOpen: false, editingConsumerId: null, newConsumerName: '', newConsumerDescription: '' }),
+      manageMenuOpen, toggleManageMenu: () => this.setState(s => ({ manageMenuOpen: !s.manageMenuOpen })),
+      manageSchemasOpen,
+      schemaSearch, onSchemaSearchChange: e => this.setState({ schemaSearch: e.target.value }),
+      closeManageSchemas: () => this.setState({ manageSchemasOpen: false }),
+      closeManageSchemasBackdrop: () => this.setState({ manageSchemasOpen: false }),
+      allSchemasList: schemas
+        .filter(s => !schemaSearch.trim() || (s.name + ' ' + Object.keys(s.definition).join(' ')).toLowerCase().includes(schemaSearch.toLowerCase()))
+        .map(s => ({
+        id: s.id, name: s.name, version: s.version,
+        fieldsPreview: Object.entries(s.definition).map(([k, v]) => `${k}: ${v}`).join(', '),
+        usageCount: topics.filter(t => t.schemaId === s.id).length,
+        onEdit: () => this.setState({ editingSchemaId: s.id, newSchemaName: s.name, newSchemaDefText: JSON.stringify(s.definition, null, 2), newSchemaDefError: '' }),
+        onDelete: () => this.setState(st => ({
+          schemas: st.schemas.filter(x => x.id !== s.id),
+          topics: st.topics.map(t => t.schemaId === s.id ? { ...t, schemaId: null } : t),
+          editingSchemaId: st.editingSchemaId === s.id ? null : st.editingSchemaId,
+        })),
+      })),
+      editingSchemaId,
+      isEditingSchema: !!editingSchemaId,
+      schemaFormHeading: editingSchemaId ? 'Edit schema' : 'New schema',
+      saveSchemaLabel: editingSchemaId ? 'Save changes' : 'Add schema',
+      cancelEditSchema: () => this.setState({ editingSchemaId: null, newSchemaName: '', newSchemaDefText: '', newSchemaDefError: '' }),
+      newSchemaName, onNewSchemaNameChange: e => this.setState({ newSchemaName: e.target.value }),
+      newSchemaDefText, onNewSchemaDefChange: e => this.setState({ newSchemaDefText: e.target.value, newSchemaDefError: '' }),
+      newSchemaDefError,
+      saveSchemaForm: () => {
+        if (!newSchemaName.trim()) { this.setState({ newSchemaDefError: 'Name is required' }); return; }
+        let parsed;
+        try { parsed = JSON.parse(newSchemaDefText); }
+        catch (e) { this.setState({ newSchemaDefError: 'Invalid JSON — ' + e.message }); return; }
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) { this.setState({ newSchemaDefError: 'Definition must be a JSON object of field:type' }); return; }
+        this.setState(s => {
+          if (editingSchemaId) {
+            return {
+              schemas: s.schemas.map(sc => {
+                if (sc.id !== editingSchemaId) return sc;
+                const nextVNum = sc.history.length + 1;
+                return { ...sc, name: newSchemaName.trim(), definition: parsed, version: 'v' + nextVNum, history: [...sc.history, { version: 'v' + nextVNum, date: new Date().toISOString().slice(0, 10) }] };
+              }),
+              editingSchemaId: null, newSchemaName: '', newSchemaDefText: '', newSchemaDefError: '',
+            };
+          }
+          const id = newSchemaName.trim().toLowerCase().replace(/\s+/g, '-');
+          return {
+            schemas: [...s.schemas, { id, name: newSchemaName.trim(), definition: parsed, version: 'v1', history: [{ version: 'v1', date: new Date().toISOString().slice(0, 10) }] }],
+            newSchemaName: '', newSchemaDefText: '', newSchemaDefError: '',
+          };
+        });
+      },
+
+      manageTagsOpen,
+      closeManageTags: () => this.setState({ manageTagsOpen: false }),
+      closeManageTagsBackdrop: () => this.setState({ manageTagsOpen: false }),
+      allTagsList,
+      newTagLabel, onNewTagLabelChange: e => this.setState({ newTagLabel: e.target.value }),
+      colorSwatches,
+      addTag: () => {
+        if (!newTagLabel.trim()) return;
+        const id = newTagLabel.trim().toLowerCase().replace(/\s+/g, '-');
+        this.setState(s => ({ tags: [...s.tags, { id, label: newTagLabel.trim(), hue: newTagHue }], newTagLabel: '' }));
+      },
+
+      manageRulesOpen,
+      closeManageRules: () => this.setState({ manageRulesOpen: false }),
+      closeManageRulesBackdrop: () => this.setState({ manageRulesOpen: false }),
+      allRulesList: rules.map(r => {
+        const matchCount = topics.filter(t => !t.tracked && matchTopic(r.pattern, t.seg.join('/'))).length;
+        const tagsById = {}; tags.forEach(t => tagsById[t.id] = t);
+        return {
+          id: r.id, pattern: r.pattern, producer: this.producerName(r.producer) || r.producer,
+          tagPills: r.tags.map(id => tagsById[id] ? this.tagPillFor(tagsById[id]) : null).filter(Boolean),
+          matchCount, hasMatches: matchCount > 0,
+          onApplyNow: () => this.setState(s => ({
+            topics: s.topics.map(t => (!t.tracked && matchTopic(r.pattern, t.seg.join('/'))) ? { ...t, tracked: true, producer: r.producer, tags: [...new Set([...t.tags, ...r.tags])] } : t),
+          })),
+          onDelete: () => this.setState(s => ({ rules: s.rules.filter(x => x.id !== r.id) })),
+        };
+      }),
+      isEditingRule: !!editingRuleId,
+      newRulePattern, onNewRulePatternChange: e => this.setState({ newRulePattern: e.target.value }),
+      newRuleProducerCombo: this.comboVM('ruleProducer', [
+        { id: null, label: 'no producer', selected: newRuleProducerId === null },
+        ...producers.map(p => ({ id: p.id, label: p.name, selected: newRuleProducerId === p.id })),
+      ].map(opt => ({
+        ...opt,
+        selectedBg: opt.selected ? 'oklch(0.27 0.05 200)' : 'transparent',
+        dotColor: opt.selected ? 'oklch(0.75 0.13 200)' : 'transparent',
+        onClick: () => this.setState({ newRuleProducerId: opt.id }),
+      }))),
+      newRuleTagOptions: tags.map(t => {
+        const c = tagColor(t.hue);
+        const active = newRuleTagIds.includes(t.id);
+        return {
+          label: t.label, bg: c.bg, color: c.color, borderColor: c.borderColor, opacity: active ? 1 : 0.4,
+          onClick: () => this.setState(s => ({ newRuleTagIds: s.newRuleTagIds.includes(t.id) ? s.newRuleTagIds.filter(x => x !== t.id) : [...s.newRuleTagIds, t.id] })),
+        };
+      }),
+      addRule: () => {
+        if (!newRulePattern.trim()) return;
+        const id = 'rule-' + Date.now();
+        this.setState(s => ({ rules: [...s.rules, { id, pattern: newRulePattern.trim(), producer: newRuleProducerId, tags: [...newRuleTagIds] }], newRulePattern: '', newRuleProducerId: null, newRuleTagIds: [] }));
+      },
+
+      producerModalOpen: !!producerModalTopic,
+      producerModalPath: producerModalTopic ? producerModalTopic.seg.join('/') : '',
+      producerAssignCombo,
+      closeProducerModal: () => this.setState({ producerModalId: null, producerModalSelectedId: undefined }),
+      closeProducerModalBackdrop: () => this.setState({ producerModalId: null, producerModalSelectedId: undefined }),
+      openManageProducersFromAssign: () => this.setState({ producerModalId: null, manageProducersOpen: true }),
+      saveProducerModal: () => {
+        const nextId = currentProducerSel;
+        this.setState(s => ({
+          topics: s.topics.map(t => t.id === producerModalId ? { ...t, producer: nextId } : t),
+          producerModalId: null, producerModalSelectedId: undefined,
+        }));
+      },
+      openProducerModalForSelected: () => this.setState({ producerModalId: selectedId, producerModalSelectedId: undefined }),
+
+      consumerPickerOpen, toggleConsumerPicker: () => this.setState(s => ({ consumerPickerOpen: !s.consumerPickerOpen })),
+      consumerPickerCombo,
+
+      manageProducersOpen,
+      producerSearch, onProducerSearchChange: e => this.setState({ producerSearch: e.target.value }),
+      closeManageProducers: () => this.setState({ manageProducersOpen: false }),
+      closeManageProducersBackdrop: () => this.setState({ manageProducersOpen: false }),
+      allProducersList: producers
+        .filter(p => !producerSearch.trim() || p.name.toLowerCase().includes(producerSearch.toLowerCase()))
+        .map(p => ({
+          id: p.id, name: p.name, description: p.description || '', hasDescription: !!p.description,
+          usageCount: topics.filter(t => t.producer === p.id).length,
+          isEditing: editingProducerId === p.id,
+          onEdit: () => this.setState({ editingProducerId: p.id, newProducerName: p.name, newProducerDescription: p.description || '' }),
+          onDelete: () => this.setState(s => ({
+            producers: s.producers.filter(x => x.id !== p.id),
+            topics: s.topics.map(t => t.producer === p.id ? { ...t, producer: null } : t),
+            editingProducerId: s.editingProducerId === p.id ? null : s.editingProducerId,
+          })),
+        })),
+      editingProducerId, isEditingProducer: !!editingProducerId,
+      producerFormHeading: editingProducerId ? 'Edit producer' : 'New producer',
+      saveProducerLabel: editingProducerId ? 'Save changes' : 'Add producer',
+      cancelEditProducer: () => this.setState({ editingProducerId: null, newProducerName: '', newProducerDescription: '' }),
+      newProducerName, onNewProducerNameChange: e => this.setState({ newProducerName: e.target.value }),
+      newProducerDescription, onNewProducerDescriptionChange: e => this.setState({ newProducerDescription: e.target.value }),
+      saveProducerForm: () => {
+        if (!newProducerName.trim()) return;
+        this.setState(s => {
+          if (editingProducerId) {
+            return { producers: s.producers.map(p => p.id === editingProducerId ? { ...p, name: newProducerName.trim(), description: newProducerDescription.trim() } : p), editingProducerId: null, newProducerName: '', newProducerDescription: '' };
+          }
+          const id = newProducerName.trim().toLowerCase().replace(/\s+/g, '-');
+          return { producers: [...s.producers, { id, name: newProducerName.trim(), description: newProducerDescription.trim() }], newProducerName: '', newProducerDescription: '' };
+        });
+      },
+
+      manageConsumersOpen,
+      consumerSearch, onConsumerSearchChange: e => this.setState({ consumerSearch: e.target.value }),
+      closeManageConsumers: () => this.setState({ manageConsumersOpen: false }),
+      closeManageConsumersBackdrop: () => this.setState({ manageConsumersOpen: false }),
+      allConsumersList: consumers
+        .filter(c => !consumerSearch.trim() || c.name.toLowerCase().includes(consumerSearch.toLowerCase()))
+        .map(c => ({
+          id: c.id, name: c.name, description: c.description || '', hasDescription: !!c.description,
+          usageCount: topics.filter(t => t.consumers.includes(c.id)).length,
+          onEdit: () => this.setState({ editingConsumerId: c.id, newConsumerName: c.name, newConsumerDescription: c.description || '' }),
+          onDelete: () => this.setState(s => ({
+            consumers: s.consumers.filter(x => x.id !== c.id),
+            topics: s.topics.map(t => ({ ...t, consumers: t.consumers.filter(x => x !== c.id) })),
+            editingConsumerId: s.editingConsumerId === c.id ? null : s.editingConsumerId,
+          })),
+        })),
+      editingConsumerId, isEditingConsumer: !!editingConsumerId,
+      consumerFormHeading: editingConsumerId ? 'Edit consumer' : 'New consumer',
+      saveConsumerLabel: editingConsumerId ? 'Save changes' : 'Add consumer',
+      cancelEditConsumer: () => this.setState({ editingConsumerId: null, newConsumerName: '', newConsumerDescription: '' }),
+      newConsumerName, onNewConsumerNameChange: e => this.setState({ newConsumerName: e.target.value }),
+      newConsumerDescription, onNewConsumerDescriptionChange: e => this.setState({ newConsumerDescription: e.target.value }),
+      saveConsumerForm: () => {
+        if (!newConsumerName.trim()) return;
+        this.setState(s => {
+          if (editingConsumerId) {
+            return { consumers: s.consumers.map(c => c.id === editingConsumerId ? { ...c, name: newConsumerName.trim(), description: newConsumerDescription.trim() } : c), editingConsumerId: null, newConsumerName: '', newConsumerDescription: '' };
+          }
+          const id = newConsumerName.trim().toLowerCase().replace(/\s+/g, '-');
+          return { consumers: [...s.consumers, { id, name: newConsumerName.trim(), description: newConsumerDescription.trim() }], newConsumerName: '', newConsumerDescription: '' };
+        });
+      },
+    };
+  }
+}
+
+</script>
+</body>
+</html>

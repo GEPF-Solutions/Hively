@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="hively.client/hively.client.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+  <Project Path="Hively.Server/Hively.Server.csproj" />
+</Solution>
