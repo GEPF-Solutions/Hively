@@ -4,9 +4,9 @@ using Hively.Server.Dto;
 namespace Hively.Server.Repository.Abstractions
 {
     /// <summary>
-    /// Repository interface for managing Topic entities. Scoped to CRUD and
-    /// relationship assignment — MQTT ingestion, the relocation-relink heuristic,
-    /// and rule matching are separate, not-yet-built subsystems.
+    /// Repository interface for managing Topic entities: CRUD, relationship
+    /// assignment, rule application, and relink acceptance. MQTT ingestion is a
+    /// separate, not-yet-built subsystem.
     /// </summary>
     public interface ITopicRepository
     {
@@ -47,5 +47,23 @@ namespace Hively.Server.Repository.Abstractions
         /// </summary>
         /// <exception cref="EntityNotFoundException">Thrown when topic is not found.</exception>
         Task RemoveTopicAsync(Guid topicId, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Applies a rule's producer/tag assignment to a topic and marks it tracked
+        /// (the "⚡ Apply rule" one-click action, and the per-topic step of the bulk
+        /// "Apply to N now" action). Tags are unioned with the topic's existing tags,
+        /// not replaced.
+        /// </summary>
+        /// <exception cref="EntityNotFoundException">Thrown when the topic or rule is not found.</exception>
+        Task ApplyRuleAsync(Guid topicId, Guid ruleId, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Accepts a relink suggestion: inherits producer, schema, tags, violation
+        /// count, and LastClearedAt from <paramref name="oldTopicId"/> onto
+        /// <paramref name="topicId"/>, marks the target tracked, then retires the
+        /// old topic (stamps RetiredAt/MergedIntoTopicId) rather than deleting it.
+        /// </summary>
+        /// <exception cref="EntityNotFoundException">Thrown when either topic is not found.</exception>
+        Task AcceptRelinkAsync(Guid topicId, Guid oldTopicId, CancellationToken cancellationToken);
     }
 }

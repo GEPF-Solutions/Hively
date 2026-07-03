@@ -129,5 +129,71 @@ namespace Hively.Server.Repository
             _dbContext.Topics.Remove(topicToRemove);
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
+
+        /// <inheritdoc />
+        public async Task ApplyRuleAsync(Guid topicId, Guid ruleId, CancellationToken cancellationToken)
+        {
+            var topic = await TopicsWithRelations(asNoTracking: false)
+                .FirstOrDefaultAsync(x => x.Id == topicId, cancellationToken);
+            if (topic == null)
+            {
+                throw new EntityNotFoundException($"Topic id {topicId} did not reference a valid topic.");
+            }
+
+            var rule = await _dbContext.Rules
+                .Include(r => r.Tags)
+                .FirstOrDefaultAsync(r => r.Id == ruleId, cancellationToken);
+            if (rule == null)
+            {
+                throw new EntityNotFoundException($"Rule id {ruleId} did not reference a valid rule.");
+            }
+
+            topic.Tracked = true;
+            topic.ProducerId = rule.ProducerId;
+            UnionTags(topic, rule.Tags);
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        /// <inheritdoc />
+        public async Task AcceptRelinkAsync(Guid topicId, Guid oldTopicId, CancellationToken cancellationToken)
+        {
+            var topic = await TopicsWithRelations(asNoTracking: false)
+                .FirstOrDefaultAsync(x => x.Id == topicId, cancellationToken);
+            if (topic == null)
+            {
+                throw new EntityNotFoundException($"Topic id {topicId} did not reference a valid topic.");
+            }
+
+            var oldTopic = await TopicsWithRelations(asNoTracking: false)
+                .FirstOrDefaultAsync(x => x.Id == oldTopicId, cancellationToken);
+            if (oldTopic == null)
+            {
+                throw new EntityNotFoundException($"Topic id {oldTopicId} did not reference a valid topic.");
+            }
+
+            topic.Tracked = true;
+            topic.ProducerId = oldTopic.ProducerId;
+            topic.SchemaId = oldTopic.SchemaId;
+            topic.ViolationCount = oldTopic.ViolationCount;
+            topic.LastClearedAt = oldTopic.LastClearedAt;
+            UnionTags(topic, oldTopic.Tags);
+
+            oldTopic.RetiredAt = DateTime.UtcNow;
+            oldTopic.MergedIntoTopicId = topic.Id;
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        private static void UnionTags(Topic topic, IEnumerable<Tag> tagsToAdd)
+        {
+            foreach (var tag in tagsToAdd)
+            {
+                if (topic.Tags.All(t => t.Id != tag.Id))
+                {
+                    topic.Tags.Add(tag);
+                }
+            }
+        }
     }
 }
