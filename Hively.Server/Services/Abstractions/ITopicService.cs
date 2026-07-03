@@ -36,5 +36,36 @@ namespace Hively.Server.Services.Abstractions
         /// Deletes a topic.
         /// </summary>
         Task RemoveTopicAsync(Guid topicId, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Finds rules whose pattern matches this topic's path, ranked by
+        /// specificity (see <see cref="Services.RuleMatcher"/>); the most specific
+        /// match is flagged <see cref="Dto.RuleMatchDto.Recommended"/>.
+        /// </summary>
+        Task<IEnumerable<RuleMatchDto>> FindMatchingRulesAsync(Guid topicId, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Applies a single rule to a topic (the "⚡ Apply rule" one-click action).
+        /// </summary>
+        Task<TopicDto> ApplyRuleAsync(Guid topicId, Guid ruleId, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Retroactively applies a rule to every currently-untracked topic it
+        /// matches ("Apply to N now" from Manage Rules). Returns the number applied.
+        /// </summary>
+        Task<int> ApplyRuleToAllMatchingAsync(Guid ruleId, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Looks for a stale, tracked topic that looks like this untracked topic's
+        /// "old address" after a physical relocation (see <see cref="Services.RelinkHeuristic"/>).
+        /// Returns null when no candidate is found — a suggestion, never a certainty.
+        /// </summary>
+        Task<RelinkCandidateDto?> FindRelinkCandidateAsync(Guid topicId, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Accepts a relink suggestion: inherits producer/schema/tags/violation
+        /// history from the old topic onto this one and retires the old topic.
+        /// </summary>
+        Task<TopicDto> AcceptRelinkAsync(Guid topicId, Guid oldTopicId, CancellationToken cancellationToken);
     }
 }

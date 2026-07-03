@@ -6,9 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace Hively.Server.Controllers
 {
     /// <summary>
-    /// Controller for managing Topic entities. Scoped to CRUD and relationship
-    /// assignment — MQTT ingestion, the relocation-relink heuristic, and rule
-    /// matching are separate, not-yet-built subsystems.
+    /// Controller for managing Topic entities: CRUD, relationship assignment,
+    /// rule matching/application, and relocation-relink suggestions. MQTT
+    /// ingestion is a separate, not-yet-built subsystem.
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
@@ -153,6 +153,103 @@ namespace Hively.Server.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while removing topic {TopicId}.", topicId);
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+
+        /// <summary>
+        /// Finds rules matching this topic's path, ranked by specificity (most specific first, marked recommended).
+        /// </summary>
+        [HttpGet("{topicId}/matching-rules")]
+        public async Task<IActionResult> GetMatchingRulesAsync(Guid topicId)
+        {
+            try
+            {
+                var matches = (await _topicService.FindMatchingRulesAsync(topicId, CancellationToken.None)).ToList();
+                _logger.LogInformation("Found {MatchCount} matching rules for topic {TopicId}.", matches.Count, topicId);
+                return Ok(matches);
+            }
+            catch (EntityNotFoundException ex)
+            {
+                _logger.LogWarning(ex, "Topic {TopicId} not found.", topicId);
+                return StatusCode(StatusCodes.Status404NotFound, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while finding matching rules for topic {TopicId}.", topicId);
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+
+        /// <summary>
+        /// Applies a rule's producer/tag assignment to a topic and marks it tracked ("⚡ Apply rule").
+        /// </summary>
+        [HttpPost("{topicId}/apply-rule/{ruleId}")]
+        public async Task<IActionResult> ApplyRuleAsync(Guid topicId, Guid ruleId)
+        {
+            try
+            {
+                var updatedTopic = await _topicService.ApplyRuleAsync(topicId, ruleId, CancellationToken.None);
+                _logger.LogInformation("Applied rule {RuleId} to topic {TopicId}.", ruleId, topicId);
+                return Ok(updatedTopic);
+            }
+            catch (EntityNotFoundException ex)
+            {
+                _logger.LogWarning(ex, "Topic {TopicId} or rule {RuleId} not found.", topicId, ruleId);
+                return StatusCode(StatusCodes.Status404NotFound, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while applying rule {RuleId} to topic {TopicId}.", ruleId, topicId);
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+
+        /// <summary>
+        /// Looks for a stale, tracked topic that looks like this untracked topic's "old address" after a relocation.
+        /// </summary>
+        [HttpGet("{topicId}/relink-candidate")]
+        public async Task<IActionResult> GetRelinkCandidateAsync(Guid topicId)
+        {
+            try
+            {
+                var candidate = await _topicService.FindRelinkCandidateAsync(topicId, CancellationToken.None);
+                _logger.LogInformation("Relink candidate lookup for topic {TopicId}: {Found}.", topicId, candidate != null);
+                return Ok(candidate);
+            }
+            catch (EntityNotFoundException ex)
+            {
+                _logger.LogWarning(ex, "Topic {TopicId} not found.", topicId);
+                return StatusCode(StatusCodes.Status404NotFound, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while finding a relink candidate for topic {TopicId}.", topicId);
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+
+        /// <summary>
+        /// Accepts a relink suggestion: inherits producer/schema/tags/violation history from the old
+        /// topic onto this one and retires the old topic record.
+        /// </summary>
+        [HttpPost("{topicId}/accept-relink/{oldTopicId}")]
+        public async Task<IActionResult> AcceptRelinkAsync(Guid topicId, Guid oldTopicId)
+        {
+            try
+            {
+                var updatedTopic = await _topicService.AcceptRelinkAsync(topicId, oldTopicId, CancellationToken.None);
+                _logger.LogInformation("Relinked topic {TopicId} from retired topic {OldTopicId}.", topicId, oldTopicId);
+                return Ok(updatedTopic);
+            }
+            catch (EntityNotFoundException ex)
+            {
+                _logger.LogWarning(ex, "Topic {TopicId} or {OldTopicId} not found.", topicId, oldTopicId);
+                return StatusCode(StatusCodes.Status404NotFound, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while accepting relink for topic {TopicId}.", topicId);
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
         }
