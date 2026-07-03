@@ -39,8 +39,10 @@ Hively.Server/
   Exceptions/                EntityNotFoundException, etc.
   Infrastructure/            strongly-typed settings classes bound from appsettings (Options pattern)
   Hubs/                      SignalR hubs
-  Services/Ingestion/        MQTT background hosted service + pure matching/validation helpers
+  Services/Ingestion/        MQTT background hosted service (not built yet)
 ```
+
+Pure matching/validation helpers (`SchemaComplianceValidator`, `TopicPatternMatcher`, `RuleMatcher`, `RelinkHeuristic`) live directly in `Services/` as static classes, not in `Services/Ingestion/` — that subfolder is reserved for the hosted service itself once it's built.
 
 ### Layer responsibilities
 
@@ -73,7 +75,7 @@ Console only for now (the default `ILogger` + Console provider ASP.NET Core wire
 ### Database
 
 - EF Core + `Npgsql.EntityFrameworkCore.PostgreSQL`. `HivelyContext : DbContext` in `DbModel/`.
-- Migrations via `dotnet ef migrations add <Name>` / `dotnet ef database update`, run from `Hively.Server/`.
+- **No EF migrations** — there's no `Migrations/` folder and none is used. The schema is hand-authored as raw DDL in `Design/schema.sql` (kept drawDB-importable for schema design/diagramming), applied directly to Postgres; `DbModel/` entities are reverse-engineered from the live DB via `dotnet ef dbcontext scaffold` whenever the schema changes, not generated ahead of it. When adding/changing a table: edit `Design/schema.sql` first, apply it to Postgres by hand (`psql`/`podman exec ... psql`), then re-scaffold.
 - Store `Topic.Segments` as a normalized child table or a delimited string (see `Design/README.md`'s EF Core note) — decide when building the Topic entity, not before; don't over-design this ahead of time.
 
 ### MQTT ingestion
@@ -164,5 +166,5 @@ Real auth (see Auth section above) is also built and verified end-to-end against
 - Backend: from repo root, `dotnet run --project Hively.Server` (needs `--project` if not already inside that directory) or via the `.slnx`/IDE run config — SpaProxy launches the Vite dev server automatically. Local dev API listens on `http://localhost:5012` (`Properties/launchSettings.json`).
 - Frontend only: `npm run dev` from `hively.client/`.
 - Local Postgres: `docker-compose.yml` at repo root (works with `podman compose up -d` or `docker compose up -d`); connection string already set in `appsettings.Development.json` to match its defaults (`localhost:5432`, db/user `hively`).
-- Migrations: `dotnet ef migrations add <Name>` / `dotnet ef database update`, run from `Hively.Server/`.
+- Schema changes: no EF migrations — edit `Design/schema.sql`, apply by hand to Postgres, then re-scaffold `DbModel/` with `dotnet ef dbcontext scaffold` (see Database section above).
 - Lint: `npm run lint` (`oxlint`) from `hively.client/`.
