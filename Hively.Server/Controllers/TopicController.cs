@@ -1,6 +1,7 @@
 using Hively.Server.Dto;
 using Hively.Server.Exceptions;
 using Hively.Server.Services.Abstractions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hively.Server.Controllers
@@ -12,6 +13,7 @@ namespace Hively.Server.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class TopicController : ControllerBase
     {
         private readonly ILogger<TopicController> _logger;
@@ -69,6 +71,7 @@ namespace Hively.Server.Controllers
         /// <summary>
         /// Creates a new topic stub (path only — mirrors what MQTT ingestion will do later).
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpPut("insert")]
         public async Task<IActionResult> InsertTopicAsync([FromBody] TopicDto topic)
         {
@@ -88,6 +91,7 @@ namespace Hively.Server.Controllers
         /// <summary>
         /// Updates a topic's tracked/producer/schema/consumer/tag assignment ("Configure Topic").
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpPost("update")]
         public async Task<IActionResult> UpdateTopicAsync([FromBody] TopicConfigureDto topic)
         {
@@ -112,6 +116,7 @@ namespace Hively.Server.Controllers
         /// <summary>
         /// Clears the violation counter for a topic.
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpPost("{topicId}/clear-violations")]
         public async Task<IActionResult> ClearViolationsAsync(Guid topicId)
         {
@@ -136,6 +141,7 @@ namespace Hively.Server.Controllers
         /// <summary>
         /// Deletes a topic.
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpDelete("delete")]
         public async Task<IActionResult> DeleteTopicAsync(Guid topicId)
         {
@@ -184,6 +190,7 @@ namespace Hively.Server.Controllers
         /// <summary>
         /// Applies a rule's producer/tag assignment to a topic and marks it tracked ("⚡ Apply rule").
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpPost("{topicId}/apply-rule/{ruleId}")]
         public async Task<IActionResult> ApplyRuleAsync(Guid topicId, Guid ruleId)
         {
@@ -233,6 +240,7 @@ namespace Hively.Server.Controllers
         /// Accepts a relink suggestion: inherits producer/schema/tags/violation history from the old
         /// topic onto this one and retires the old topic record.
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpPost("{topicId}/accept-relink/{oldTopicId}")]
         public async Task<IActionResult> AcceptRelinkAsync(Guid topicId, Guid oldTopicId)
         {

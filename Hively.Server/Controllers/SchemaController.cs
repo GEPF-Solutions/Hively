@@ -1,6 +1,7 @@
 using Hively.Server.Dto;
 using Hively.Server.Exceptions;
 using Hively.Server.Services.Abstractions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hively.Server.Controllers
@@ -10,6 +11,7 @@ namespace Hively.Server.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class SchemaController : ControllerBase
     {
         private readonly ILogger<SchemaController> _logger;
@@ -86,6 +88,7 @@ namespace Hively.Server.Controllers
         /// <summary>
         /// Creates a new schema (always starts at version "v1").
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpPut("insert")]
         public async Task<IActionResult> InsertSchemaAsync([FromBody] SchemaDto schema)
         {
@@ -105,6 +108,7 @@ namespace Hively.Server.Controllers
         /// <summary>
         /// Updates a schema's definition, auto-incrementing its version.
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpPost("update")]
         public async Task<IActionResult> UpdateSchemaAsync([FromBody] SchemaDto schema)
         {
@@ -129,6 +133,7 @@ namespace Hively.Server.Controllers
         /// <summary>
         /// Deletes a schema.
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpDelete("delete")]
         public async Task<IActionResult> DeleteSchemaAsync(Guid schemaId)
         {

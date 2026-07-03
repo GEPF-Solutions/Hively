@@ -1,6 +1,7 @@
 using Hively.Server.Dto;
 using Hively.Server.Exceptions;
 using Hively.Server.Services.Abstractions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hively.Server.Controllers
@@ -10,6 +11,7 @@ namespace Hively.Server.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ProducerController : ControllerBase
     {
         private readonly ILogger<ProducerController> _logger;
@@ -67,6 +69,7 @@ namespace Hively.Server.Controllers
         /// <summary>
         /// Creates a new producer.
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpPut("insert")]
         public async Task<IActionResult> InsertProducerAsync([FromBody] ProducerDto producer)
         {
@@ -86,6 +89,7 @@ namespace Hively.Server.Controllers
         /// <summary>
         /// Updates an existing producer.
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpPost("update")]
         public async Task<IActionResult> UpdateProducerAsync([FromBody] ProducerDto producer)
         {
@@ -110,6 +114,7 @@ namespace Hively.Server.Controllers
         /// <summary>
         /// Deletes a producer.
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpDelete("delete")]
         public async Task<IActionResult> DeleteProducerAsync(Guid producerId)
         {

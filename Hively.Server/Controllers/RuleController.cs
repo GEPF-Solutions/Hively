@@ -1,6 +1,7 @@
 using Hively.Server.Dto;
 using Hively.Server.Exceptions;
 using Hively.Server.Services.Abstractions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Hively.Server.Controllers
@@ -10,6 +11,7 @@ namespace Hively.Server.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class RuleController : ControllerBase
     {
         private readonly ILogger<RuleController> _logger;
@@ -69,6 +71,7 @@ namespace Hively.Server.Controllers
         /// <summary>
         /// Creates a new rule.
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpPut("insert")]
         public async Task<IActionResult> InsertRuleAsync([FromBody] RuleDto rule)
         {
@@ -88,6 +91,7 @@ namespace Hively.Server.Controllers
         /// <summary>
         /// Updates an existing rule.
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpPost("update")]
         public async Task<IActionResult> UpdateRuleAsync([FromBody] RuleDto rule)
         {
@@ -112,6 +116,7 @@ namespace Hively.Server.Controllers
         /// <summary>
         /// Deletes a rule.
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpDelete("delete")]
         public async Task<IActionResult> DeleteRuleAsync(Guid ruleId)
         {
@@ -136,6 +141,7 @@ namespace Hively.Server.Controllers
         /// <summary>
         /// Retroactively applies this rule to every currently-untracked topic it matches ("Apply to N now").
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpPost("{ruleId}/apply-to-all")]
         public async Task<IActionResult> ApplyToAllMatchingAsync(Guid ruleId)
         {
