@@ -29,7 +29,8 @@ namespace Hively.Server.Controllers
         {
             try
             {
-                var producers = await _producerService.GetProducersAsync(CancellationToken.None);
+                var producers = (await _producerService.GetProducersAsync(CancellationToken.None)).ToList();
+                _logger.LogInformation("Retrieved {ProducerCount} producers.", producers.Count);
                 return Ok(producers);
             }
             catch (Exception ex)
@@ -48,16 +49,17 @@ namespace Hively.Server.Controllers
             try
             {
                 var producer = await _producerService.GetProducerAsync(producerId, CancellationToken.None);
+                _logger.LogInformation("Retrieved producer {ProducerId}.", producerId);
                 return Ok(producer);
             }
             catch (EntityNotFoundException ex)
             {
-                _logger.LogError(ex, "An error occurred while getting producer.");
+                _logger.LogWarning(ex, "Producer {ProducerId} not found.", producerId);
                 return StatusCode(StatusCodes.Status404NotFound, ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred while getting producer.");
+                _logger.LogError(ex, "An error occurred while getting producer {ProducerId}.", producerId);
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
         }
@@ -71,11 +73,12 @@ namespace Hively.Server.Controllers
             try
             {
                 var createdProducer = await _producerService.InsertProducerAsync(producer, CancellationToken.None);
+                _logger.LogInformation("Created producer {ProducerId} ({ProducerName}).", createdProducer.Id, createdProducer.Name);
                 return Ok(createdProducer);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred while inserting producer.");
+                _logger.LogError(ex, "An error occurred while inserting producer {ProducerName}.", producer.Name);
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
         }
@@ -89,16 +92,17 @@ namespace Hively.Server.Controllers
             try
             {
                 await _producerService.UpdateProducerAsync(producer, CancellationToken.None);
+                _logger.LogInformation("Updated producer {ProducerId}.", producer.Id);
                 return Ok(new { message = "Update successful" });
             }
             catch (EntityNotFoundException ex)
             {
-                _logger.LogError(ex, "An error occurred while updating producer.");
+                _logger.LogWarning(ex, "Producer {ProducerId} not found.", producer.Id);
                 return StatusCode(StatusCodes.Status404NotFound, ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred while updating producer.");
+                _logger.LogError(ex, "An error occurred while updating producer {ProducerId}.", producer.Id);
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
         }
@@ -112,16 +116,17 @@ namespace Hively.Server.Controllers
             try
             {
                 await _producerService.RemoveProducerAsync(producerId, CancellationToken.None);
+                _logger.LogInformation("Removed producer {ProducerId}.", producerId);
                 return Ok(new { message = "Removal successful" });
             }
             catch (EntityNotFoundException ex)
             {
-                _logger.LogError(ex, "An error occurred while removing producer.");
+                _logger.LogWarning(ex, "Producer {ProducerId} not found.", producerId);
                 return StatusCode(StatusCodes.Status404NotFound, ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred while removing producer.");
+                _logger.LogError(ex, "An error occurred while removing producer {ProducerId}.", producerId);
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
         }

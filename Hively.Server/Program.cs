@@ -21,6 +21,14 @@ public class Program
         builder.Services.AddDbContext<HivelyContext>(options =>
         {
             options.UseNpgsql(connectionString);
+
+            // Dev only: logs full SQL text (incl. parameter values) for every query — noisy
+            // and can expose sensitive data, never enable outside Development.
+            if (builder.Environment.IsDevelopment())
+            {
+                options.EnableSensitiveDataLogging();
+                options.EnableDetailedErrors();
+            }
         });
 
         builder.Services.AddScoped<IProducerRepository, ProducerRepository>();
@@ -30,12 +38,18 @@ public class Program
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
         builder.Services.AddOpenApi();
 
+        if (builder.Environment.IsDevelopment())
+        {
+            builder.Services.AddHttpLogging(options => { });
+        }
+
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
+            app.UseHttpLogging();
         }
 
         app.UseDefaultFiles();

@@ -57,6 +57,18 @@ Hively.Server/
 - Controller actions catch specific exception types in order (most specific first) and map to status codes: `EntityNotFoundException` → 404, validation/`InvalidOperationException` → 400, generic `Exception` → 500 (log first). Auth failures are now handled by `[Authorize]` middleware, not a manual cookie check per action (this is where Hively diverges from RMCD-App's manual `session_id` cookie check — we have real middleware now, use it).
 - Route convention: `[Route("api/[controller]")]`, one controller per aggregate (`TopicController`, `ProducerController`, `ConsumerController`, `SchemaController`, `TagController`, `RuleController`, `UserController`).
 
+### Logging
+
+Console only for now (the default `ILogger` + Console provider ASP.NET Core wires up automatically) — no Serilog/Seq/structured sinks until there's an actual need for one.
+
+- **Logging happens at the controller layer only.** Services/repositories throw; the controller's `catch` blocks are the single place a given failure gets logged, so nothing gets logged twice for the same request. Repositories/services don't take an `ILogger`.
+- Every action logs on **both** the success and failure path, using structured placeholders (`_logger.LogInformation("Created producer {ProducerId} ({ProducerName}).", id, name)`) rather than string interpolation — keeps entries greppable/queryable even though the sink is plain console today.
+- `EntityNotFoundException` (404 case) logs at `LogWarning`, not `LogError` — it's an expected, client-facing outcome, not a real error. Everything else in the generic `catch (Exception)` block logs at `LogError`.
+- **Dev-only, never in Production** (configured in `Program.cs`, gated on `builder.Environment.IsDevelopment()`):
+  - `options.EnableSensitiveDataLogging()` + `EnableDetailedErrors()` on the `HivelyContext` registration — logs full SQL text with parameter values for every query via the `Microsoft.EntityFrameworkCore.Database.Command` category.
+  - `AddHttpLogging()` / `UseHttpLogging()` — logs every request/response (method, path, status, headers).
+  - Both require **explicit category overrides** in `appsettings.Development.json`'s `Logging:LogLevel` — the existing `"Microsoft.AspNetCore": "Warning"` catch-all silently swallows `Microsoft.AspNetCore.HttpLogging` (and would swallow EF Core's category too if it didn't fall under `Default`) unless each is called out by its own explicit `"Information"` entry. Forgetting this is why a new log category can silently produce zero output — check `appsettings.Development.json` first if that happens.
+
 ### Database
 
 - EF Core + `Npgsql.EntityFrameworkCore.PostgreSQL`. `HivelyContext : DbContext` in `DbModel/`.
