@@ -41,6 +41,8 @@ public class Program
         builder.Services.AddScoped<ISchemaService, SchemaService>();
         builder.Services.AddScoped<IRuleRepository, RuleRepository>();
         builder.Services.AddScoped<IRuleService, RuleService>();
+        builder.Services.AddScoped<ITopicRepository, TopicRepository>();
+        builder.Services.AddScoped<ITopicService, TopicService>();
 
         builder.Services.AddControllers();
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
