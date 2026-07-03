@@ -37,6 +37,8 @@ public class Program
         builder.Services.AddScoped<IConsumerService, ConsumerService>();
         builder.Services.AddScoped<ITagRepository, TagRepository>();
         builder.Services.AddScoped<ITagService, TagService>();
+        builder.Services.AddScoped<ISchemaRepository, SchemaRepository>();
+        builder.Services.AddScoped<ISchemaService, SchemaService>();
 
         builder.Services.AddControllers();
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
