@@ -1,7 +1,7 @@
-# Handoff: UNS (MQTT) Data Catalog
+# Handoff: Hively — UNS (MQTT) Data Catalog
 
 ## Overview
-A data-catalog application for a **Unified Namespace (UNS)** running over MQTT — the MQTT-world equivalent of tools like a Kafka schema/data catalog (e.g. Confluent Data Catalog), which don't have a good affordable analogue for MQTT/UNS today.
+**Hively** is a data-catalog application for a **Unified Namespace (UNS)** running over MQTT — the MQTT-world equivalent of tools like a Kafka schema/data catalog (e.g. Confluent Data Catalog), which don't have a good affordable analogue for MQTT/UNS today. The name/logo riff on a beehive: an organized honeycomb of cells, standing in for a well-governed namespace of topics.
 
 Core purpose: let plant/OT engineers and admins understand and govern the topics flowing across their broker:
 - Who **produces** a given topic, who **consumes** it
@@ -144,6 +144,17 @@ Because UNS paths are deep (10–15 segments is common; the prototype models 12)
 - This pattern scales to arbitrary depth without needing infinite nested indentation — generalize it rather than hardcoding "site"/"line" style fixed levels.
 - The main topic list also offers **Hierarchy** (grouped into sections by physical cell) vs **List** (flat, alphabetically sorted) view modes, independent of the sidebar drill-down.
 
+### 8. Producer/Consumer relationship graph (Graph tab)
+A star/ego-graph view, separate from the topic catalog, for visualizing producer↔topic↔consumer relationships:
+- User searches/selects a **focal entity** (a producer, a consumer, or a topic) via a type-to-search combobox.
+- The focal entity renders at the center of an SVG canvas; its directly-related entities render on a ring around it (for a topic: its producer on one side, its consumers fanned on the other; for a producer/consumer: all its topics on ring 1, and *their* other-side entities aggregated on ring 2).
+- Clicking any node re-centers the graph on that node (drill navigation), with a "← back" breadcrumb history and a "clear" reset.
+- Nodes are color-coded and clearly distinguished: producer = cyan, topic = amber/gold, consumer = magenta — deliberately spread across distinct hues (an earlier iteration used two similar blues and was hard to read).
+- Zoom controls (−/reset/+, 50–300%) scale the graph via CSS transform with the container scrollable for panning when zoomed in.
+- **Known scaling limitation, discussed and deliberately deferred**: a literal "every topic as a node" full-UNS graph was considered and explicitly rejected for now due to potential performance/legibility problems at real-world scale (a UNS can have thousands of topics — a full hairball graph doesn't clarify anything). If a full-namespace overview is wanted later, the recommended approach (not yet built) is: show only producers + consumers as nodes (bounded, finite count), with edge thickness/label representing aggregate topic count between them rather than one edge per topic, and clicking a node drills into the existing per-entity star-graph where individual topics do appear. Untracked topics have no producer/consumer, so they'd need to render as a separate, unconnected "orphaned" cluster (e.g. dashed amber, possibly grouped/counted rather than one node per topic) rather than being silently omitted.
+
+**Implementation note for the port**: node label positions are computed in JS (not CSS) as percentages, with a **vertical flip** — labels below the node in the top half of the canvas, above the node in the bottom half — specifically to keep labels from clipping the container edges at the ring's extremes. Preserve this if re-implementing the layout math. Also note labels are rendered as an HTML overlay `<div>` positioned over the SVG rather than as SVG `<text>` — this was a deliberate fix for a real bug (the prototype's templating layer wraps interpolated text in a tracking `<span>`, which is invalid inside SVG `<text>` and silently collapses to zero size in real browsers).
+
 ---
 
 ## Suggested C# Backend Architecture
@@ -171,6 +182,8 @@ The prototype is one big component with inline styles and a flat state object �
 
 ## Design Tokens
 
+**Logo/brand**: a small honeycomb (7-hexagon flower: 1 center + 6 ring cells) rendered as flat-color SVG polygons — no gradients. Center cell brightest (`oklch(0.9 0.15 98)`), 3 ring cells mid-gold (`oklch(0.83 0.17 95)`), 3 ring cells deeper amber (`oklch(0.68 0.14 85)`), thin dark-amber cell borders (`oklch(0.32 0.05 90)`). Sits next to the wordmark "HIVELY" (monospace, letter-spaced) in the header. See the inline `<svg>` in the header markup for exact hexagon coordinates (a 7-cell honeycomb inscribed in a 100×100 viewBox).
+
 **Palette** (OKLCH, dark theme):
 - Background (page): `oklch(0.17 0.014 254)`
 - Background (panels/header): `oklch(0.20 0.015 254)` / header bar `oklch(0.155 0.012 254)`
@@ -192,12 +205,20 @@ The prototype is one big component with inline styles and a flat state object �
 ## Assets
 No external image/icon assets — the UI uses only typography, color, and simple CSS shapes (dots, bars for the activity sparkline). No icon font or SVG iconography is used; keep it that way unless the target design system mandates otherwise.
 
+## Logo Assets
+`assets/` contains the Hively honeycomb logo as flat PNGs in a few ratios/uses:
+- `hively-icon-1x1-transparent.png` / `hively-icon-1x1-dark.png` — square icon only (512×512), for app icons/favicons.
+- `hively-lockup-4x1-transparent.png` / `hively-lockup-4x1-dark.png` — icon + "HIVELY" wordmark, wide lockup (1200×300), for headers/nav bars.
+- `hively-banner-1.91x1-dark.png` — icon + wordmark + tagline, social/og-image ratio (1200×628).
+All use flat colors (no gradients): center hex brightest gold, alternating ring hexes in two gold tones, dark amber-brown cell borders. Recreate at any size from the hex polygon coordinates in the header `<svg>` inside `MQTT Data Catalog.dc.html` if you need other sizes/formats (e.g. true vector SVG/ICO).
+
 ## Screenshots
 See `screenshots/` for static reference images (the live prototype is more useful, but these help at a glance):
 - `01-topic-list.png` — main topic list, Hierarchy grouping, untracked-topic callout, tag filter chips, namespace drill-down sidebar.
 - `02-topic-detail.png` — topic detail page: producer/consumer/schema/last-message/compliance/activity cards.
 - `03-configure-modal.png` — the "Configure Topic" flow for bringing an untracked topic under management (producer/consumer search-comboboxes, schema/tag assignment).
 - `04-manage-schemas.png` — the global schema catalog (filter box, version badges, usage counts, new/edit schema form).
+- `05-graph-view.png` — the producer/topic/consumer star-graph, centered on a topic (showing the Hively logo/wordmark in the header).
 
 ## Files
 - `MQTT Data Catalog.dc.html` — the full interactive prototype. Self-contained (one file, loads its own fonts from Google Fonts, everything else inline). Open directly in any browser.

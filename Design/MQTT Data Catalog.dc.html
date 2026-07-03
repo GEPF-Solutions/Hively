@@ -28,11 +28,24 @@
   <!-- TOP BAR -->
   <div style="height:52px; min-height:52px; display:flex; align-items:center; gap:14px; padding:0 20px; background:oklch(0.155 0.012 254); border-bottom:1px solid oklch(0.3 0.02 254);">
     <div style="display:flex; align-items:center; gap:10px;">
-      <div style="font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600; letter-spacing:1.5px; color:oklch(0.88 0.008 254);">UNS·CATALOG</div>
+      <svg viewBox="0 0 100 100" width="30" height="30" style="flex-shrink:0;">
+        <polygon points="65.59,20.00 79.88,28.25 79.88,44.75 65.59,53.00 51.30,44.75 51.30,28.25" fill="oklch(0.68 0.14 85)" stroke="oklch(0.32 0.05 90)" stroke-width="1.2"></polygon>
+        <polygon points="34.41,20.00 48.70,28.25 48.70,44.75 34.41,53.00 20.12,44.75 20.12,28.25" fill="oklch(0.68 0.14 85)" stroke="oklch(0.32 0.05 90)" stroke-width="1.2"></polygon>
+        <polygon points="50.00,60.50 64.29,68.75 64.29,85.25 50.00,93.50 35.71,85.25 35.71,68.75" fill="oklch(0.68 0.14 85)" stroke="oklch(0.32 0.05 90)" stroke-width="1.2"></polygon>
+        <polygon points="50.00,6.50 64.29,14.75 64.29,31.25 50.00,39.50 35.71,31.25 35.71,14.75" fill="oklch(0.83 0.17 95)" stroke="oklch(0.32 0.05 90)" stroke-width="1.2"></polygon>
+        <polygon points="34.41,47.00 48.70,55.25 48.70,71.75 34.41,80.00 20.12,71.75 20.12,55.25" fill="oklch(0.83 0.17 95)" stroke="oklch(0.32 0.05 90)" stroke-width="1.2"></polygon>
+        <polygon points="65.59,47.00 79.88,55.25 79.88,71.75 65.59,80.00 51.30,71.75 51.30,55.25" fill="oklch(0.83 0.17 95)" stroke="oklch(0.32 0.05 90)" stroke-width="1.2"></polygon>
+        <polygon points="50.00,33.50 64.29,41.75 64.29,58.25 50.00,66.50 35.71,58.25 35.71,41.75" fill="oklch(0.9 0.15 98)" stroke="oklch(0.32 0.05 90)" stroke-width="1.2"></polygon>
+      </svg>
+      <div style="font-family:'IBM Plex Mono',monospace; font-size:14.5px; font-weight:600; letter-spacing:1px; color:oklch(0.9 0.01 90);">HIVELY</div>
       <div style="width:1px; height:16px; background:oklch(0.32 0.02 254);"></div>
       <div style="display:flex; align-items:center; gap:6px;">
         <span style="width:6px; height:6px; border-radius:50%; background:oklch(0.72 0.16 150);"></span>
         <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:oklch(0.55 0.012 254);">mqtt://broker.acme.local:8883</span>
+      </div>
+      <div style="display:flex; background:oklch(0.17 0.014 254); border:1px solid oklch(0.3 0.02 254); border-radius:7px; padding:3px; margin-left:6px;">
+        <button onClick="{{ setViewCatalog }}" style="border:none; cursor:pointer; font-size:12px; font-weight:500; padding:5px 12px; border-radius:5px; background:{{ viewCatalogBg }}; color:{{ viewCatalogColor }};">Topics</button>
+        <button onClick="{{ setViewGraph }}" style="border:none; cursor:pointer; font-size:12px; font-weight:500; padding:5px 12px; border-radius:5px; background:{{ viewGraphBg }}; color:{{ viewGraphColor }};">Graph</button>
       </div>
     </div>
     <div style="flex:1;"></div>
@@ -61,6 +74,7 @@
   </div>
 
   <!-- BODY -->
+  <sc-if value="{{ showCatalogBody }}" hint-placeholder-val="{{ true }}">
   <div style="flex:1; display:flex; min-height:0;">
 
     <!-- SIDEBAR -->
@@ -350,6 +364,73 @@
       </sc-if>
     </div>
   </div>
+  </sc-if>
+
+  <!-- GRAPH VIEW -->
+  <sc-if value="{{ showGraph }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1; display:flex; flex-direction:column; gap:14px; padding:20px 28px 28px 28px; min-height:0; overflow-y:auto;">
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <input value="{{ graphCombo.search }}" onChange="{{ graphCombo.onSearchChange }}" placeholder="search a producer, consumer, or topic..." style="flex:1; min-width:280px; background:oklch(0.17 0.014 254); border:1px solid oklch(0.32 0.02 254); border-radius:6px; padding:9px 11px; color:oklch(0.93 0.006 254); font-size:12.5px; font-family:'IBM Plex Mono',monospace; outline:none;" />
+        <sc-if value="{{ graphHasHistory }}">
+          <button onClick="{{ graphBack }}" style="background:none; border:1px solid oklch(0.36 0.02 254); color:oklch(0.8 0.008 254); font-size:12.5px; padding:8px 13px; border-radius:6px; cursor:pointer; white-space:nowrap;">← back</button>
+        </sc-if>
+        <sc-if value="{{ graphHasFocal }}">
+          <button onClick="{{ graphClear }}" style="background:none; border:1px solid oklch(0.36 0.02 254); color:oklch(0.8 0.008 254); font-size:12.5px; padding:8px 13px; border-radius:6px; cursor:pointer; white-space:nowrap;">clear</button>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ graphCombo.showResults }}">
+        <div style="display:flex; flex-direction:column; gap:2px; max-height:240px; overflow-y:auto; border:1px solid oklch(0.3 0.02 254); border-radius:8px; padding:6px; background:oklch(0.20 0.015 254);">
+          <sc-for list="{{ graphCombo.options }}" as="opt" hint-placeholder-count="4">
+            <button onClick="{{ opt.onClick }}" style="all:unset; box-sizing:border-box; cursor:pointer; display:flex; align-items:center; gap:9px; padding:7px 10px; border-radius:5px;">
+              <span style="width:8px; height:8px; border-radius:50%; background:{{ opt.dotColor }}; flex-shrink:0;"></span>
+              <span style="font-size:12.5px; color:oklch(0.9 0.006 254); font-family:'IBM Plex Mono',monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ opt.label }}</span>
+              <span style="font-size:10px; color:oklch(0.5 0.012 254); margin-left:auto; text-transform:uppercase; letter-spacing:0.4px; flex-shrink:0;">{{ opt.typeLabel }}</span>
+            </button>
+          </sc-for>
+          <sc-if value="{{ graphCombo.noMatches }}">
+            <div style="font-size:11.5px; color:oklch(0.5 0.012 254); font-style:italic; padding:7px 10px;">no matches</div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ graphHasFocal }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:oklch(0.55 0.012 254); font-family:'IBM Plex Mono',monospace;">
+          <span style="width:8px; height:8px; border-radius:50%; background:{{ graph.focalDotColor }};"></span>
+          centered on <span style="color:oklch(0.9 0.006 254); font-weight:600;">{{ graph.focalLabel }}</span> ({{ graph.focalType }})
+        </div>
+        <div style="background:oklch(0.20 0.015 254); border:1px solid oklch(0.28 0.018 254); border-radius:12px; padding:10px; flex:1; display:flex; align-items:center; justify-content:center; min-height:0; overflow:auto; position:relative;">
+          <div style="position:absolute; top:12px; right:12px; z-index:2; display:flex; align-items:center; gap:4px; background:oklch(0.17 0.014 254); border:1px solid oklch(0.3 0.02 254); border-radius:7px; padding:3px;">
+            <button onClick="{{ zoomOut }}" style="width:26px; height:26px; border:none; background:none; color:oklch(0.85 0.008 254); font-size:15px; cursor:pointer; border-radius:5px;">−</button>
+            <button onClick="{{ zoomReset }}" style="min-width:42px; border:none; background:none; color:oklch(0.6 0.012 254); font-size:11px; font-family:'IBM Plex Mono',monospace; cursor:pointer; padding:4px 2px; border-radius:5px;">{{ graphZoomPct }}</button>
+            <button onClick="{{ zoomIn }}" style="width:26px; height:26px; border:none; background:none; color:oklch(0.85 0.008 254); font-size:15px; cursor:pointer; border-radius:5px;">+</button>
+          </div>
+          <div style="position:relative; height:100%; width:auto; max-width:100%; aspect-ratio:900/560; transform:scale({{ graphZoom }}); transform-origin:center center; flex-shrink:0;">
+            <svg viewBox="0 0 900 560" style="position:absolute; inset:0; width:100%; height:100%; display:block;">
+              <sc-for list="{{ graph.edges }}" as="edge" hint-placeholder-count="4">
+                <line x1="{{ edge.x1 }}" y1="{{ edge.y1 }}" x2="{{ edge.x2 }}" y2="{{ edge.y2 }}" stroke="{{ edge.stroke }}" stroke-width="1.4" stroke-opacity="{{ edge.opacity }}"></line>
+              </sc-for>
+              <sc-for list="{{ graph.nodes }}" as="node" hint-placeholder-count="6">
+                <circle onClick="{{ node.onClick }}" style="cursor:{{ node.cursor }};" cx="{{ node.x }}" cy="{{ node.y }}" r="{{ node.r }}" fill="{{ node.fill }}" stroke="{{ node.stroke }}" stroke-width="{{ node.strokeWidth }}"></circle>
+              </sc-for>
+            </svg>
+            <sc-for list="{{ graph.nodes }}" as="node" hint-placeholder-count="6">
+              <div title="{{ node.fullLabel }}" onClick="{{ node.onClick }}" style="position:absolute; left:{{ node.xPct }}; top:{{ node.labelYPct }}; transform:{{ node.labelTransform }}; font-family:'IBM Plex Mono',monospace; font-size:{{ node.fontSize }}px; color:{{ node.textColor }}; cursor:{{ node.cursor }}; white-space:nowrap; pointer-events:auto;">{{ node.shortLabel }}</div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex; gap:18px; font-size:11.5px; color:oklch(0.55 0.012 254);">
+          <div style="display:flex; align-items:center; gap:6px;"><span style="width:9px; height:9px; border-radius:50%; background:oklch(0.78 0.15 200);"></span>producer</div>
+          <div style="display:flex; align-items:center; gap:6px;"><span style="width:9px; height:9px; border-radius:50%; background:oklch(0.78 0.14 80);"></span>topic</div>
+          <div style="display:flex; align-items:center; gap:6px;"><span style="width:9px; height:9px; border-radius:50%; background:oklch(0.75 0.17 330);"></span>consumer</div>
+          <div style="margin-left:auto; color:oklch(0.48 0.012 254);">click any node to re-center the graph on it</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ graphNoFocal }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; color:oklch(0.5 0.012 254); font-size:13.5px; text-align:center;">Search for a producer, consumer, or topic above to see its connections.</div>
+      </sc-if>
+    </div>
+  </sc-if>
 
   <!-- CONFIGURE MODAL -->
   <sc-if value="{{ configureOpen }}">
@@ -928,8 +1009,14 @@ class Component extends DCLogic {
     pickerSearch: {
       configureProducer: '', configureSchema: '', configureConsumer: '',
       schemaAssign: '', producerAssign: '', consumerAssign: '', ruleProducer: '',
+      graphFocal: '',
     },
     folderPath: [],
+    view: 'catalog', // 'catalog' | 'graph'
+    graphFocalType: null, // 'producer' | 'consumer' | 'topic'
+    graphFocalId: null,
+    graphHistory: [],
+    graphZoom: 1,
     topics: RAW_TOPICS.map(t => ({ ...t, id: t.seg.join('/') })),
   };
 
@@ -1040,8 +1127,114 @@ class Component extends DCLogic {
     };
   }
 
+  graphNodeStyle(type) {
+    if (type === 'producer') return { fill: 'oklch(0.28 0.09 200)', stroke: 'oklch(0.78 0.15 200)', textColor: 'oklch(0.88 0.04 200)' };
+    if (type === 'consumer') return { fill: 'oklch(0.28 0.1 330)', stroke: 'oklch(0.75 0.17 330)', textColor: 'oklch(0.88 0.05 330)' };
+    return { fill: 'oklch(0.32 0.09 80)', stroke: 'oklch(0.78 0.14 80)', textColor: 'oklch(0.9 0.03 80)' };
+  }
+
+  graphEntityLabel(type, id) {
+    if (type === 'producer') return this.producerName(id) || id || 'unknown';
+    if (type === 'consumer') { const c = this.state.consumers.find(x => x.id === id); return c ? c.name : id; }
+    const t = this.state.topics.find(x => x.id === id);
+    return t ? t.seg[t.seg.length - 1] : id;
+  }
+
+  truncateLabel(s, n) {
+    if (!s) return s;
+    return s.length > n ? s.slice(0, n - 1) + '…' : s;
+  }
+
+  setGraphFocal(type, id) {
+    this.setState(s => {
+      const hist = (s.graphFocalType && s.graphFocalId && (s.graphFocalType !== type || s.graphFocalId !== id))
+        ? [...s.graphHistory, { type: s.graphFocalType, id: s.graphFocalId }] : s.graphHistory;
+      return { graphFocalType: type, graphFocalId: id, graphHistory: hist, pickerSearch: { ...s.pickerSearch, graphFocal: '' } };
+    });
+  }
+
+  graphBack() {
+    this.setState(s => {
+      const hist = [...s.graphHistory];
+      const prev = hist.pop();
+      return prev ? { graphFocalType: prev.type, graphFocalId: prev.id, graphHistory: hist } : { graphFocalType: null, graphFocalId: null, graphHistory: [] };
+    });
+  }
+
+  zoomGraph(delta) {
+    this.setState(s => ({ graphZoom: Math.max(0.5, Math.min(3, +(s.graphZoom + delta).toFixed(2))) }));
+  }
+
+  computeGraph() {
+    const { graphFocalType: type, graphFocalId: id, topics } = this.state;
+    if (!type || !id) return null;
+    const W = 900, H = 560, cx = W / 2, cy = H / 2, R1 = 165, R2 = 255;
+    const nodes = [];
+    const edges = [];
+    const mk = (key, x, y, r, nodeType, label, onClick, isFocal) => {
+      const st = this.graphNodeStyle(nodeType);
+      const labelAbove = y > cy;
+      const labelY = labelAbove ? y - r - 15 : y + r + 15;
+      return {
+        key, x, y, r, fill: st.fill, stroke: st.stroke, strokeWidth: isFocal ? 2.5 : 1.5,
+        textColor: st.textColor, fontSize: isFocal ? 13 : 11.5,
+        label, fullLabel: label, shortLabel: this.truncateLabel(label, isFocal ? 20 : 14),
+        labelY, labelTransform: labelAbove ? 'translate(-50%, -100%)' : 'translate(-50%, 0)',
+        onClick: onClick || null, cursor: onClick ? 'pointer' : 'default',
+        xPct: (x / W * 100) + '%', labelYPct: (labelY / H * 100) + '%',
+      };
+    };
+
+    nodes.push(mk('focal', cx, cy, 28, type, this.graphEntityLabel(type, id), null, true));
+
+    if (type === 'topic') {
+      const t = topics.find(x => x.id === id);
+      if (!t) return null;
+      if (t.producer) {
+        const x = cx - R1, y = cy;
+        nodes.push(mk('p-' + t.producer, x, y, 20, 'producer', this.graphEntityLabel('producer', t.producer), () => this.setGraphFocal('producer', t.producer)));
+        edges.push({ x1: cx, y1: cy, x2: x, y2: y, stroke: this.graphNodeStyle('producer').stroke, opacity: 0.7 });
+      }
+      const n = t.consumers.length;
+      t.consumers.forEach((cid, i) => {
+        const spread = n === 1 ? 0 : Math.min(2.1, 0.55 * n);
+        const ang = n === 1 ? 0 : (-spread / 2 + spread * i / (n - 1));
+        const x = cx + R1 * Math.cos(ang), y = cy + R1 * Math.sin(ang);
+        nodes.push(mk('c-' + cid, x, y, 18, 'consumer', this.graphEntityLabel('consumer', cid), () => this.setGraphFocal('consumer', cid)));
+        edges.push({ x1: cx, y1: cy, x2: x, y2: y, stroke: this.graphNodeStyle('consumer').stroke, opacity: 0.7 });
+      });
+    } else {
+      const relTopics = topics.filter(t => type === 'producer' ? t.producer === id : t.consumers.includes(id));
+      const n = relTopics.length;
+      const farMap = {};
+      relTopics.forEach((t, i) => {
+        const ang = n === 0 ? 0 : (2 * Math.PI * i / n) - Math.PI / 2;
+        const x = cx + R1 * Math.cos(ang), y = cy + R1 * Math.sin(ang);
+        nodes.push(mk('t-' + t.id, x, y, 15, 'topic', t.seg[t.seg.length - 1], () => this.setGraphFocal('topic', t.id)));
+        edges.push({ x1: cx, y1: cy, x2: x, y2: y, stroke: this.graphNodeStyle('topic').stroke, opacity: 0.6 });
+
+        const farType = type === 'producer' ? 'consumer' : 'producer';
+        const farIds = type === 'producer' ? t.consumers : (t.producer ? [t.producer] : []);
+        farIds.forEach(fid => {
+          const key = farType + '-' + fid;
+          (farMap[key] = farMap[key] || { id: fid, type: farType, parents: [] }).parents.push({ x, y });
+        });
+      });
+      const farNodes = Object.values(farMap);
+      const m = farNodes.length;
+      farNodes.forEach((f, i) => {
+        const ang = m === 0 ? 0 : (2 * Math.PI * i / m) - Math.PI / 2;
+        const x = cx + R2 * Math.cos(ang), y = cy + R2 * Math.sin(ang);
+        nodes.push(mk(f.type + '2-' + f.id, x, y, 15, f.type, this.graphEntityLabel(f.type, f.id), () => this.setGraphFocal(f.type, f.id)));
+        f.parents.forEach(p => edges.push({ x1: p.x, y1: p.y, x2: x, y2: y, stroke: this.graphNodeStyle(f.type).stroke, opacity: 0.35 }));
+      });
+    }
+
+    return { nodes, edges, focalType: type, focalLabel: this.graphEntityLabel(type, id), focalDotColor: this.graphNodeStyle(type).stroke };
+  }
+
   renderVals() {
-    const { role, groupBy, search, selectedId, topics, tags, schemas, rules, tagFilter, folderPath, configureId, configureForm, manageTagsOpen, newTagLabel, newTagHue, tagPickerOpen, schemaModalId, schemaModalSelectedId, manageSchemasOpen, editingSchemaId, newSchemaName, newSchemaDefText, newSchemaDefError, schemaSearch, manageRulesOpen, editingRuleId, newRulePattern, newRuleProducerId, newRuleTagIds, producers, consumers, manageProducersOpen, producerSearch, editingProducerId, newProducerName, newProducerDescription, manageConsumersOpen, consumerSearch, editingConsumerId, newConsumerName, newConsumerDescription, producerModalId, producerModalSelectedId, consumerPickerOpen, manageMenuOpen } = this.state;
+    const { role, groupBy, search, selectedId, topics, tags, schemas, rules, tagFilter, folderPath, configureId, configureForm, manageTagsOpen, newTagLabel, newTagHue, tagPickerOpen, schemaModalId, schemaModalSelectedId, manageSchemasOpen, editingSchemaId, newSchemaName, newSchemaDefText, newSchemaDefError, schemaSearch, manageRulesOpen, editingRuleId, newRulePattern, newRuleProducerId, newRuleTagIds, producers, consumers, manageProducersOpen, producerSearch, editingProducerId, newProducerName, newProducerDescription, manageConsumersOpen, consumerSearch, editingConsumerId, newConsumerName, newConsumerDescription, producerModalId, producerModalSelectedId, consumerPickerOpen, manageMenuOpen, view, graphFocalType, graphFocalId, graphHistory, graphZoom } = this.state;
     const isAdmin = role === 'admin';
     const tagsById = {}; tags.forEach(t => tagsById[t.id] = t);
 
@@ -1266,6 +1459,20 @@ class Component extends DCLogic {
     })) : [];
     const schemaAssignCombo = this.comboVM('schemaAssign', schemaAssignOptionsRaw);
 
+    // graph view
+    const graphEntityOptions = [
+      ...producers.map(p => ({ type: 'producer', id: p.id, label: p.name, typeLabel: 'producer' })),
+      ...consumers.map(c => ({ type: 'consumer', id: c.id, label: c.name, typeLabel: 'consumer' })),
+      ...topics.map(t => ({ type: 'topic', id: t.id, label: t.seg.join('/'), typeLabel: 'topic' })),
+    ].map(o => ({
+      ...o,
+      dotColor: this.graphNodeStyle(o.type).stroke,
+      onClick: () => this.setGraphFocal(o.type, o.id),
+    }));
+    const graphComboRaw = this.comboVM('graphFocal', graphEntityOptions);
+    const graphCombo = { ...graphComboRaw, showResults: graphComboRaw.search.trim().length > 0 };
+    const graph = this.computeGraph();
+
     const allTagsList = tags.map(t => {
       const c = tagColor(t.hue);
       return { label: t.label, ...c, onDelete: () => this.setState(s => ({ tags: s.tags.filter(x => x.id !== t.id), topics: s.topics.map(tp => ({ ...tp, tags: tp.tags.filter(x => x !== t.id) })) })) };
@@ -1281,6 +1488,19 @@ class Component extends DCLogic {
       viewerBtnBg: !isAdmin ? 'oklch(0.75 0.13 200)' : 'transparent', viewerBtnColor: !isAdmin ? 'oklch(0.15 0.02 200)' : 'oklch(0.6 0.012 254)',
       adminBtnBg: isAdmin ? 'oklch(0.75 0.13 200)' : 'transparent', adminBtnColor: isAdmin ? 'oklch(0.15 0.02 200)' : 'oklch(0.6 0.012 254)',
       setRoleViewer: () => this.setState({ role: 'viewer' }), setRoleAdmin: () => this.setState({ role: 'admin' }),
+
+      view, showCatalogBody: view === 'catalog', showGraph: view === 'graph',
+      setViewCatalog: () => this.setState({ view: 'catalog' }), setViewGraph: () => this.setState({ view: 'graph' }),
+      viewCatalogBg: view === 'catalog' ? 'oklch(0.75 0.13 200)' : 'transparent', viewCatalogColor: view === 'catalog' ? 'oklch(0.15 0.02 200)' : 'oklch(0.6 0.012 254)',
+      viewGraphBg: view === 'graph' ? 'oklch(0.75 0.13 200)' : 'transparent', viewGraphColor: view === 'graph' ? 'oklch(0.15 0.02 200)' : 'oklch(0.6 0.012 254)',
+      graphCombo, graph,
+      graphHasFocal: !!graph, graphNoFocal: !graph,
+      graphHasHistory: graphHistory.length > 0,
+      graphBack: () => this.graphBack(),
+      graphClear: () => this.setState({ graphFocalType: null, graphFocalId: null, graphHistory: [] }),
+      graphZoom, graphZoomPct: Math.round(graphZoom * 100) + '%',
+      zoomIn: () => this.zoomGraph(0.25), zoomOut: () => this.zoomGraph(-0.25),
+      zoomReset: () => this.setState({ graphZoom: 1 }),
       openManageTags: () => this.setState({ manageTagsOpen: true, manageMenuOpen: false }),
 
       search, onSearchChange: e => this.setState({ search: e.target.value }),
