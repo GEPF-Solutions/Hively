@@ -145,9 +145,22 @@ hively.client/src/
 
 ---
 
+## Status
+
+**Backend**: all six core entities have a full 3-layer CRUD slice, each built, run, and verified end-to-end against a real Postgres instance (not just compiled) — `Producer`, `Consumer`, `Tag`, `Schema` (with version history), `Rule` (with tag assignment), `Topic` (with schema compliance validation via `SchemaComplianceValidator`). Check `git log --oneline` for the exact commit per entity.
+
+The rule-matching engine and relocation-relink heuristic are also built and verified end-to-end: pure functions `TopicPatternMatcher.MatchTopic`, `RuleMatcher.RuleSpecificity`/`FindMatchingRules`, and `RelinkHeuristic.FindRelinkCandidate` (`Hively.Server/Services/`), ported from the prototype's `matchTopic`/`ruleSpecificity`/`findMatchingRules`/`findRelinkCandidate`. Wired into `ITopicService`/`TopicController`: `GET /api/topic/{id}/matching-rules`, `POST /api/topic/{id}/apply-rule/{ruleId}`, `GET /api/topic/{id}/relink-candidate`, `POST /api/topic/{id}/accept-relink/{oldTopicId}`, plus `POST /api/rule/{id}/apply-to-all` for the bulk "Apply to N now" case.
+
+**Deliberately not built yet** — these depend on subsystems that don't exist yet, scoped out of the CRUD pass on purpose, not forgotten:
+- MQTT ingestion (real broker connection, `MQTTnet` background hosted service, untracked-stub creation, violation counting, activity histogram rollup) — the rule-matching/relink logic above is ready for it to call into once it exists
+- SignalR hub for live push updates (`TopicHub`) — reads/writes work, nothing pushes yet
+- Real auth — no Entra ID/Google OIDC wired up yet, no `UserController`/bootstrap-admin logic implemented; all current endpoints are open, no `[Authorize]` anywhere
+- **Frontend — nothing built yet.** `hively.client/` is still the untouched default Vite/React template (`App.tsx`, `main.tsx`, default assets only). None of the structure described above (`components/`, `pages/`, `services/`, `hooks/`) exists on disk yet.
+
 ## Dev commands
 
-- Backend: `dotnet run --project Hively.Server` (or via the `.slnx`/IDE run config — SpaProxy launches the Vite dev server automatically).
+- Backend: from repo root, `dotnet run --project Hively.Server` (needs `--project` if not already inside that directory) or via the `.slnx`/IDE run config — SpaProxy launches the Vite dev server automatically. Local dev API listens on `http://localhost:5012` (`Properties/launchSettings.json`).
 - Frontend only: `npm run dev` from `hively.client/`.
+- Local Postgres: `docker-compose.yml` at repo root (works with `podman compose up -d` or `docker compose up -d`); connection string already set in `appsettings.Development.json` to match its defaults (`localhost:5432`, db/user `hively`).
 - Migrations: `dotnet ef migrations add <Name>` / `dotnet ef database update`, run from `Hively.Server/`.
 - Lint: `npm run lint` (`oxlint`) from `hively.client/`.
