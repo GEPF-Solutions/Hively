@@ -89,7 +89,8 @@ Console only for now (the default `ILogger` + Console provider ASP.NET Core wire
 
 ### Auth (Entra ID + Google)
 
-- Cookie authentication as the sign-in scheme; both `AddOpenIdConnect` (Microsoft Entra ID, via `Microsoft.Identity.Web`) and `AddGoogle` (`Microsoft.AspNetCore.Authentication.Google`) as external challenge schemes signing into that cookie.
+- Cookie authentication as the sign-in scheme; both `AddOpenIdConnect("Entra", ...)` (Microsoft Entra ID) and `AddGoogle` (`Microsoft.AspNetCore.Authentication.Google`) as external challenge schemes signing into that cookie. Entra deliberately uses plain `AddOpenIdConnect` pointed at `login.microsoftonline.com/{tenantId}/v2.0` rather than `Microsoft.Identity.Web`'s `AddMicrosoftIdentityWebApp` — that package's token-cache/MSAL machinery is for apps calling Graph or other downstream APIs, which this app never does; we only need the ID token's email/subject claims.
+- Provider secrets (`Authentication:Google:ClientId/ClientSecret`, `Authentication:Entra:ClientId/ClientSecret/TenantId`) live in .NET user-secrets, never in `appsettings.*.json`.
 - On first successful external login, upsert a row in our own `Users` table keyed by email/external subject id, defaulting to `Viewer`; an existing Admin promotes others via the `UserController` (no self-service admin signup).
 - Authorize admin-only endpoints/actions with `[Authorize(Roles = "Admin")]`; read-only endpoints just need `[Authorize]`.
 
@@ -151,10 +152,11 @@ hively.client/src/
 
 The rule-matching engine and relocation-relink heuristic are also built and verified end-to-end: pure functions `TopicPatternMatcher.MatchTopic`, `RuleMatcher.RuleSpecificity`/`FindMatchingRules`, and `RelinkHeuristic.FindRelinkCandidate` (`Hively.Server/Services/`), ported from the prototype's `matchTopic`/`ruleSpecificity`/`findMatchingRules`/`findRelinkCandidate`. Wired into `ITopicService`/`TopicController`: `GET /api/topic/{id}/matching-rules`, `POST /api/topic/{id}/apply-rule/{ruleId}`, `GET /api/topic/{id}/relink-candidate`, `POST /api/topic/{id}/accept-relink/{oldTopicId}`, plus `POST /api/rule/{id}/apply-to-all` for the bulk "Apply to N now" case.
 
+Real auth (see Auth section above) is also built and verified end-to-end against real Google and Entra ID accounts, resolving through `IUserService.UpsertFromExternalLoginAsync` (`Users`/`UserIdentities` tables, matches the algorithm documented in `Design/schema.sql`). The very first login ever is auto-promoted to Admin; everyone after defaults to Viewer. `AuthController` (`login/google`, `login/entra`, `logout`, `me`) and `UserController` (Admin-only user list + role promotion) are the new endpoints. All six CRUD controllers now carry `[Authorize]` on reads and `[Authorize(Roles = "Admin")]` on mutations — verified that anonymous requests 401 across the board.
+
 **Deliberately not built yet** — these depend on subsystems that don't exist yet, scoped out of the CRUD pass on purpose, not forgotten:
 - MQTT ingestion (real broker connection, `MQTTnet` background hosted service, untracked-stub creation, violation counting, activity histogram rollup) — the rule-matching/relink logic above is ready for it to call into once it exists
 - SignalR hub for live push updates (`TopicHub`) — reads/writes work, nothing pushes yet
-- Real auth — no Entra ID/Google OIDC wired up yet, no `UserController`/bootstrap-admin logic implemented; all current endpoints are open, no `[Authorize]` anywhere
 - **Frontend — nothing built yet.** `hively.client/` is still the untouched default Vite/React template (`App.tsx`, `main.tsx`, default assets only). None of the structure described above (`components/`, `pages/`, `services/`, `hooks/`) exists on disk yet.
 
 ## Dev commands
