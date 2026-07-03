@@ -1,4 +1,8 @@
 using Hively.Server.DbModel;
+using Hively.Server.Repository;
+using Hively.Server.Repository.Abstractions;
+using Hively.Server.Services;
+using Hively.Server.Services.Abstractions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hively.Server;
@@ -18,6 +22,9 @@ public class Program
         {
             options.UseNpgsql(connectionString);
         });
+
+        builder.Services.AddScoped<IProducerRepository, ProducerRepository>();
+        builder.Services.AddScoped<IProducerService, ProducerService>();
 
         builder.Services.AddControllers();
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

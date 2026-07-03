@@ -1,0 +1,129 @@
+using Hively.Server.Dto;
+using Hively.Server.Exceptions;
+using Hively.Server.Services.Abstractions;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Hively.Server.Controllers
+{
+    /// <summary>
+    /// Controller for managing Producer entities.
+    /// </summary>
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ProducerController : ControllerBase
+    {
+        private readonly ILogger<ProducerController> _logger;
+        private readonly IProducerService _producerService;
+
+        public ProducerController(ILogger<ProducerController> logger, IProducerService producerService)
+        {
+            _logger = logger;
+            _producerService = producerService;
+        }
+
+        /// <summary>
+        /// Retrieves all producers.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetProducersAsync()
+        {
+            try
+            {
+                var producers = await _producerService.GetProducersAsync(CancellationToken.None);
+                return Ok(producers);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while getting producers.");
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+
+        /// <summary>
+        /// Retrieves a single producer by ID.
+        /// </summary>
+        [HttpGet("{producerId}")]
+        public async Task<IActionResult> GetProducerByIdAsync(Guid producerId)
+        {
+            try
+            {
+                var producer = await _producerService.GetProducerAsync(producerId, CancellationToken.None);
+                return Ok(producer);
+            }
+            catch (EntityNotFoundException ex)
+            {
+                _logger.LogError(ex, "An error occurred while getting producer.");
+                return StatusCode(StatusCodes.Status404NotFound, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while getting producer.");
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+
+        /// <summary>
+        /// Creates a new producer.
+        /// </summary>
+        [HttpPut("insert")]
+        public async Task<IActionResult> InsertProducerAsync([FromBody] ProducerDto producer)
+        {
+            try
+            {
+                var createdProducer = await _producerService.InsertProducerAsync(producer, CancellationToken.None);
+                return Ok(createdProducer);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while inserting producer.");
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+
+        /// <summary>
+        /// Updates an existing producer.
+        /// </summary>
+        [HttpPost("update")]
+        public async Task<IActionResult> UpdateProducerAsync([FromBody] ProducerDto producer)
+        {
+            try
+            {
+                await _producerService.UpdateProducerAsync(producer, CancellationToken.None);
+                return Ok(new { message = "Update successful" });
+            }
+            catch (EntityNotFoundException ex)
+            {
+                _logger.LogError(ex, "An error occurred while updating producer.");
+                return StatusCode(StatusCodes.Status404NotFound, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while updating producer.");
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+
+        /// <summary>
+        /// Deletes a producer.
+        /// </summary>
+        [HttpDelete("delete")]
+        public async Task<IActionResult> DeleteProducerAsync(Guid producerId)
+        {
+            try
+            {
+                await _producerService.RemoveProducerAsync(producerId, CancellationToken.None);
+                return Ok(new { message = "Removal successful" });
+            }
+            catch (EntityNotFoundException ex)
+            {
+                _logger.LogError(ex, "An error occurred while removing producer.");
+                return StatusCode(StatusCodes.Status404NotFound, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while removing producer.");
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+    }
+}
