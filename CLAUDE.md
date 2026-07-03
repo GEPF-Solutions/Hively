@@ -1,0 +1,140 @@
+# Hively — CLAUDE.md
+
+Hively is a data-catalog application for an MQTT Unified Namespace (UNS) — think "Confluent Data Catalog, but for MQTT." It tracks topics, their producers/consumers, assigned schemas + compliance, tags, and bulk-assignment rules, and helps admins recover when a physical relocation makes a whole branch of the namespace go untracked at once.
+
+**Full domain spec, behaviors, and design tokens live in `Design/README.md` — read it before implementing any feature.** This file only covers architecture/conventions; it deliberately does not repeat the domain model, key behaviors (rules, relocation heuristic, search, graph view, etc.), or design tokens documented there. `Design/MQTT Data Catalog.dc.html` is a clickable prototype — open it in a browser to see exact behavior before building a screen.
+
+## Reference project
+
+`../RMCD-App` (sibling directory) is the architectural template for this project — same tech family (ASP.NET Core + React, `.esproj`-hosted SPA), further along in development. When unsure how to structure something, check how RMCD-App does it before inventing a new pattern. This doc encodes the conventions pulled from it; where Hively intentionally diverges (see Decisions below), that's called out explicitly.
+
+## Decisions made for this project
+
+| Area | Choice | Notes |
+|---|---|---|
+| Database | PostgreSQL (`Npgsql.EntityFrameworkCore.PostgreSQL`) | RMCD-App uses MySQL/Pomelo; Hively uses Postgres instead — good JSON support for schema definitions/payloads. |
+| MQTT ingestion | Real client from day one, `MQTTnet` | Not mocked — wire up a real background hosted service against a real broker. |
+| Live updates | SignalR from day one | Matches `Design/README.md`'s suggestion. Frontend gets a real hub connection, not polling. |
+| Auth | OIDC login via **both** Microsoft Entra ID and Google | No manual session-cookie auth like RMCD-App — use ASP.NET Core's real authentication middleware. App-level roles (Admin/Viewer) are looked up from our own `Users` table by external identity, not from the identity provider. |
+| Icons | None | Per design doc: no icon font/SVG iconography, typography + color + CSS shapes only. Don't add `lucide-react` or similar even though RMCD-App does. |
+| Frontend state | Local component state + small custom hooks | No Redux/Zustand/React Query. RMCD-App proves this scales fine for an app this size, and it's the simplest mental model to hold — important since the user is still learning React. |
+
+---
+
+## Backend: 3-layer architecture
+
+`Controllers → Services → Repositories`, strictly one-directional (controllers never touch `DbModel`/EF directly, services never touch `HttpContext`).
+
+```
+Hively.Server/
+  Controllers/              one controller per aggregate root (TopicController, ProducerController, ...)
+  Services/
+    Abstractions/            I<Name>Service interfaces
+    <Name>Service.cs
+  Repository/
+    Abstractions/            I<Name>Repository interfaces
+    <Name>Repository.cs
+  DbModel/                   EF Core entities + the DbContext (HivelyContext)
+  Dto/                       request/response shapes, never expose DbModel entities over the wire
+  Exceptions/                EntityNotFoundException, etc.
+  Infrastructure/            strongly-typed settings classes bound from appsettings (Options pattern)
+  Hubs/                      SignalR hubs
+  Services/Ingestion/        MQTT background hosted service + pure matching/validation helpers
+```
+
+### Layer responsibilities
+
+- **Controller**: auth/authorization only (`[Authorize]` / `[Authorize(Roles = "Admin")]`), model binding, calling exactly one service method, mapping exceptions to status codes. No business logic.
+- **Service**: business logic, orchestration, validation rules from the domain (schema validation, rule specificity, relink heuristic). Maps between `Dto` and `DbModel` via DTO constructors (`new TopicDto(topicEntity)`). Throws domain exceptions (`EntityNotFoundException`, etc.) rather than returning null/bool for error cases.
+- **Repository**: EF Core queries only. Returns/accepts `DbModel` entities, not DTOs. Throws `EntityNotFoundException` when a lookup by id fails so services don't need null-checks.
+
+### Conventions (mirrored from RMCD-App)
+
+- Every interface method takes a `CancellationToken` as the last parameter.
+- DTOs have a constructor that maps from the DbModel entity (`public TopicDto(Topic topic) { ... }`) plus a parameterless constructor for deserialization.
+- XML `/// <summary>` doc comments on every public controller action, service method, and repository interface method — RMCD-App does this consistently; keep matching it for cross-project consistency.
+- Register every `I<Name>Service`/`I<Name>Repository` pair as `Scoped` in `Program.cs`, in one place, grouped by feature.
+- Controller actions catch specific exception types in order (most specific first) and map to status codes: `EntityNotFoundException` → 404, validation/`InvalidOperationException` → 400, generic `Exception` → 500 (log first). Auth failures are now handled by `[Authorize]` middleware, not a manual cookie check per action (this is where Hively diverges from RMCD-App's manual `session_id` cookie check — we have real middleware now, use it).
+- Route convention: `[Route("api/[controller]")]`, one controller per aggregate (`TopicController`, `ProducerController`, `ConsumerController`, `SchemaController`, `TagController`, `RuleController`, `UserController`).
+
+### Database
+
+- EF Core + `Npgsql.EntityFrameworkCore.PostgreSQL`. `HivelyContext : DbContext` in `DbModel/`.
+- Migrations via `dotnet ef migrations add <Name>` / `dotnet ef database update`, run from `Hively.Server/`.
+- Store `Topic.Segments` as a normalized child table or a delimited string (see `Design/README.md`'s EF Core note) — decide when building the Topic entity, not before; don't over-design this ahead of time.
+
+### MQTT ingestion
+
+- A single `IHostedService` (e.g. `MqttIngestionService`) using `MQTTnet`, subscribed to `#`, injected with a scoped-service-factory (hosted services are singletons; create a scope per message to resolve `ITopicService`/`HivelyContext`).
+- On every message: upsert last payload/timestamp/retained on the matching topic (create an untracked stub if never seen), run schema validation if assigned (increment `violationCount` on failure), roll up the `activityHistogram` bucket.
+- Keep `matchTopic`, `ruleSpecificity`, `findMatchingRules`, `findRelinkCandidate`, and schema `validateSchema` as pure, unit-testable functions — port them from the prototype's `<script>` block in `Design/MQTT Data Catalog.dc.html`, don't reinvent the logic.
+
+### Real-time (SignalR)
+
+- One hub (e.g. `TopicHub`) pushes: new untracked topic detected, topic last-message/compliance updated, violation count changed.
+- The MQTT ingestion service and any service-layer mutation (e.g. clearing a violation counter, applying a rule) push through the hub after committing to the DB — don't let the frontend find out via a stale poll.
+
+### Auth (Entra ID + Google)
+
+- Cookie authentication as the sign-in scheme; both `AddOpenIdConnect` (Microsoft Entra ID, via `Microsoft.Identity.Web`) and `AddGoogle` (`Microsoft.AspNetCore.Authentication.Google`) as external challenge schemes signing into that cookie.
+- On first successful external login, upsert a row in our own `Users` table keyed by email/external subject id, defaulting to `Viewer`; an existing Admin promotes others via the `UserController` (no self-service admin signup).
+- Authorize admin-only endpoints/actions with `[Authorize(Roles = "Admin")]`; read-only endpoints just need `[Authorize]`.
+
+---
+
+## Frontend: React, heavily modularized
+
+Small, single-purpose files over big ones — optimize for "easy to find and hold in your head," not for fewest files. Mirror RMCD-App's decomposition exactly; don't flatten it.
+
+```
+hively.client/src/
+  components/
+    ui/            generic, app-agnostic building blocks (Button, Modal, Input, Select, Badge, ...) — one file each, index.ts barrel
+    layout/        Header, Sidebar/NamespaceBrowser shell, Footer
+    navigation/    NavLink, ProtectedRoute, ScrollToTop
+    shared/        small app-aware but reusable pieces (StatCard, ComplianceBadge, TagPill, ...)
+  pages/
+    Topics/
+      Topics.tsx              page shell only — composes the pieces below
+      components/             TopicRow, HierarchyView, ListView, ...
+      cards/                  (on TopicDetail) ProducerCard, ConsumerCard, SchemaCard, ComplianceCard, ActivityCard
+      modals/                 ConfigureTopicModal, SchemaAssignModal, ProducerAssignModal
+      hooks/                  useTopicFilters, useNamespaceDrilldown, ...
+      contexts/               only if a subtree genuinely needs shared local state
+      index.ts                `export { default } from './Topics'`
+    Schemas/  Rules/  Producers/  Consumers/  Tags/  Graph/   (same shape as Topics/)
+  services/
+    apiService.ts              generic fetch wrapper (copy RMCD-App's: timeout, credentials:'include', JSON/error parsing) — every other service goes through this, never call fetch directly elsewhere
+    topicService.ts  producerService.ts  consumerService.ts  schemaService.ts  tagService.ts  ruleService.ts  userService.ts
+    signalr.ts                  connection factory for the SignalR hub client
+  hooks/
+    data/                       one hook per entity (useTopics, useTopic, useProducers, ...) — useState + useEffect + loading/error, calling the matching service, matching RMCD-App's useMachines.ts pattern exactly
+    ui/                         cross-cutting UI hooks (useModalState, useFormState, ...)
+  contexts/                     AuthContext (current user + role), ToastContext, SignalRContext (shared hub connection)
+  types/
+    api.ts                      shapes mirroring backend DTOs
+    ui.ts                       frontend-only view types
+    index.ts                    `export * from './api'; export * from './ui';`
+  constants/                    apiEndpoints.ts, validation.ts
+  utils/
+  App.tsx  main.tsx
+```
+
+### Conventions
+
+- **All backend calls go through `services/apiService.ts`.** Per-entity service files (`topicService.ts`, etc.) are the only callers of `apiRequest<T>()`; components/hooks never call it directly. This is the one required layer — everything else above is decomposition for readability.
+- Data-fetching hooks (`hooks/data/*`) are the only things that call entity services from UI code. A page component calls a hook, not a service, directly.
+- Routing via `react-router-dom`, mirroring RMCD-App's `ProtectedRoute` pattern for anything requiring auth, with an additional role check for Admin-only routes (Manage Schemas/Rules/Tags/Producers/Consumers panels).
+- Styling: Tailwind CSS v4 (`@tailwindcss/vite`), matching RMCD-App's setup. Dark theme, OKLCH palette, IBM Plex Mono for topic paths/code/patterns/ids — see `Design/README.md` → Design Tokens for exact values; treat them as final, not placeholders.
+- No icon library — see Decisions table above.
+- A page's `index.ts` re-exports its default component (`export { default } from './Topics'`) so imports elsewhere stay short (`import Topics from '@/pages/Topics'`).
+- `SearchableCombobox` (producer/consumer/schema pickers) is the one component explicitly called out in the design doc as worth extracting once and reusing — build it in `components/shared/` early since ~5+ screens need it (Configure modal, Rule form, Graph focal-entity search, etc.).
+
+---
+
+## Dev commands
+
+- Backend: `dotnet run --project Hively.Server` (or via the `.slnx`/IDE run config — SpaProxy launches the Vite dev server automatically).
+- Frontend only: `npm run dev` from `hively.client/`.
+- Migrations: `dotnet ef migrations add <Name>` / `dotnet ef database update`, run from `Hively.Server/`.
+- Lint: `npm run lint` (`oxlint`) from `hively.client/`.

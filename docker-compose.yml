@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: docker.io/library/postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hively}
+      POSTGRES_USER: ${POSTGRES_USER:-hively}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hively_dev}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - hively-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hively} -d ${POSTGRES_DB:-hively}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  hively-postgres-data:
