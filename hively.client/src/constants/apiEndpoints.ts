@@ -9,6 +9,7 @@ export const apiEndpoints = {
     loginEntra: (returnUrl: string) => `/api/auth/login/entra?returnUrl=${encodeURIComponent(returnUrl)}`,
     logout: '/api/auth/logout',
     me: '/api/auth/me',
+    providers: '/api/auth/providers',
   },
 
   users: {

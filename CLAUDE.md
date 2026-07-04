@@ -16,7 +16,7 @@ Hively is a data-catalog application for an MQTT Unified Namespace (UNS) — thi
 | MQTT ingestion | Real client from day one, `MQTTnet` | Not mocked — wire up a real background hosted service against a real broker. |
 | Live updates | SignalR from day one | Matches `Design/README.md`'s suggestion. Frontend gets a real hub connection, not polling. |
 | Auth | OIDC login via **both** Microsoft Entra ID and Google | No manual session-cookie auth like RMCD-App — use ASP.NET Core's real authentication middleware. App-level roles (Admin/Viewer) are looked up from our own `Users` table by external identity, not from the identity provider. |
-| Icons | None | Per design doc: no icon font/SVG iconography, typography + color + CSS shapes only. Don't add `lucide-react` or similar even though RMCD-App does. |
+| Icons | None, except OAuth provider marks | Per design doc: no icon font/SVG iconography, typography + color + CSS shapes only. Don't add `lucide-react` or similar even though RMCD-App does. One deliberate exception: `pages/Login/ProviderIcons.tsx` inlines the official Google/Microsoft logo marks on the login buttons, since both providers' own sign-in branding guidelines call for them — not general app iconography, so it doesn't reopen the door to an icon library. |
 | Frontend state | Local component state + small custom hooks | No Redux/Zustand/React Query. RMCD-App proves this scales fine for an app this size, and it's the simplest mental model to hold — important since the user is still learning React. |
 
 ---
@@ -191,8 +191,9 @@ Duplicate-entity conflicts (inserting/renaming to a `Topic.Path`, `Producer.Name
 
 ## Dev commands
 
-- Backend: from repo root, `dotnet run --project Hively.Server` (needs `--project` if not already inside that directory) or via the `.slnx`/IDE run config — SpaProxy launches the Vite dev server automatically. Local dev API listens on `http://localhost:5012` (`Properties/launchSettings.json`).
+- Backend: from repo root, `dotnet run --project Hively.Server` (needs `--project` if not already inside that directory) or via the `.slnx`/IDE run config — SpaProxy launches the Vite dev server automatically. **Run the "https" profile** (`https://localhost:8443;http://localhost:8080`), not "http" (`Properties/launchSettings.json`) — the http-only profile has no HTTPS endpoint, which silently breaks Google/Entra login (the OIDC/OAuth redirect_uri gets computed as `http://` instead of `https://`, since Vite's proxy target falls back to whatever `ASPNETCORE_URLS` the running profile actually set).
 - Frontend only: `npm run dev` from `hively.client/`.
 - Local Postgres + a local Mosquitto broker: `docker-compose.yml` at repo root (works with `podman compose up -d` or `docker compose up -d`); Postgres connection string already set in `appsettings.Development.json` to match its defaults (`localhost:5432`, db/user `hively`). Point `MqttBroker` in `appsettings.Development.json` at a real broker instead if you have one (e.g. one running in a cluster) rather than the local container.
 - Schema changes: no EF migrations — edit `Design/schema.sql`, apply by hand to Postgres, then re-scaffold `DbModel/` with `dotnet ef dbcontext scaffold` (see Database section above).
 - Lint: `npm run lint` (`oxlint`) from `hively.client/`.
+- Container image: built from the root `Dockerfile` (multi-stage, builds the SPA and publishes the API into one image), published to `ghcr.io/gepf-solutions/hively`. Takes all config via env vars, no user-secrets inside the container — see `docs/deployment.md` for the full variable list and a `docker run` example.

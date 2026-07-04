@@ -1,6 +1,6 @@
 import { apiRequest } from './apiService';
 import { apiEndpoints } from '../constants/apiEndpoints';
-import type { CurrentUser } from '../types';
+import type { AuthProviders, CurrentUser } from '../types';
 
 export const authService = {
   /** Resolves the signed-in user, or null if the session cookie is missing/expired. */
@@ -10,6 +10,11 @@ export const authService = {
     } catch {
       return null;
     }
+  },
+
+  /** Which external providers are enabled — the login page uses this to decide which buttons to show. */
+  async getProviders(): Promise<AuthProviders> {
+    return apiRequest<AuthProviders>(apiEndpoints.auth.providers);
   },
 
   async logout(): Promise<void> {

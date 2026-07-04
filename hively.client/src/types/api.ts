@@ -103,6 +103,11 @@ export interface CurrentUser {
   role: UserRole;
 }
 
+export interface AuthProviders {
+  google: boolean;
+  entra: boolean;
+}
+
 export interface MqttStatus {
   connected: boolean;
   host: string;
