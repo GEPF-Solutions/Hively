@@ -123,18 +123,18 @@ namespace Hively.Server.Services
         {
             var rule = await _ruleRepository.GetRuleAsync(ruleId, cancellationToken);
             var topics = await _topicRepository.GetTopicsAsync(cancellationToken);
-            var matchingUntracked = topics
-                .Where(t => !t.Tracked && TopicPatternMatcher.MatchTopic(rule.Pattern, t.Path))
+            var matching = topics
+                .Where(t => TopicPatternMatcher.MatchTopic(rule.Pattern, t.Path))
                 .ToList();
 
-            foreach (var topic in matchingUntracked)
+            foreach (var topic in matching)
             {
                 await _topicRepository.ApplyRuleAsync(topic.Id, ruleId, cancellationToken);
                 var updatedTopic = await _topicRepository.GetTopicAsync(topic.Id, cancellationToken);
                 await _topicNotifier.NotifyTopicUpdatedAsync(TopicDtoBuilder.Build(updatedTopic), cancellationToken);
             }
 
-            return matchingUntracked.Count;
+            return matching.Count;
         }
 
         /// <inheritdoc />

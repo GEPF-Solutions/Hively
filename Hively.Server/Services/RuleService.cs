@@ -11,13 +11,13 @@ namespace Hively.Server.Services
     {
         private readonly IRuleRepository _ruleRepository;
         private readonly IRuleNotifier _ruleNotifier;
-        private readonly IAutoRuleApplier _autoRuleApplier;
+        private readonly ITopicService _topicService;
 
-        public RuleService(IRuleRepository ruleRepository, IRuleNotifier ruleNotifier, IAutoRuleApplier autoRuleApplier)
+        public RuleService(IRuleRepository ruleRepository, IRuleNotifier ruleNotifier, ITopicService topicService)
         {
             _ruleRepository = ruleRepository;
             _ruleNotifier = ruleNotifier;
-            _autoRuleApplier = autoRuleApplier;
+            _topicService = topicService;
         }
 
         /// <inheritdoc />
@@ -38,7 +38,7 @@ namespace Hively.Server.Services
         public async Task<RuleDto> InsertRuleAsync(RuleDto rule, CancellationToken cancellationToken)
         {
             var createdRule = await _ruleRepository.InsertRuleAsync(rule, cancellationToken);
-            await _autoRuleApplier.SweepUntrackedTopicsAsync(cancellationToken);
+            await _topicService.ApplyRuleToAllMatchingAsync(createdRule.Id, cancellationToken);
             await _ruleNotifier.NotifyRulesChangedAsync(cancellationToken);
             return new RuleDto(createdRule);
         }
@@ -47,7 +47,7 @@ namespace Hively.Server.Services
         public async Task<RuleDto> UpdateRuleAsync(RuleDto rule, CancellationToken cancellationToken)
         {
             var updatedRule = await _ruleRepository.UpdateRuleAsync(rule, cancellationToken);
-            await _autoRuleApplier.SweepUntrackedTopicsAsync(cancellationToken);
+            await _topicService.ApplyRuleToAllMatchingAsync(updatedRule.Id, cancellationToken);
             await _ruleNotifier.NotifyRulesChangedAsync(cancellationToken);
             return new RuleDto(updatedRule);
         }

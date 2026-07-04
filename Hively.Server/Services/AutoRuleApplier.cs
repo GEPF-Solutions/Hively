@@ -9,13 +9,11 @@ namespace Hively.Server.Services
     {
         private readonly IRuleRepository _ruleRepository;
         private readonly ITopicRepository _topicRepository;
-        private readonly ITopicNotifier _topicNotifier;
 
-        public AutoRuleApplier(IRuleRepository ruleRepository, ITopicRepository topicRepository, ITopicNotifier topicNotifier)
+        public AutoRuleApplier(IRuleRepository ruleRepository, ITopicRepository topicRepository)
         {
             _ruleRepository = ruleRepository;
             _topicRepository = topicRepository;
-            _topicNotifier = topicNotifier;
         }
 
         /// <inheritdoc />
@@ -30,31 +28,6 @@ namespace Hively.Server.Services
 
             await _topicRepository.ApplyRuleAsync(topicId, rule.Id, cancellationToken);
             return true;
-        }
-
-        /// <inheritdoc />
-        public async Task<int> SweepUntrackedTopicsAsync(CancellationToken cancellationToken)
-        {
-            var rules = (await _ruleRepository.GetRulesAsync(cancellationToken)).ToList();
-            var topics = await _topicRepository.GetTopicsAsync(cancellationToken);
-            var untracked = topics.Where(t => !t.Tracked).ToList();
-
-            var appliedCount = 0;
-            foreach (var topic in untracked)
-            {
-                var rule = FindSoleAutoApplyRule(topic.Path, rules);
-                if (rule == null)
-                {
-                    continue;
-                }
-
-                await _topicRepository.ApplyRuleAsync(topic.Id, rule.Id, cancellationToken);
-                var updatedTopic = await _topicRepository.GetTopicAsync(topic.Id, cancellationToken);
-                await _topicNotifier.NotifyTopicUpdatedAsync(TopicDtoBuilder.Build(updatedTopic), cancellationToken);
-                appliedCount++;
-            }
-
-            return appliedCount;
         }
 
         // Auto-apply only kicks in when this is the *only* matching rule — same

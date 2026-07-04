@@ -35,14 +35,13 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
   const producerById = new Map(producers.map((p) => [p.id, p]));
   const schemaById = new Map(schemas.map((s) => [s.id, s]));
   const tagById = new Map(tags.map((t) => [t.id, t]));
-  const untrackedTopics = topics.filter((t) => !t.tracked);
   const filtered = rules.filter((r) => {
     const q = search.trim().toLowerCase();
     return (r.name ?? '').toLowerCase().includes(q) || r.pattern.toLowerCase().includes(q);
   });
 
   function matchCount(rulePattern: string) {
-    return untrackedTopics.filter((t) => matchTopicPattern(rulePattern, t.path)).length;
+    return topics.filter((t) => matchTopicPattern(rulePattern, t.path)).length;
   }
 
   function toggleTag(id: string) {
@@ -120,7 +119,10 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
         <Badge tone="cyan" className="!text-[9px]">
           auto
         </Badge>{' '}
-        applies itself the moment it's the only rule matching a newly-untracked topic.
+        applies itself the moment it's the only rule matching a newly-untracked topic. Saving a rule (new or edited)
+        immediately re-applies it to every topic already matching its pattern, tracked or not — so adding a schema to
+        a rule later, say, pushes onto topics it already configured without any extra step. "Apply to N now" is there
+        for topics that started matching later, without the rule itself being touched again.
       </div>
 
       <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="filter rules…" className="mb-3" />
