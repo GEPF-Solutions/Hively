@@ -48,15 +48,12 @@ export default function SchemaCard({ schema, canChange, onChangeClick }: SchemaC
           <pre className="overflow-x-auto rounded-md bg-bg p-3 font-mono text-xs leading-relaxed text-cyan">
             {formatDefinition(schema.definition)}
           </pre>
-          <div className="mt-3 flex flex-col gap-1.5">
+          <div className="mt-3 flex max-h-24 flex-col gap-1.5 overflow-y-auto pr-1">
             {history.map((h, i) => (
               <div key={h.id} className="flex items-center gap-2 text-[11.5px] text-muted">
-                <span
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ background: i === history.length - 1 ? 'oklch(0.75 0.13 200)' : 'oklch(0.45 0.012 254)' }}
-                />
+                <span className="h-1.5 w-1.5 rounded-full" style={{ background: i === 0 ? 'oklch(0.75 0.13 200)' : 'oklch(0.45 0.012 254)' }} />
                 <span className="font-mono">{h.version}</span> · {new Date(h.createdAt).toLocaleDateString()}
-                {i === history.length - 1 && <span className="font-semibold text-cyan">current</span>}
+                {i === 0 && <span className="font-semibold text-cyan">current</span>}
               </div>
             ))}
           </div>
