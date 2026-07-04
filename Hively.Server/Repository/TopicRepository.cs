@@ -50,6 +50,13 @@ namespace Hively.Server.Repository
         }
 
         /// <inheritdoc />
+        public async Task<Topic?> FindTopicByPathAsync(string path, CancellationToken cancellationToken)
+        {
+            return await TopicsWithRelations(asNoTracking: true)
+                .FirstOrDefaultAsync(x => x.Path == path, cancellationToken);
+        }
+
+        /// <inheritdoc />
         public async Task<Guid> InsertTopicAsync(TopicDto topicDto, CancellationToken cancellationToken)
         {
             var newTopic = new Topic
@@ -181,6 +188,31 @@ namespace Hively.Server.Repository
 
             oldTopic.RetiredAt = DateTime.UtcNow;
             oldTopic.MergedIntoTopicId = topic.Id;
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        /// <inheritdoc />
+        public async Task RecordIngestedMessageAsync(
+            Guid topicId,
+            string payloadJson,
+            DateTime seenAtUtc,
+            bool retained,
+            int violationCount,
+            string activityHistogramJson,
+            CancellationToken cancellationToken)
+        {
+            var topic = await _dbContext.Topics.FirstOrDefaultAsync(x => x.Id == topicId, cancellationToken);
+            if (topic == null)
+            {
+                throw new EntityNotFoundException($"Topic id {topicId} did not reference a valid topic.");
+            }
+
+            topic.LastPayload = payloadJson;
+            topic.LastSeenAt = seenAtUtc;
+            topic.Retained = retained;
+            topic.ViolationCount = violationCount;
+            topic.ActivityHistogram = activityHistogramJson;
 
             await _dbContext.SaveChangesAsync(cancellationToken);
         }

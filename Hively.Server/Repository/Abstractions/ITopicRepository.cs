@@ -5,8 +5,7 @@ namespace Hively.Server.Repository.Abstractions
 {
     /// <summary>
     /// Repository interface for managing Topic entities: CRUD, relationship
-    /// assignment, rule application, and relink acceptance. MQTT ingestion is a
-    /// separate, not-yet-built subsystem.
+    /// assignment, rule application, relink acceptance, and MQTT ingestion writes.
     /// </summary>
     public interface ITopicRepository
     {
@@ -14,6 +13,14 @@ namespace Hively.Server.Repository.Abstractions
         /// Retrieves all topics, with producer/schema/consumers/tags loaded.
         /// </summary>
         Task<IEnumerable<Topic>> GetTopicsAsync(CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Finds a topic by its exact path, with schema loaded, or null if no topic
+        /// with that path has ever been seen. Unlike <see cref="GetTopicAsync"/>, a
+        /// miss is the expected/common case for an incoming ingestion message on a
+        /// brand-new path, not an error, so this does not throw.
+        /// </summary>
+        Task<Topic?> FindTopicByPathAsync(string path, CancellationToken cancellationToken);
 
         /// <summary>
         /// Retrieves a single topic by ID, with producer/schema/consumers/tags loaded.
@@ -65,5 +72,21 @@ namespace Hively.Server.Repository.Abstractions
         /// </summary>
         /// <exception cref="EntityNotFoundException">Thrown when either topic is not found.</exception>
         Task AcceptRelinkAsync(Guid topicId, Guid oldTopicId, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Persists the fields owned exclusively by MQTT ingestion — last payload,
+        /// last-seen timestamp, retained flag, violation count, and activity
+        /// histogram — for an already-existing topic. The caller (ingestion service)
+        /// computes all of these values; this just writes them.
+        /// </summary>
+        /// <exception cref="EntityNotFoundException">Thrown when topic is not found.</exception>
+        Task RecordIngestedMessageAsync(
+            Guid topicId,
+            string payloadJson,
+            DateTime seenAtUtc,
+            bool retained,
+            int violationCount,
+            string activityHistogramJson,
+            CancellationToken cancellationToken);
     }
 }
