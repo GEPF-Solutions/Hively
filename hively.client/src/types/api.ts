@@ -97,3 +97,11 @@ export interface CurrentUser {
   email: string;
   role: UserRole;
 }
+
+export interface MqttStatus {
+  connected: boolean;
+  host: string;
+  port: number;
+  connectedAt: string | null;
+  lastDisconnectReason: string | null;
+}

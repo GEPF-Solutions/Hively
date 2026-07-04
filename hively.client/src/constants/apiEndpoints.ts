@@ -74,4 +74,8 @@ export const apiEndpoints = {
   hubs: {
     topic: '/hubs/topic',
   },
+
+  mqttStatus: {
+    base: '/api/mqtt-status',
+  },
 } as const;
