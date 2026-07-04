@@ -4,8 +4,9 @@ import ManageSchemasPanel from './panels/ManageSchemasPanel';
 import ManageRulesPanel from './panels/ManageRulesPanel';
 import ManageProducersPanel from './panels/ManageProducersPanel';
 import ManageConsumersPanel from './panels/ManageConsumersPanel';
+import ManageUsersPanel from './panels/ManageUsersPanel';
 
-type PanelName = 'tags' | 'schemas' | 'rules' | 'producers' | 'consumers';
+type PanelName = 'tags' | 'schemas' | 'rules' | 'producers' | 'consumers' | 'users';
 
 const MENU_ITEMS: { key: PanelName; label: string }[] = [
   { key: 'tags', label: 'Tags' },
@@ -13,6 +14,7 @@ const MENU_ITEMS: { key: PanelName; label: string }[] = [
   { key: 'rules', label: 'Rules' },
   { key: 'producers', label: 'Producers' },
   { key: 'consumers', label: 'Consumers' },
+  { key: 'users', label: 'Users' },
 ];
 
 export default function ManageMenu() {
@@ -53,6 +55,7 @@ export default function ManageMenu() {
       {openPanel === 'rules' && <ManageRulesPanel onClose={() => setOpenPanel(null)} />}
       {openPanel === 'producers' && <ManageProducersPanel onClose={() => setOpenPanel(null)} />}
       {openPanel === 'consumers' && <ManageConsumersPanel onClose={() => setOpenPanel(null)} />}
+      {openPanel === 'users' && <ManageUsersPanel onClose={() => setOpenPanel(null)} />}
     </div>
   );
 }
