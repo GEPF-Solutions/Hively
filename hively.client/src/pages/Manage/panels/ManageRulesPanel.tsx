@@ -6,6 +6,7 @@ import Input from '../../../components/ui/Input';
 import { ManageList, SearchableCombobox, TagPill } from '../../../components/shared';
 import { useRules } from '../../../hooks/data/useRules';
 import { useProducers } from '../../../hooks/data/useProducers';
+import { useSchemas } from '../../../hooks/data/useSchemas';
 import { useTags } from '../../../hooks/data/useTags';
 import { useTopics } from '../../../hooks/data/useTopics';
 import { ruleService } from '../../../services/ruleService';
@@ -17,6 +18,7 @@ import type { Rule } from '../../../types';
 export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
   const { rules, refetch } = useRules();
   const { producers, refetch: refetchProducers } = useProducers();
+  const { schemas } = useSchemas();
   const { tags } = useTags();
   const { topics, refetch: refetchTopics } = useTopics();
   const toast = useToast();
@@ -26,10 +28,12 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState('');
   const [pattern, setPattern] = useState('');
   const [producerId, setProducerId] = useState<string | null>(null);
+  const [schemaId, setSchemaId] = useState<string | null>(null);
   const [tagIds, setTagIds] = useState<string[]>([]);
   const [autoApply, setAutoApply] = useState(false);
 
   const producerById = new Map(producers.map((p) => [p.id, p]));
+  const schemaById = new Map(schemas.map((s) => [s.id, s]));
   const tagById = new Map(tags.map((t) => [t.id, t]));
   const untrackedTopics = topics.filter((t) => !t.tracked);
   const filtered = rules.filter((r) => {
@@ -57,6 +61,7 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
     setName(rule.name ?? '');
     setPattern(rule.pattern);
     setProducerId(rule.producerId);
+    setSchemaId(rule.schemaId);
     setTagIds(rule.tagIds);
     setAutoApply(rule.autoApply);
   }
@@ -66,6 +71,7 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
     setName('');
     setPattern('');
     setProducerId(null);
+    setSchemaId(null);
     setTagIds([]);
     setAutoApply(false);
   }
@@ -74,9 +80,9 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
     if (!pattern.trim()) return;
     try {
       if (editingId) {
-        await ruleService.updateRule({ id: editingId, name: name.trim() || null, pattern: pattern.trim(), producerId, tagIds, autoApply });
+        await ruleService.updateRule({ id: editingId, name: name.trim() || null, pattern: pattern.trim(), producerId, schemaId, tagIds, autoApply });
       } else {
-        await ruleService.insertRule({ name: name.trim() || null, pattern: pattern.trim(), producerId, tagIds, autoApply });
+        await ruleService.insertRule({ name: name.trim() || null, pattern: pattern.trim(), producerId, schemaId, tagIds, autoApply });
       }
       cancelEdit();
       refetch();
@@ -107,8 +113,10 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
   return (
     <Modal isOpen onClose={onClose} title="Manage Rules" maxWidth="lg" footer={<Button onClick={onClose}>Done</Button>}>
       <div className="mb-4 text-xs leading-relaxed text-muted">
-        Auto-assign producer &amp; tags to topics matching an MQTT-style pattern (+ = one level, # = rest). Use for
-        bulk-managing many topics from the same producer, or to survive a namespace reshuffle. A rule marked{' '}
+        Auto-assign a producer, schema &amp; tags to topics matching an MQTT-style pattern (+ = one level, # = rest).
+        Use for bulk-managing many topics from the same producer, or to survive a namespace reshuffle — consumers
+        aren't assignable here since who consumes a topic doesn't follow from its pattern the way producer/schema do,
+        so that stays a manual per-topic call. A rule marked{' '}
         <Badge tone="cyan" className="!text-[9px]">
           auto
         </Badge>{' '}
@@ -130,6 +138,9 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
                 {rule.name && <div className="truncate font-mono text-[11px] text-muted">{rule.pattern}</div>}
                 <div className="mt-0.5 text-[11.5px] text-muted">
                   producer: {rule.producerId ? (producerById.get(rule.producerId)?.name ?? 'Unknown') : 'Unknown'}
+                </div>
+                <div className="text-[11.5px] text-muted">
+                  schema: {rule.schemaId ? (schemaById.get(rule.schemaId)?.name ?? 'Unknown') : 'None'}
                 </div>
                 <div className="mt-1.5 flex flex-wrap gap-1">
                   {rule.tagIds.map((id) => {
@@ -173,6 +184,16 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
             noneLabel="Unknown"
             maxHeight={120}
             onCreate={handleCreateProducer}
+          />
+        </div>
+        <div className="mb-2.5">
+          <SearchableCombobox
+            options={schemas.map((s) => ({ id: s.id, label: s.name }))}
+            selectedId={schemaId}
+            onSelect={setSchemaId}
+            placeholder="type to search schemas…"
+            noneLabel="None"
+            maxHeight={120}
           />
         </div>
         <div className="mb-3 flex flex-wrap gap-1.5">

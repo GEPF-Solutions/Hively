@@ -15,7 +15,11 @@ public partial class Rule
 
     public bool AutoApply { get; set; }
 
+    public Guid? SchemaId { get; set; }
+
     public virtual Producer? Producer { get; set; }
+
+    public virtual Schema? Schema { get; set; }
 
     public virtual ICollection<Tag> Tags { get; set; } = new List<Tag>();
 }

@@ -164,6 +164,7 @@ namespace Hively.Server.Repository
 
             topic.Tracked = true;
             topic.ProducerId = rule.ProducerId;
+            topic.SchemaId = rule.SchemaId;
             UnionTags(topic, rule.Tags);
 
             await _dbContext.SaveChangesAsync(cancellationToken);

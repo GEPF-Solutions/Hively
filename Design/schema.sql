@@ -94,7 +94,11 @@ CREATE TABLE topic_tags (
     CONSTRAINT fk_topic_tags_tag FOREIGN KEY (tag_id) REFERENCES tags (id) ON DELETE CASCADE
 );
 
--- Bulk-assignment rule: MQTT-pattern (+/# wildcards) -> producer + tags to apply.
+-- Bulk-assignment rule: MQTT-pattern (+/# wildcards) -> producer + schema + tags
+-- to apply. Consumers are deliberately not assignable by rule — unlike
+-- producer/schema, which physical device/measurement produces a topic is
+-- determined by its pattern, but who *consumes* it doesn't follow from the
+-- pattern the same way, so that stays a manual per-topic decision.
 -- name is optional — an admin managing a handful of rules can just read the
 -- pattern, but it's easy to lose track once there are many; falls back to
 -- showing the pattern when not set.
@@ -107,8 +111,10 @@ CREATE TABLE rules (
     name        text,
     pattern     text NOT NULL,
     producer_id uuid,
+    schema_id   uuid,
     auto_apply  boolean NOT NULL DEFAULT false,
-    CONSTRAINT fk_rules_producer FOREIGN KEY (producer_id) REFERENCES producers (id) ON DELETE SET NULL
+    CONSTRAINT fk_rules_producer FOREIGN KEY (producer_id) REFERENCES producers (id) ON DELETE SET NULL,
+    CONSTRAINT fk_rules_schema FOREIGN KEY (schema_id) REFERENCES schemas (id) ON DELETE SET NULL
 );
 
 CREATE TABLE rule_tags (

@@ -74,11 +74,17 @@ public partial class HivelyContext : DbContext
             entity.Property(e => e.Name).HasColumnName("name");
             entity.Property(e => e.Pattern).HasColumnName("pattern");
             entity.Property(e => e.ProducerId).HasColumnName("producer_id");
+            entity.Property(e => e.SchemaId).HasColumnName("schema_id");
 
             entity.HasOne(d => d.Producer).WithMany(p => p.Rules)
                 .HasForeignKey(d => d.ProducerId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("fk_rules_producer");
+
+            entity.HasOne(d => d.Schema).WithMany(p => p.Rules)
+                .HasForeignKey(d => d.SchemaId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("fk_rules_schema");
 
             entity.HasMany(d => d.Tags).WithMany(p => p.Rules)
                 .UsingEntity<Dictionary<string, object>>(

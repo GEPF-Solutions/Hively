@@ -54,6 +54,7 @@ namespace Hively.Server.Repository
                 Name = ruleDto.Name,
                 Pattern = ruleDto.Pattern,
                 ProducerId = ruleDto.ProducerId,
+                SchemaId = ruleDto.SchemaId,
                 AutoApply = ruleDto.AutoApply,
                 Tags = tags
             };
@@ -79,6 +80,7 @@ namespace Hively.Server.Repository
             ruleToUpdate.Name = ruleDto.Name;
             ruleToUpdate.Pattern = ruleDto.Pattern;
             ruleToUpdate.ProducerId = ruleDto.ProducerId;
+            ruleToUpdate.SchemaId = ruleDto.SchemaId;
             ruleToUpdate.AutoApply = ruleDto.AutoApply;
 
             var tags = await _dbContext.Tags

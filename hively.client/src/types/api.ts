@@ -40,6 +40,7 @@ export interface Rule {
   name: string | null;
   pattern: string;
   producerId: string | null;
+  schemaId: string | null;
   tagIds: string[];
   /** When a newly-untracked topic matches exactly this one rule (and no other), apply it immediately. */
   autoApply: boolean;

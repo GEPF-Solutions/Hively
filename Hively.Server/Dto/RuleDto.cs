@@ -14,6 +14,8 @@ namespace Hively.Server.Dto
 
         public Guid? ProducerId { get; set; }
 
+        public Guid? SchemaId { get; set; }
+
         public List<string> TagIds { get; set; } = new();
 
         /// <summary>
@@ -28,6 +30,7 @@ namespace Hively.Server.Dto
             Name = rule.Name;
             Pattern = rule.Pattern;
             ProducerId = rule.ProducerId;
+            SchemaId = rule.SchemaId;
             TagIds = rule.Tags.Select(t => t.Id).ToList();
             AutoApply = rule.AutoApply;
         }

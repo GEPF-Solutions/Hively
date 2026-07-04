@@ -87,12 +87,13 @@ Freely admin-defined colored pill.
 Multiple tags per topic. No additional "status" concept beyond tags + the tracked/untracked + compliant/non-compliant states.
 
 ### Rule
-Bulk-assignment tool for admins managing many topics from the same producer, or recovering from a namespace reshuffle (see "Relocation & Rules" below).
+Bulk-assignment tool for admins managing many topics from the same producer, or recovering from a namespace reshuffle (see "Relocation & Rules" below). Deliberately doesn't assign consumers — which physical device produces a topic (and what schema its payload should match) follows from the topic's pattern, but who *consumes* it doesn't follow the same way, so that stays a manual per-topic decision.
 | Field | Type |
 |---|---|
 | `id` | `string` |
 | `pattern` | `string` | MQTT-style topic filter using `+` (single-level wildcard) and `#` (multi-level wildcard), e.g. `acme/+/+/+/+/+/press-01/#`. |
 | `producerId` | `Producer?` | Producer to assign when applied. |
+| `schemaId` | `Schema?` | Schema to assign when applied. |
 | `tagIds` | `Tag[]` | Tags to assign (unioned with the topic's existing tags) when applied. |
 
 ---
@@ -104,8 +105,8 @@ Bulk-assignment tool for admins managing many topics from the same producer, or 
 - Admins can click **Configure** on any untracked row to open a modal where they set producer, consumers, schema, and tags, then **"Mark as Managed"** flips `tracked=true`.
 - A sidebar callout shows a live count of untracked topics with a one-click filter to see only those.
 
-### 2. Rules — bulk producer/tag assignment
-Real UNS deployments have many sub-topics per physical device (e.g. `press-01/temperature`, `press-01/pressure`, `press-01/vibration`) that all share one producer. Configuring each one-by-one doesn't scale. A **Rule** is a saved MQTT-pattern (`+`/`#` wildcards) + producer + tag set:
+### 2. Rules — bulk producer/schema/tag assignment
+Real UNS deployments have many sub-topics per physical device (e.g. `press-01/temperature`, `press-01/pressure`, `press-01/vibration`) that all share one producer and, usually, one schema per measurement. Configuring each one-by-one doesn't scale. A **Rule** is a saved MQTT-pattern (`+`/`#` wildcards) + producer + schema + tag set (consumers deliberately excluded — see the Rule entity note above):
 - When an untracked topic matches exactly one rule, the row shows a one-click **"⚡ Apply rule"** action.
 - When an untracked topic matches **multiple** rules, don't guess — surface a conflict badge ("⚠ N rules match") that routes the admin to the Configure modal, where all matching rules are listed ranked by **specificity** (more literal path segments = more specific; `#` counts as least specific, `+` counts as half), the most specific pre-labeled "recommended," and the admin picks one explicitly.
 - The Manage Rules panel also supports **"Apply to N now"** — retroactively bulk-apply a rule to every currently-untracked topic it matches.
