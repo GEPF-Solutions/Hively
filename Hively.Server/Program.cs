@@ -57,6 +57,7 @@ public class Program
 
         builder.Services.Configure<MqttBrokerSettings>(builder.Configuration.GetSection("MqttBroker"));
         builder.Services.AddScoped<ITopicIngestionService, TopicIngestionService>();
+        builder.Services.AddSingleton<IMqttStatusService, MqttStatusService>();
         builder.Services.AddHostedService<MqttIngestionService>();
 
         builder.Services.AddSignalR();

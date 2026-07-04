@@ -25,5 +25,13 @@ namespace Hively.Server.Hubs
         /// A topic was deleted.
         /// </summary>
         Task TopicRemoved(Guid topicId, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// The MQTT broker connection went up or down (see
+        /// <see cref="Services.Abstractions.IMqttStatusService"/>). Not strictly a
+        /// "topic" event, but pushed through the same hub rather than standing up
+        /// a second SignalR connection for one small status indicator.
+        /// </summary>
+        Task BrokerStatusChanged(MqttStatusDto status, CancellationToken cancellationToken);
     }
 }
