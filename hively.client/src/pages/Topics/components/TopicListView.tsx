@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopicRow from './TopicRow';
 import ConfigureTopicModal from '../modals/ConfigureTopicModal';
+import AddTopicModal from '../modals/AddTopicModal';
+import Button from '../../../components/ui/Button';
 import { useDisplayGroups } from '../hooks/useDisplayGroups';
 import { findMatchingRules } from '../../../utils/ruleMatch';
 import { useToast } from '../../../contexts/ToastContext';
@@ -41,6 +43,7 @@ export default function TopicListView({
   const toast = useToast();
   const groups = useDisplayGroups(filtered, viewMode);
   const [configuringTopic, setConfiguringTopic] = useState<Topic | null>(null);
+  const [addTopicOpen, setAddTopicOpen] = useState(false);
 
   async function handleQuickApplyRule(topicId: string, ruleId: string) {
     try {
@@ -55,23 +58,30 @@ export default function TopicListView({
     <div className="px-7 py-5">
       <div className="mb-4 flex items-center justify-between">
         <div className="text-[13.5px] text-muted">{filtered.length} topics</div>
-        <div className="flex gap-0.5 rounded-lg border border-border bg-panel p-0.5">
-          <button
-            onClick={() => onViewModeChange('hierarchy')}
-            className={`rounded-md px-3 py-1.5 text-xs font-medium ${
-              viewMode === 'hierarchy' ? 'bg-cyan text-[oklch(0.15_0.02_200)]' : 'text-muted'
-            }`}
-          >
-            Hierarchy
-          </button>
-          <button
-            onClick={() => onViewModeChange('list')}
-            className={`rounded-md px-3 py-1.5 text-xs font-medium ${
-              viewMode === 'list' ? 'bg-cyan text-[oklch(0.15_0.02_200)]' : 'text-muted'
-            }`}
-          >
-            List
-          </button>
+        <div className="flex items-center gap-2.5">
+          {isAdmin && (
+            <Button variant="secondary" size="sm" onClick={() => setAddTopicOpen(true)}>
+              + Add Topic
+            </Button>
+          )}
+          <div className="flex gap-0.5 rounded-lg border border-border bg-panel p-0.5">
+            <button
+              onClick={() => onViewModeChange('hierarchy')}
+              className={`rounded-md px-3 py-1.5 text-xs font-medium ${
+                viewMode === 'hierarchy' ? 'bg-cyan text-[oklch(0.15_0.02_200)]' : 'text-muted'
+              }`}
+            >
+              Hierarchy
+            </button>
+            <button
+              onClick={() => onViewModeChange('list')}
+              className={`rounded-md px-3 py-1.5 text-xs font-medium ${
+                viewMode === 'list' ? 'bg-cyan text-[oklch(0.15_0.02_200)]' : 'text-muted'
+              }`}
+            >
+              List
+            </button>
+          </div>
         </div>
       </div>
 
@@ -115,6 +125,10 @@ export default function TopicListView({
           onClose={() => setConfiguringTopic(null)}
           onSaved={() => setConfiguringTopic(null)}
         />
+      )}
+
+      {addTopicOpen && (
+        <AddTopicModal onClose={() => setAddTopicOpen(false)} onCreated={(created) => setConfiguringTopic(created)} />
       )}
     </div>
   );
