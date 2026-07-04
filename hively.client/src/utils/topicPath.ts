@@ -24,12 +24,3 @@ export function levelName(depth: number): string {
 export function segmentsOf(path: string): string[] {
   return path.split('/');
 }
-
-/** "enterprise:acme  region:amer  ..." style crumb for everything above the leaf segment. */
-export function segmentCrumb(path: string): string {
-  const segments = segmentsOf(path);
-  return segments
-    .slice(0, -1)
-    .map((seg, i) => `${levelName(i)}:${seg}`)
-    .join('  ');
-}

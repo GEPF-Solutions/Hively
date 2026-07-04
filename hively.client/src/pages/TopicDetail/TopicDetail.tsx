@@ -22,7 +22,7 @@ import { useTags } from '../../hooks/data/useTags';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { topicService } from '../../services/topicService';
-import { segmentCrumb, segmentsOf } from '../../utils/topicPath';
+import { segmentsOf } from '../../utils/topicPath';
 import type { TopicConfigure } from '../../types';
 
 export default function TopicDetail() {
@@ -108,7 +108,7 @@ export default function TopicDetail() {
   }
 
   return (
-    <div className="h-full overflow-y-auto px-8 py-6" style={{ maxWidth: 1180 }}>
+    <div className="h-full overflow-y-auto px-8 py-6">
       <div className="mb-4 flex items-center justify-between">
         <Button variant="secondary" size="sm" onClick={() => navigate('/topics')}>
           ← Back to topics
@@ -131,7 +131,6 @@ export default function TopicDetail() {
         </div>
       )}
 
-      <div className="mb-1 font-mono text-xs text-muted">{segmentCrumb(topic.path)}</div>
       <div className="mb-1.5 flex flex-wrap items-baseline gap-3.5">
         <div className="text-2xl font-semibold text-text">{leaf}</div>
         {topic.compliant === true && <Badge tone="cyan">Compliant</Badge>}
@@ -162,7 +161,7 @@ export default function TopicDetail() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-3">
         <ProducerCard producer={producer} canChange={isAdmin} onChangeClick={() => setChangingProducer(true)} />
         <ConsumerCard consumers={topicConsumers} canEdit={isAdmin} onToggle={toggleConsumer} />
         <SchemaCard schema={schema} canChange={isAdmin} onChangeClick={() => setChangingSchema(true)} />
