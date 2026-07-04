@@ -18,10 +18,27 @@ namespace Hively.Server.Controllers
     public class AuthController : ControllerBase
     {
         private readonly ILogger<AuthController> _logger;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(ILogger<AuthController> logger)
+        public AuthController(ILogger<AuthController> logger, IConfiguration configuration)
         {
             _logger = logger;
+            _configuration = configuration;
+        }
+
+        /// <summary>
+        /// Which external providers are enabled (Authentication:{Provider}:Enabled in
+        /// config) — anonymous, since the login page needs this before anyone's
+        /// signed in, to know which buttons to show at all.
+        /// </summary>
+        [HttpGet("providers")]
+        public IActionResult Providers()
+        {
+            return Ok(new
+            {
+                google = _configuration.GetValue<bool>("Authentication:Google:Enabled"),
+                entra = _configuration.GetValue<bool>("Authentication:Entra:Enabled")
+            });
         }
 
         /// <summary>
@@ -30,6 +47,11 @@ namespace Hively.Server.Controllers
         [HttpGet("login/google")]
         public IActionResult LoginGoogle([FromQuery] string returnUrl = "/")
         {
+            if (!_configuration.GetValue<bool>("Authentication:Google:Enabled"))
+            {
+                return NotFound("Google sign-in is not enabled.");
+            }
+
             return Challenge(BuildProperties(returnUrl), GoogleDefaults.AuthenticationScheme);
         }
 
@@ -39,6 +61,11 @@ namespace Hively.Server.Controllers
         [HttpGet("login/entra")]
         public IActionResult LoginEntra([FromQuery] string returnUrl = "/")
         {
+            if (!_configuration.GetValue<bool>("Authentication:Entra:Enabled"))
+            {
+                return NotFound("Entra sign-in is not enabled.");
+            }
+
             return Challenge(BuildProperties(returnUrl), "Entra");
         }
 

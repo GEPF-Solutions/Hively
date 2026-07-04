@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hively.Server;
@@ -64,7 +65,13 @@ public class Program
 
         builder.Services.AddSignalR();
 
-        builder.Services.AddAuthentication(options =>
+        // Each provider is opt-in via Authentication:{Provider}:Enabled (default
+        // false) — a deployment only offering Entra, say, shouldn't even register
+        // Google's handler, let alone need real credentials configured for it.
+        var googleEnabled = builder.Configuration.GetValue<bool>("Authentication:Google:Enabled");
+        var entraEnabled = builder.Configuration.GetValue<bool>("Authentication:Entra:Enabled");
+
+        var authBuilder = builder.Services.AddAuthentication(options =>
         {
             options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -83,48 +90,99 @@ public class Program
                 ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
                 return Task.CompletedTask;
             };
-        })
-        .AddGoogle(options =>
-        {
-            options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
-            options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
-            options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            options.Events.OnCreatingTicket = async ctx =>
-            {
-                var email = ctx.Identity!.FindFirst(ClaimTypes.Email)?.Value
-                    ?? throw new InvalidOperationException("Google login did not return an email claim.");
-                var subject = ctx.Identity.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                    ?? throw new InvalidOperationException("Google login did not return a subject claim.");
-
-                var userService = ctx.HttpContext.RequestServices.GetRequiredService<IUserService>();
-                var user = await userService.UpsertFromExternalLoginAsync("google", subject, email, ctx.HttpContext.RequestAborted);
-                ctx.Identity.AddClaim(new Claim(ClaimTypes.Role, user.Role));
-            };
-        })
-        .AddOpenIdConnect("Entra", options =>
-        {
-            var tenantId = builder.Configuration["Authentication:Entra:TenantId"];
-            options.Authority = $"https://login.microsoftonline.com/{tenantId}/v2.0";
-            options.ClientId = builder.Configuration["Authentication:Entra:ClientId"];
-            options.ClientSecret = builder.Configuration["Authentication:Entra:ClientSecret"];
-            options.ResponseType = "code";
-            options.SaveTokens = false;
-            options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            options.Scope.Add("email");
-            options.Events.OnTokenValidated = async ctx =>
-            {
-                var principal = ctx.Principal!;
-                var email = principal.FindFirst(ClaimTypes.Email)?.Value
-                    ?? principal.FindFirst("preferred_username")?.Value
-                    ?? throw new InvalidOperationException("Entra login did not return an email claim.");
-                var subject = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                    ?? throw new InvalidOperationException("Entra login did not return a subject claim.");
-
-                var userService = ctx.HttpContext.RequestServices.GetRequiredService<IUserService>();
-                var user = await userService.UpsertFromExternalLoginAsync("entra", subject, email, ctx.HttpContext.RequestAborted);
-                ((ClaimsIdentity)principal.Identity!).AddClaim(new Claim(ClaimTypes.Role, user.Role));
-            };
         });
+
+        if (googleEnabled)
+        {
+            authBuilder.AddGoogle(options =>
+            {
+                options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
+                options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
+                options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+
+                // Restricts Google login to a single Google Workspace domain, mirroring
+                // what Entra's TenantId already does — optional so local dev without a
+                // Workspace domain configured still allows any Google account.
+                var allowedHostedDomain = builder.Configuration["Authentication:Google:AllowedHostedDomain"];
+                if (!string.IsNullOrEmpty(allowedHostedDomain))
+                {
+                    // Pre-fills Google's account chooser to this domain. A UX nicety
+                    // only, NOT the actual security control — a client could strip this
+                    // query param, which is why OnCreatingTicket below re-checks server-side.
+                    options.Events.OnRedirectToAuthorizationEndpoint = ctx =>
+                    {
+                        var uri = QueryHelpers.AddQueryString(ctx.RedirectUri, "hd", allowedHostedDomain);
+                        ctx.Response.Redirect(uri);
+                        return Task.CompletedTask;
+                    };
+                }
+
+                options.Events.OnCreatingTicket = async ctx =>
+                {
+                    if (!string.IsNullOrEmpty(allowedHostedDomain))
+                    {
+                        // 'hd' (hosted domain) is only present on Workspace accounts, never
+                        // on personal @gmail.com ones — absent or mismatched both fail.
+                        var hostedDomain = ctx.User.TryGetProperty("hd", out var hd) ? hd.GetString() : null;
+                        if (!string.Equals(hostedDomain, allowedHostedDomain, StringComparison.OrdinalIgnoreCase))
+                        {
+                            ctx.Fail($"Google account is not part of the '{allowedHostedDomain}' organization.");
+                            return;
+                        }
+                    }
+
+                    var email = ctx.Identity!.FindFirst(ClaimTypes.Email)?.Value
+                        ?? throw new InvalidOperationException("Google login did not return an email claim.");
+                    var subject = ctx.Identity.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                        ?? throw new InvalidOperationException("Google login did not return a subject claim.");
+
+                    var userService = ctx.HttpContext.RequestServices.GetRequiredService<IUserService>();
+                    var user = await userService.UpsertFromExternalLoginAsync("google", subject, email, ctx.HttpContext.RequestAborted);
+                    ctx.Identity.AddClaim(new Claim(ClaimTypes.Role, user.Role));
+                };
+                options.Events.OnRemoteFailure = ctx =>
+                {
+                    ctx.HandleResponse();
+                    ctx.Response.Redirect("/login?error=access_denied");
+                    return Task.CompletedTask;
+                };
+            });
+        }
+
+        if (entraEnabled)
+        {
+            authBuilder.AddOpenIdConnect("Entra", options =>
+            {
+                var tenantId = builder.Configuration["Authentication:Entra:TenantId"];
+                options.Authority = $"https://login.microsoftonline.com/{tenantId}/v2.0";
+                options.ClientId = builder.Configuration["Authentication:Entra:ClientId"];
+                options.ClientSecret = builder.Configuration["Authentication:Entra:ClientSecret"];
+                options.ResponseType = "code";
+                // Force a GET callback (?code=...&state=...) instead of the handler's
+                // form_post default — a POST landing on /signin-oidc through the local
+                // dev proxy chain (Vite -> SpaProxy -> Kestrel) is far more fragile than
+                // a plain GET, and was the actual cause of "message.State is null or
+                // empty" (the form body wasn't arriving intact). Google's OAuth handler
+                // never hit this since it already defaults to a query-string callback.
+                options.ResponseMode = "query";
+                options.SaveTokens = false;
+                options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.Scope.Add("email");
+                options.Events.OnTokenValidated = async ctx =>
+                {
+                    var principal = ctx.Principal!;
+                    var email = principal.FindFirst(ClaimTypes.Email)?.Value
+                        ?? principal.FindFirst("preferred_username")?.Value
+                        ?? throw new InvalidOperationException("Entra login did not return an email claim.");
+                    var subject = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                        ?? throw new InvalidOperationException("Entra login did not return a subject claim.");
+
+                    var userService = ctx.HttpContext.RequestServices.GetRequiredService<IUserService>();
+                    var user = await userService.UpsertFromExternalLoginAsync("entra", subject, email, ctx.HttpContext.RequestAborted);
+                    ((ClaimsIdentity)principal.Identity!).AddClaim(new Claim(ClaimTypes.Role, user.Role));
+                };
+            });
+        }
 
         builder.Services.AddControllers();
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
