@@ -132,6 +132,20 @@ export default function Graph() {
                     strokeOpacity={edge.opacity}
                   />
                 ))}
+                {/* Traveling dash overlay showing producer -> topic -> consumer flow direction. */}
+                {graph.edges.map((edge, i) => (
+                  <line
+                    key={`flow-${i}`}
+                    className="graph-flow-edge"
+                    x1={edge.x1}
+                    y1={edge.y1}
+                    x2={edge.x2}
+                    y2={edge.y2}
+                    stroke={edge.stroke}
+                    strokeWidth={2}
+                    style={{ animationDirection: edge.reversed ? 'reverse' : 'normal' }}
+                  />
+                ))}
                 {graph.nodes.map((node) => (
                   <circle
                     key={node.key}

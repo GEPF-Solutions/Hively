@@ -36,6 +36,15 @@ export interface GraphEdge {
   y2: number;
   stroke: string;
   opacity: number;
+  /**
+   * True when (x1,y1)->(x2,y2) runs opposite to the real MQTT dataflow
+   * direction (producer publishes -> topic -> consumers receive). The ring
+   * layout always draws from the focal node outward, which only happens to
+   * match that direction when the focal node itself is upstream (a producer,
+   * or the topic when drawing its producer/consumer spokes toward the
+   * consumer side) — every other case needs the animated flow reversed.
+   */
+  reversed: boolean;
 }
 
 export interface GraphLayout {
@@ -124,7 +133,8 @@ export function useGraphLayout(
         const x = CX - R1;
         const y = CY;
         nodes.push(mk(`p-${topic.producerId}`, x, y, 20, 'producer', label('producer', topic.producerId), () => onFocus('producer', topic.producerId!)));
-        edges.push({ x1: CX, y1: CY, x2: x, y2: y, stroke: graphNodeStyle('producer').stroke, opacity: 0.7 });
+        // drawn topic(focal) -> producer, but the real flow is producer -> topic
+        edges.push({ x1: CX, y1: CY, x2: x, y2: y, stroke: graphNodeStyle('producer').stroke, opacity: 0.7, reversed: true });
       }
 
       const n = topic.consumerIds.length;
@@ -134,9 +144,15 @@ export function useGraphLayout(
         const x = CX + R1 * Math.cos(ang);
         const y = CY + R1 * Math.sin(ang);
         nodes.push(mk(`c-${cid}`, x, y, 18, 'consumer', label('consumer', cid), () => onFocus('consumer', cid)));
-        edges.push({ x1: CX, y1: CY, x2: x, y2: y, stroke: graphNodeStyle('consumer').stroke, opacity: 0.7 });
+        // topic(focal) -> consumer matches the real flow direction already
+        edges.push({ x1: CX, y1: CY, x2: x, y2: y, stroke: graphNodeStyle('consumer').stroke, opacity: 0.7, reversed: false });
       });
     } else {
+      // Ring layout always draws focal -> ring1 -> ring2. That matches the
+      // real producer -> topic -> consumer flow when focal is the producer,
+      // but runs backward when focal is the consumer.
+      const flowReversed = focalType === 'consumer';
+
       const relTopics = topics.filter((t) => (focalType === 'producer' ? t.producerId === focalId : t.consumerIds.includes(focalId)));
       const n = relTopics.length;
       const farMap = new Map<string, { id: string; type: GraphEntityType; parents: { x: number; y: number }[] }>();
@@ -147,7 +163,7 @@ export function useGraphLayout(
         const y = CY + R1 * Math.sin(ang);
         const leaf = segmentsOf(t.path).at(-1) ?? t.path;
         nodes.push(mk(`t-${t.id}`, x, y, 15, 'topic', leaf, () => onFocus('topic', t.id)));
-        edges.push({ x1: CX, y1: CY, x2: x, y2: y, stroke: graphNodeStyle('topic').stroke, opacity: 0.6 });
+        edges.push({ x1: CX, y1: CY, x2: x, y2: y, stroke: graphNodeStyle('topic').stroke, opacity: 0.6, reversed: flowReversed });
 
         const farType: GraphEntityType = focalType === 'producer' ? 'consumer' : 'producer';
         const farIds = focalType === 'producer' ? t.consumerIds : t.producerId ? [t.producerId] : [];
@@ -166,7 +182,9 @@ export function useGraphLayout(
         const x = CX + R2 * Math.cos(ang);
         const y = CY + R2 * Math.sin(ang);
         nodes.push(mk(`${f.type}2-${f.id}`, x, y, 15, f.type, label(f.type, f.id), () => onFocus(f.type, f.id)));
-        f.parents.forEach((p) => edges.push({ x1: p.x, y1: p.y, x2: x, y2: y, stroke: graphNodeStyle(f.type).stroke, opacity: 0.35 }));
+        f.parents.forEach((p) =>
+          edges.push({ x1: p.x, y1: p.y, x2: x, y2: y, stroke: graphNodeStyle(f.type).stroke, opacity: 0.35, reversed: flowReversed }),
+        );
       });
     }
 

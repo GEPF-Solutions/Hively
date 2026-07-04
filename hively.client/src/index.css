@@ -33,3 +33,16 @@ body {
 #root {
   min-height: 100svh;
 }
+
+/* Graph view: traveling dash overlay indicating producer -> topic -> consumer
+   dataflow direction (see pages/Graph/hooks/useGraphLayout.ts's `reversed` flag). */
+@keyframes graph-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.graph-flow-edge {
+  stroke-dasharray: 4 20;
+  animation: graph-flow 1.1s linear infinite;
+}
