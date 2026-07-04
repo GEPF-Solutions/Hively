@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using Hively.Server.Dto;
+using Hively.Server.Services.Abstractions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
@@ -8,10 +10,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace Hively.Server.Controllers
 {
     /// <summary>
-    /// Controller for the login/logout flow. Both external providers sign into the
-    /// same cookie scheme (see Program.cs); app-level role is looked up from our own
-    /// Users table via IUserService.UpsertFromExternalLoginAsync, called from each
-    /// provider's post-authentication event (see Program.cs), not from here.
+    /// Controller for the login/logout flow. External providers (Google, Entra) sign
+    /// into the same cookie scheme as basic auth (see Program.cs); app-level role is
+    /// looked up from our own Users table via IUserService.UpsertFromExternalLoginAsync,
+    /// called from each provider's post-authentication event for Google/Entra, and
+    /// directly from LoginBasic below since basic auth has no handler middleware.
     /// </summary>
     [ApiController]
     [Route("api/auth")]
@@ -19,17 +22,19 @@ namespace Hively.Server.Controllers
     {
         private readonly ILogger<AuthController> _logger;
         private readonly IConfiguration _configuration;
+        private readonly IUserService _userService;
 
-        public AuthController(ILogger<AuthController> logger, IConfiguration configuration)
+        public AuthController(ILogger<AuthController> logger, IConfiguration configuration, IUserService userService)
         {
             _logger = logger;
             _configuration = configuration;
+            _userService = userService;
         }
 
         /// <summary>
-        /// Which external providers are enabled (Authentication:{Provider}:Enabled in
-        /// config) — anonymous, since the login page needs this before anyone's
-        /// signed in, to know which buttons to show at all.
+        /// Which providers are enabled (Authentication:{Provider}:Enabled in config)
+        /// — anonymous, since the login page needs this before anyone's signed in, to
+        /// know which buttons/form to show at all.
         /// </summary>
         [HttpGet("providers")]
         public IActionResult Providers()
@@ -37,8 +42,47 @@ namespace Hively.Server.Controllers
             return Ok(new
             {
                 google = _configuration.GetValue<bool>("Authentication:Google:Enabled"),
-                entra = _configuration.GetValue<bool>("Authentication:Entra:Enabled")
+                entra = _configuration.GetValue<bool>("Authentication:Entra:Enabled"),
+                basic = _configuration.GetValue<bool>("Authentication:Basic:Enabled")
             });
+        }
+
+        /// <summary>
+        /// Signs in with the single username/password configured via
+        /// Authentication:Basic:Username/Password — for self-hosted setups with no
+        /// Entra tenant or Google Workspace domain available. Compared in cleartext
+        /// for now, not hashed.
+        /// </summary>
+        [HttpPost("login/basic")]
+        public async Task<IActionResult> LoginBasic([FromBody] BasicLoginRequestDto request, CancellationToken cancellationToken)
+        {
+            if (!_configuration.GetValue<bool>("Authentication:Basic:Enabled"))
+            {
+                return NotFound("Basic sign-in is not enabled.");
+            }
+
+            var configuredUsername = _configuration["Authentication:Basic:Username"];
+            var configuredPassword = _configuration["Authentication:Basic:Password"];
+            if (request.Username != configuredUsername || request.Password != configuredPassword)
+            {
+                _logger.LogWarning("Failed basic-auth login attempt for username {Username}.", request.Username);
+                return Unauthorized("Invalid username or password.");
+            }
+
+            var user = await _userService.UpsertFromExternalLoginAsync("basic", request.Username, request.Username, cancellationToken);
+
+            var identity = new ClaimsIdentity(
+                [
+                    new Claim(ClaimTypes.Email, request.Username),
+                    new Claim(ClaimTypes.NameIdentifier, request.Username),
+                    new Claim(ClaimTypes.Role, user.Role)
+                ],
+                CookieAuthenticationDefaults.AuthenticationScheme);
+
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
+            _logger.LogInformation("User {Username} logged in via basic auth.", request.Username);
+
+            return Ok(new { email = request.Username, role = user.Role });
         }
 
         /// <summary>

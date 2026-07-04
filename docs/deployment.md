@@ -48,7 +48,7 @@ and what's optional.
 | `MqttBroker__ClientId` | MQTT client ID the ingestion service connects as. |
 | `MqttBroker__UseTls` | `true`/`false` — whether to connect over TLS. |
 
-At least one of the two providers below needs `Enabled=true`, or there's no way to log in at all — `AuthController.Providers` (`GET /api/auth/providers`) is what the frontend's login page queries to decide which buttons to show.
+At least one of the three providers below needs `Enabled=true`, or there's no way to log in at all — `AuthController.Providers` (`GET /api/auth/providers`) is what the frontend's login page queries to decide which buttons/form to show.
 
 | Variable | Purpose |
 |---|---|
@@ -59,6 +59,9 @@ At least one of the two providers below needs `Enabled=true`, or there's no way 
 | `Authentication__Entra__ClientId` | Required if Entra is enabled. Entra ID (Azure AD) app registration client ID. |
 | `Authentication__Entra__ClientSecret` | Required if Entra is enabled. Entra ID app registration client secret. Treat as a secret. |
 | `Authentication__Entra__TenantId` | Required if Entra is enabled. Entra tenant ID — pins `AddOpenIdConnect`'s authority to a single org tenant, restricting Microsoft login to that org (see `Program.cs`). |
+| `Authentication__Basic__Enabled` | `true`/`false` (default `false`) — turns on the single-username/password login, for a self-hosted setup with no Entra tenant or Google Workspace domain available. Neither of the two rows below matter unless this is `true`. |
+| `Authentication__Basic__Username` | Required if Basic is enabled. The one login username. |
+| `Authentication__Basic__Password` | Required if Basic is enabled. Compared in cleartext, not hashed, for now — treat as a secret regardless, and prefer Google/Entra over this when either is available. |
 
 ## Optional
 

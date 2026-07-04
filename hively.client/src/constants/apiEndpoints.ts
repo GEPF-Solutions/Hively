@@ -7,6 +7,7 @@ export const apiEndpoints = {
   auth: {
     loginGoogle: (returnUrl: string) => `/api/auth/login/google?returnUrl=${encodeURIComponent(returnUrl)}`,
     loginEntra: (returnUrl: string) => `/api/auth/login/entra?returnUrl=${encodeURIComponent(returnUrl)}`,
+    loginBasic: '/api/auth/login/basic',
     logout: '/api/auth/logout',
     me: '/api/auth/me',
     providers: '/api/auth/providers',

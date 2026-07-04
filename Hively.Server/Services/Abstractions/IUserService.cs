@@ -18,8 +18,10 @@ namespace Hively.Server.Services.Abstractions
         Task<UserDto> GetUserAsync(Guid userId, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Resolves or creates the User for an external login (called from the
-        /// auth handlers' post-authentication events, not from a controller).
+        /// Resolves or creates the User for an external login — called from the
+        /// Google/Entra auth handlers' post-authentication events (see Program.cs),
+        /// and directly from AuthController's basic-auth login action, which has no
+        /// handler middleware of its own to hook into.
         /// </summary>
         Task<UserDto> UpsertFromExternalLoginAsync(string authProvider, string externalSubject, string email, CancellationToken cancellationToken);
 

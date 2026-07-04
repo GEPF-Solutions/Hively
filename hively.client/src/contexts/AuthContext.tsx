@@ -9,6 +9,7 @@ interface AuthContextType {
   loading: boolean;
   loginWithGoogle: (returnUrl?: string) => void;
   loginWithEntra: (returnUrl?: string) => void;
+  loginWithBasic: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -35,6 +36,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = authService.entraLoginUrl(returnUrl);
   }, []);
 
+  // Same-page form submit, not a redirect — no OIDC handshake to leave the SPA
+  // for, so just update local state directly on success. Throws on failure
+  // (wrong credentials) for the caller to show.
+  const loginWithBasic = useCallback(async (username: string, password: string) => {
+    const currentUser = await authService.loginBasic(username, password);
+    setUser(currentUser);
+  }, []);
+
   const logout = useCallback(async () => {
     await authService.logout();
     setUser(null);
@@ -49,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         loginWithGoogle,
         loginWithEntra,
+        loginWithBasic,
         logout,
       }}
     >

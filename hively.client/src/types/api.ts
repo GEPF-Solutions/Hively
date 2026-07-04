@@ -106,6 +106,7 @@ export interface CurrentUser {
 export interface AuthProviders {
   google: boolean;
   entra: boolean;
+  basic: boolean;
 }
 
 export interface MqttStatus {
