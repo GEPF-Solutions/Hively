@@ -1,0 +1,49 @@
+import { useState } from 'react';
+import Button from '../../../components/ui/Button';
+import { MultiSelectPills } from '../../../components/shared';
+import type { Consumer } from '../../../types';
+
+interface ConsumerCardProps {
+  consumers: Consumer[];
+  allConsumers: Consumer[];
+  canEdit: boolean;
+  onToggle: (consumerId: string) => void;
+}
+
+export default function ConsumerCard({ consumers, allConsumers, canEdit, onToggle }: ConsumerCardProps) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  return (
+    <div className="rounded-[10px] border border-border bg-panel p-4">
+      <div className="mb-2.5 flex items-center justify-between">
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+          Consumers ({consumers.length})
+        </div>
+        {canEdit && (
+          <Button variant="secondary" size="sm" onClick={() => setPickerOpen((v) => !v)}>
+            + consumer
+          </Button>
+        )}
+      </div>
+
+      {consumers.map((c) => (
+        <div key={c.id} title={c.description ?? undefined} className="flex items-center gap-2 py-0.5 text-sm">
+          <span className="h-1.5 w-1.5 rounded-full bg-cyan" />
+          {c.name}
+        </div>
+      ))}
+      {consumers.length === 0 && <div className="text-[12.5px] italic text-muted">no known consumers</div>}
+
+      {pickerOpen && (
+        <div className="mt-2.5 border-t border-border pt-2.5">
+          <MultiSelectPills
+            options={allConsumers.map((c) => ({ id: c.id, label: c.name }))}
+            selectedIds={consumers.map((c) => c.id)}
+            onToggle={onToggle}
+            placeholder="type to search consumers…"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
