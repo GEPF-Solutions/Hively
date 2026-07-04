@@ -1,9 +1,11 @@
 using System.Security.Claims;
 using Hively.Server.DbModel;
+using Hively.Server.Infrastructure;
 using Hively.Server.Repository;
 using Hively.Server.Repository.Abstractions;
 using Hively.Server.Services;
 using Hively.Server.Services.Abstractions;
+using Hively.Server.Services.Ingestion;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
@@ -50,6 +52,10 @@ public class Program
         builder.Services.AddScoped<ITopicService, TopicService>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IUserService, UserService>();
+
+        builder.Services.Configure<MqttBrokerSettings>(builder.Configuration.GetSection("MqttBroker"));
+        builder.Services.AddScoped<ITopicIngestionService, TopicIngestionService>();
+        builder.Services.AddHostedService<MqttIngestionService>();
 
         builder.Services.AddAuthentication(options =>
         {
