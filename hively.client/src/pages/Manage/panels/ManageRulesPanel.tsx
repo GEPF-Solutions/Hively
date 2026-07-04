@@ -8,11 +8,9 @@ import { useRules } from '../../../hooks/data/useRules';
 import { useProducers } from '../../../hooks/data/useProducers';
 import { useSchemas } from '../../../hooks/data/useSchemas';
 import { useTags } from '../../../hooks/data/useTags';
-import { useTopics } from '../../../hooks/data/useTopics';
 import { ruleService } from '../../../services/ruleService';
 import { producerService } from '../../../services/producerService';
 import { useToast } from '../../../contexts/ToastContext';
-import { matchTopicPattern } from '../../../utils/searchMatch';
 import type { Rule } from '../../../types';
 
 export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
@@ -20,7 +18,6 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
   const { producers, refetch: refetchProducers } = useProducers();
   const { schemas } = useSchemas();
   const { tags } = useTags();
-  const { topics, refetch: refetchTopics } = useTopics();
   const toast = useToast();
 
   const [search, setSearch] = useState('');
@@ -39,10 +36,6 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
     const q = search.trim().toLowerCase();
     return (r.name ?? '').toLowerCase().includes(q) || r.pattern.toLowerCase().includes(q);
   });
-
-  function matchCount(rulePattern: string) {
-    return topics.filter((t) => matchTopicPattern(rulePattern, t.path)).length;
-  }
 
   function toggleTag(id: string) {
     setTagIds((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]));
@@ -99,16 +92,6 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
     }
   }
 
-  async function handleApplyToAll(id: string) {
-    try {
-      const count = await ruleService.applyToAllMatching(id);
-      toast.success(`Applied to ${count} topic${count === 1 ? '' : 's'}.`);
-      refetchTopics();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to apply rule');
-    }
-  }
-
   return (
     <Modal isOpen onClose={onClose} title="Manage Rules" maxWidth="lg" footer={<Button onClick={onClose}>Done</Button>}>
       <div className="mb-4 text-xs leading-relaxed text-muted">
@@ -121,50 +104,42 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
         </Badge>{' '}
         applies itself the moment it's the only rule matching a newly-untracked topic. Saving a rule (new or edited)
         immediately re-applies it to every topic already matching its pattern, tracked or not — so adding a schema to
-        a rule later, say, pushes onto topics it already configured without any extra step. "Apply to N now" is there
-        for topics that started matching later, without the rule itself being touched again.
+        a rule later, say, pushes onto topics it already configured with no extra step, not even re-saving something
+        unchanged.
       </div>
 
       <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="filter rules…" className="mb-3" />
 
       <ManageList>
-        {filtered.map((rule) => {
-          const count = matchCount(rule.pattern);
-          return (
-            <div key={rule.id} className="flex items-center gap-2.5 rounded-md bg-bg px-2.5 py-2.5">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <div className="truncate text-[13px] font-semibold text-text">{rule.name ?? rule.pattern}</div>
-                  {rule.autoApply && <Badge tone="cyan">auto</Badge>}
-                </div>
-                {rule.name && <div className="truncate font-mono text-[11px] text-muted">{rule.pattern}</div>}
-                <div className="mt-0.5 text-[11.5px] text-muted">
-                  producer: {rule.producerId ? (producerById.get(rule.producerId)?.name ?? 'Unknown') : 'Unknown'}
-                </div>
-                <div className="text-[11.5px] text-muted">
-                  schema: {rule.schemaId ? (schemaById.get(rule.schemaId)?.name ?? 'Unknown') : 'None'}
-                </div>
-                <div className="mt-1.5 flex flex-wrap gap-1">
-                  {rule.tagIds.map((id) => {
-                    const tag = tagById.get(id);
-                    return tag ? <TagPill key={id} tag={tag} /> : null;
-                  })}
-                </div>
+        {filtered.map((rule) => (
+          <div key={rule.id} className="flex items-center gap-2.5 rounded-md bg-bg px-2.5 py-2.5">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <div className="truncate text-[13px] font-semibold text-text">{rule.name ?? rule.pattern}</div>
+                {rule.autoApply && <Badge tone="cyan">auto</Badge>}
               </div>
-              {count > 0 && (
-                <Button variant="primary" size="sm" onClick={() => handleApplyToAll(rule.id)}>
-                  Apply to {count} now
-                </Button>
-              )}
-              <Button variant="secondary" size="sm" onClick={() => startEdit(rule)}>
-                Edit
-              </Button>
-              <button onClick={() => handleDelete(rule.id)} className="text-base leading-none text-muted hover:text-text">
-                ×
-              </button>
+              {rule.name && <div className="truncate font-mono text-[11px] text-muted">{rule.pattern}</div>}
+              <div className="mt-0.5 text-[11.5px] text-muted">
+                producer: {rule.producerId ? (producerById.get(rule.producerId)?.name ?? 'Unknown') : 'Unknown'}
+              </div>
+              <div className="text-[11.5px] text-muted">
+                schema: {rule.schemaId ? (schemaById.get(rule.schemaId)?.name ?? 'Unknown') : 'None'}
+              </div>
+              <div className="mt-1.5 flex flex-wrap gap-1">
+                {rule.tagIds.map((id) => {
+                  const tag = tagById.get(id);
+                  return tag ? <TagPill key={id} tag={tag} /> : null;
+                })}
+              </div>
             </div>
-          );
-        })}
+            <Button variant="secondary" size="sm" onClick={() => startEdit(rule)}>
+              Edit
+            </Button>
+            <button onClick={() => handleDelete(rule.id)} className="text-base leading-none text-muted hover:text-text">
+              ×
+            </button>
+          </div>
+        ))}
         {filtered.length === 0 && <div className="px-1 py-1 text-[12.5px] italic text-muted">No rules match.</div>}
       </ManageList>
 

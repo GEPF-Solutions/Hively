@@ -69,7 +69,6 @@ export const apiEndpoints = {
     insert: '/api/rule/insert',
     update: '/api/rule/update',
     delete: (id: string) => `/api/rule/delete?ruleId=${id}`,
-    applyToAll: (id: string) => `/api/rule/${id}/apply-to-all`,
   },
 
   hubs: {

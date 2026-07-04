@@ -16,13 +16,11 @@ namespace Hively.Server.Controllers
     {
         private readonly ILogger<RuleController> _logger;
         private readonly IRuleService _ruleService;
-        private readonly ITopicService _topicService;
 
-        public RuleController(ILogger<RuleController> logger, IRuleService ruleService, ITopicService topicService)
+        public RuleController(ILogger<RuleController> logger, IRuleService ruleService)
         {
             _logger = logger;
             _ruleService = ruleService;
-            _topicService = topicService;
         }
 
         /// <summary>
@@ -134,31 +132,6 @@ namespace Hively.Server.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while removing rule {RuleId}.", ruleId);
-                return StatusCode(StatusCodes.Status500InternalServerError);
-            }
-        }
-
-        /// <summary>
-        /// Retroactively applies this rule to every currently-untracked topic it matches ("Apply to N now").
-        /// </summary>
-        [Authorize(Roles = "Admin")]
-        [HttpPost("{ruleId}/apply-to-all")]
-        public async Task<IActionResult> ApplyToAllMatchingAsync(Guid ruleId)
-        {
-            try
-            {
-                var appliedCount = await _topicService.ApplyRuleToAllMatchingAsync(ruleId, CancellationToken.None);
-                _logger.LogInformation("Applied rule {RuleId} to {AppliedCount} untracked topics.", ruleId, appliedCount);
-                return Ok(new { appliedCount });
-            }
-            catch (EntityNotFoundException ex)
-            {
-                _logger.LogWarning(ex, "Rule {RuleId} not found.", ruleId);
-                return StatusCode(StatusCodes.Status404NotFound, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "An error occurred while applying rule {RuleId} to all matching topics.", ruleId);
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
         }

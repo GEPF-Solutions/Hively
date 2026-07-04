@@ -50,14 +50,14 @@ namespace Hively.Server.Services.Abstractions
         Task<TopicDto> ApplyRuleAsync(Guid topicId, Guid ruleId, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Applies a rule to every topic matching its pattern, tracked or not.
-        /// Called automatically by <see cref="IRuleService.InsertRuleAsync"/>/
-        /// <see cref="IRuleService.UpdateRuleAsync"/> right after a rule is saved, so
-        /// an already-tracked topic immediately picks up a change to the rule that
-        /// configured it (e.g. a schema added after the fact) instead of only ever
-        /// being touched once, at first tracking. Also exposed as the manual
-        /// "Apply to N now" button in Manage Rules, for topics that started matching
-        /// later without the rule itself being re-saved. Returns the number applied.
+        /// Applies a rule to every topic matching its pattern, tracked or not. Called
+        /// automatically by <see cref="IRuleService.InsertRuleAsync"/>/<see cref="IRuleService.UpdateRuleAsync"/>
+        /// right after a rule is saved, so an already-tracked topic immediately picks
+        /// up a change to the rule that configured it (e.g. a schema added after the
+        /// fact) instead of only ever being touched once, at first tracking. No
+        /// separate manual trigger exists — re-saving the rule (even with no field
+        /// actually changed) re-runs this the same way a dedicated button would.
+        /// Returns the number applied.
         /// </summary>
         Task<int> ApplyRuleToAllMatchingAsync(Guid ruleId, CancellationToken cancellationToken);
 

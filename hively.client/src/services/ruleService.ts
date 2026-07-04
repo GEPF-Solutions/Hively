@@ -28,9 +28,4 @@ export const ruleService = {
   async deleteRule(id: string): Promise<void> {
     await apiRequest(apiEndpoints.rules.delete(id), { method: 'DELETE' });
   },
-
-  /** Retroactively applies a rule to every currently-untracked topic it matches. Returns the number applied. */
-  async applyToAllMatching(id: string): Promise<number> {
-    return apiRequest<number>(apiEndpoints.rules.applyToAll(id), { method: 'POST' });
-  },
 };

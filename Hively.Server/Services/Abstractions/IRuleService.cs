@@ -27,8 +27,8 @@ namespace Hively.Server.Services.Abstractions
         /// Updates an existing rule, then immediately re-applies it to every
         /// currently matching topic (tracked or not) via <see cref="ITopicService.ApplyRuleToAllMatchingAsync"/>
         /// — this is how an already-configured topic picks up a change to the rule
-        /// that configured it (e.g. a schema added after the fact) without an admin
-        /// having to separately click "Apply to N now".
+        /// that configured it (e.g. a schema added after the fact), with no separate
+        /// action needed beyond saving the rule.
         /// </summary>
         Task<RuleDto> UpdateRuleAsync(RuleDto rule, CancellationToken cancellationToken);
 
