@@ -24,20 +24,11 @@ Everything above updates live in the UI the moment it happens on the broker — 
 
 ## Screenshots
 
-<!--
-  Drop real screenshots of the running app into docs/screenshots/ using these
-  filenames and they'll show up here:
-    topics-list.png      — Topics list, hierarchy view, untracked callout
-    topic-detail.png      — Topic detail page (producer/schema/compliance/activity cards)
-    configure-topic.png    — Configure Topic modal
-    manage-schemas.png     — Manage Schemas panel
-    graph-view.png         — Producer/consumer relationship graph
--->
-
 | | |
 |---|---|
 | ![Topics list](docs/screenshots/topics-list.png) | ![Topic detail](docs/screenshots/topic-detail.png) |
-| ![Configure topic](docs/screenshots/configure-topic.png) | ![Graph view](docs/screenshots/graph-view.png) |
+| ![Configure Topic](docs/screenshots/configure-topic.png) | ![Manage Schemas](docs/screenshots/manage-schemas.png) |
+| ![Manage Rules](docs/screenshots/manage-rules.png) | ![Graph view](docs/screenshots/graph-view.png) |
 
 ## Running it locally
 
