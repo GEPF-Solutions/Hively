@@ -50,6 +50,25 @@ export default function TopicListView({
     }
   }
 
+  // InsertTopicAsync already runs auto-apply server-side — if a rule's sole,
+  // AutoApply-enabled match covered this path, the topic comes back already
+  // tracked/configured. Don't send the admin into a manual Configure modal
+  // for something that's already done; just say what covered it.
+  async function handleTopicCreated(created: Topic) {
+    if (!created.tracked) {
+      setConfiguringTopic(created);
+      return;
+    }
+
+    try {
+      const matches = await topicService.getMatchingRules(created.id);
+      const rule = matches.length === 1 ? matches[0].rule : null;
+      toast.success(rule ? `Automatically configured — matched rule "${rule.name ?? rule.pattern}".` : 'Automatically configured by a matching rule.');
+    } catch {
+      toast.success('Automatically configured by a matching rule.');
+    }
+  }
+
   return (
     <div className="px-7 py-5">
       <div className="mb-4 flex items-center justify-between">
@@ -121,9 +140,7 @@ export default function TopicListView({
         />
       )}
 
-      {addTopicOpen && (
-        <AddTopicModal onClose={() => setAddTopicOpen(false)} onCreated={(created) => setConfiguringTopic(created)} />
-      )}
+      {addTopicOpen && <AddTopicModal onClose={() => setAddTopicOpen(false)} onCreated={handleTopicCreated} />}
     </div>
   );
 }

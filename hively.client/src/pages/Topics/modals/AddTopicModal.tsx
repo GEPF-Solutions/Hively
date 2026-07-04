@@ -14,8 +14,11 @@ interface AddTopicModalProps {
 /**
  * Manually catalogues a topic path before the broker has ever seen traffic
  * for it — creates the same kind of untracked stub MQTT ingestion would
- * create on first sighting (see TopicController.InsertTopicAsync), then
- * hands off to ConfigureTopicModal to assign producer/consumers/schema/tags.
+ * create on first sighting (see TopicController.InsertTopicAsync), including
+ * running the same auto-apply check. If a rule's sole, AutoApply-enabled
+ * match already covers the path, the topic comes back tracked and
+ * configured with nothing further to do; otherwise the caller hands off to
+ * ConfigureTopicModal to assign producer/consumers/schema/tags.
  */
 export default function AddTopicModal({ onClose, onCreated }: AddTopicModalProps) {
   const toast = useToast();
@@ -65,7 +68,8 @@ export default function AddTopicModal({ onClose, onCreated }: AddTopicModalProps
       <p className="mt-2.5 text-xs leading-relaxed text-muted">
         Catalogue a topic before the broker has published to it yet — useful for planning a new machine's namespace
         ahead of commissioning. It's created as an untracked stub, same as one MQTT ingestion would create on first
-        sighting; you'll configure its producer/consumers/schema/tags next.
+        sighting — if an auto-apply rule already covers this path, it comes back fully configured with nothing further
+        to do; otherwise you'll configure its producer/consumers/schema/tags next.
       </p>
     </Modal>
   );
