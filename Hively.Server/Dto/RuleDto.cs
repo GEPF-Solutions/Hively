@@ -16,6 +16,12 @@ namespace Hively.Server.Dto
 
         public List<string> TagIds { get; set; } = new();
 
+        /// <summary>
+        /// When a newly-untracked topic matches exactly this one rule (and no
+        /// other), apply it immediately instead of waiting for an admin.
+        /// </summary>
+        public bool AutoApply { get; set; }
+
         public RuleDto(Rule rule)
         {
             Id = rule.Id;
@@ -23,6 +29,7 @@ namespace Hively.Server.Dto
             Pattern = rule.Pattern;
             ProducerId = rule.ProducerId;
             TagIds = rule.Tags.Select(t => t.Id).ToList();
+            AutoApply = rule.AutoApply;
         }
 
         // Empty constructor for deserialization

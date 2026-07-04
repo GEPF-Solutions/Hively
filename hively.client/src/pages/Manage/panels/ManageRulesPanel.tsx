@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Modal from '../../../components/ui/Modal';
 import Button from '../../../components/ui/Button';
+import Badge from '../../../components/ui/Badge';
 import Input from '../../../components/ui/Input';
 import { ManageList, SearchableCombobox, TagPill } from '../../../components/shared';
 import { useRules } from '../../../hooks/data/useRules';
@@ -26,6 +27,7 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
   const [pattern, setPattern] = useState('');
   const [producerId, setProducerId] = useState<string | null>(null);
   const [tagIds, setTagIds] = useState<string[]>([]);
+  const [autoApply, setAutoApply] = useState(false);
 
   const producerById = new Map(producers.map((p) => [p.id, p]));
   const tagById = new Map(tags.map((t) => [t.id, t]));
@@ -56,6 +58,7 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
     setPattern(rule.pattern);
     setProducerId(rule.producerId);
     setTagIds(rule.tagIds);
+    setAutoApply(rule.autoApply);
   }
 
   function cancelEdit() {
@@ -64,15 +67,16 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
     setPattern('');
     setProducerId(null);
     setTagIds([]);
+    setAutoApply(false);
   }
 
   async function handleSave() {
     if (!pattern.trim()) return;
     try {
       if (editingId) {
-        await ruleService.updateRule({ id: editingId, name: name.trim() || null, pattern: pattern.trim(), producerId, tagIds });
+        await ruleService.updateRule({ id: editingId, name: name.trim() || null, pattern: pattern.trim(), producerId, tagIds, autoApply });
       } else {
-        await ruleService.insertRule({ name: name.trim() || null, pattern: pattern.trim(), producerId, tagIds });
+        await ruleService.insertRule({ name: name.trim() || null, pattern: pattern.trim(), producerId, tagIds, autoApply });
       }
       cancelEdit();
       refetch();
@@ -104,7 +108,11 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
     <Modal isOpen onClose={onClose} title="Manage Rules" maxWidth="lg" footer={<Button onClick={onClose}>Done</Button>}>
       <div className="mb-4 text-xs leading-relaxed text-muted">
         Auto-assign producer &amp; tags to topics matching an MQTT-style pattern (+ = one level, # = rest). Use for
-        bulk-managing many topics from the same producer, or to survive a namespace reshuffle.
+        bulk-managing many topics from the same producer, or to survive a namespace reshuffle. A rule marked{' '}
+        <Badge tone="cyan" className="!text-[9px]">
+          auto
+        </Badge>{' '}
+        applies itself the moment it's the only rule matching a newly-untracked topic.
       </div>
 
       <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="filter rules…" className="mb-3" />
@@ -115,7 +123,10 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
           return (
             <div key={rule.id} className="flex items-center gap-2.5 rounded-md bg-bg px-2.5 py-2.5">
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[13px] font-semibold text-text">{rule.name ?? rule.pattern}</div>
+                <div className="flex items-center gap-1.5">
+                  <div className="truncate text-[13px] font-semibold text-text">{rule.name ?? rule.pattern}</div>
+                  {rule.autoApply && <Badge tone="cyan">auto</Badge>}
+                </div>
                 {rule.name && <div className="truncate font-mono text-[11px] text-muted">{rule.pattern}</div>}
                 <div className="mt-0.5 text-[11.5px] text-muted">
                   producer: {rule.producerId ? (producerById.get(rule.producerId)?.name ?? 'Unknown') : 'Unknown'}
@@ -169,6 +180,18 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
             <TagPill key={tag.id} tag={tag} active={tagIds.includes(tag.id)} onClick={() => toggleTag(tag.id)} />
           ))}
         </div>
+        <label className="mb-3 flex items-start gap-2.5 text-xs text-muted">
+          <input
+            type="checkbox"
+            checked={autoApply}
+            onChange={(e) => setAutoApply(e.target.checked)}
+            className="mt-0.5 accent-cyan"
+          />
+          <span>
+            <span className="font-medium text-text/90">Auto-apply</span> when this is the only rule matching a
+            newly-untracked topic. Multiple matches always require a manual pick regardless.
+          </span>
+        </label>
         <div className="flex gap-2">
           <Button variant="primary" className="flex-1" onClick={handleSave}>
             {editingId ? 'Save changes' : 'Add rule'}

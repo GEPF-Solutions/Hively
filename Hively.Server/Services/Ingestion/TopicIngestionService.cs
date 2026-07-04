@@ -12,11 +12,13 @@ namespace Hively.Server.Services.Ingestion
     {
         private readonly ITopicRepository _topicRepository;
         private readonly ITopicNotifier _topicNotifier;
+        private readonly IAutoRuleApplier _autoRuleApplier;
 
-        public TopicIngestionService(ITopicRepository topicRepository, ITopicNotifier topicNotifier)
+        public TopicIngestionService(ITopicRepository topicRepository, ITopicNotifier topicNotifier, IAutoRuleApplier autoRuleApplier)
         {
             _topicRepository = topicRepository;
             _topicNotifier = topicNotifier;
+            _autoRuleApplier = autoRuleApplier;
         }
 
         /// <inheritdoc />
@@ -32,6 +34,7 @@ namespace Hively.Server.Services.Ingestion
             if (topic == null)
             {
                 var newTopicId = await _topicRepository.InsertTopicAsync(new TopicDto { Path = topicPath }, cancellationToken);
+                await _autoRuleApplier.TryAutoApplyAsync(newTopicId, topicPath, cancellationToken);
                 topic = await _topicRepository.GetTopicAsync(newTopicId, cancellationToken);
             }
 
@@ -55,7 +58,10 @@ namespace Hively.Server.Services.Ingestion
             var updatedTopic = await _topicRepository.GetTopicAsync(topic.Id, cancellationToken);
             var dto = TopicDtoBuilder.Build(updatedTopic);
 
-            if (isNewTopic)
+            // A brand-new topic that got auto-applied is now tracked — that's an
+            // update (fully catalogued), not the "still needs configuring" signal
+            // TopicUntracked implies.
+            if (isNewTopic && !dto.Tracked)
             {
                 await _topicNotifier.NotifyTopicUntrackedAsync(dto, cancellationToken);
             }

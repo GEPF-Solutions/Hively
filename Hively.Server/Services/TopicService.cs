@@ -13,12 +13,18 @@ namespace Hively.Server.Services
         private readonly ITopicRepository _topicRepository;
         private readonly IRuleRepository _ruleRepository;
         private readonly ITopicNotifier _topicNotifier;
+        private readonly IAutoRuleApplier _autoRuleApplier;
 
-        public TopicService(ITopicRepository topicRepository, IRuleRepository ruleRepository, ITopicNotifier topicNotifier)
+        public TopicService(
+            ITopicRepository topicRepository,
+            IRuleRepository ruleRepository,
+            ITopicNotifier topicNotifier,
+            IAutoRuleApplier autoRuleApplier)
         {
             _topicRepository = topicRepository;
             _ruleRepository = ruleRepository;
             _topicNotifier = topicNotifier;
+            _autoRuleApplier = autoRuleApplier;
         }
 
         /// <inheritdoc />
@@ -39,6 +45,12 @@ namespace Hively.Server.Services
         public async Task<TopicDto> InsertTopicAsync(TopicDto topic, CancellationToken cancellationToken)
         {
             var createdTopicId = await _topicRepository.InsertTopicAsync(topic, cancellationToken);
+
+            if (!topic.Tracked)
+            {
+                await _autoRuleApplier.TryAutoApplyAsync(createdTopicId, topic.Path, cancellationToken);
+            }
+
             var createdTopic = await _topicRepository.GetTopicAsync(createdTopicId, cancellationToken);
             var dto = TopicDtoBuilder.Build(createdTopic);
 

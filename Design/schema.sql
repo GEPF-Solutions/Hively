@@ -98,11 +98,16 @@ CREATE TABLE topic_tags (
 -- name is optional — an admin managing a handful of rules can just read the
 -- pattern, but it's easy to lose track once there are many; falls back to
 -- showing the pattern when not set.
+-- auto_apply: when a newly-untracked topic matches exactly one rule overall,
+-- and that rule has this set, apply it immediately instead of waiting for an
+-- admin. Per-rule rather than a single global toggle — lets an admin opt in
+-- a specific, well-trusted pattern without auto-applying every rule.
 CREATE TABLE rules (
     id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     name        text,
     pattern     text NOT NULL,
     producer_id uuid,
+    auto_apply  boolean NOT NULL DEFAULT false,
     CONSTRAINT fk_rules_producer FOREIGN KEY (producer_id) REFERENCES producers (id) ON DELETE SET NULL
 );
 

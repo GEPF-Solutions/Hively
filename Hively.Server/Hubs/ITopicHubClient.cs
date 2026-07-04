@@ -33,5 +33,13 @@ namespace Hively.Server.Hubs
         /// a second SignalR connection for one small status indicator.
         /// </summary>
         Task BrokerStatusChanged(MqttStatusDto status, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// A rule was created, edited, or deleted. No payload — clients just
+        /// refetch their rules list, since what changed (specificity ordering,
+        /// which untracked topics now match) is cheaper to recompute client-side
+        /// than to model here.
+        /// </summary>
+        Task RulesChanged(CancellationToken cancellationToken);
     }
 }

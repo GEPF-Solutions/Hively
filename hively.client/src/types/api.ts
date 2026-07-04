@@ -41,6 +41,8 @@ export interface Rule {
   pattern: string;
   producerId: string | null;
   tagIds: string[];
+  /** When a newly-untracked topic matches exactly this one rule (and no other), apply it immediately. */
+  autoApply: boolean;
 }
 
 export interface RuleMatch {

@@ -70,6 +70,7 @@ public partial class HivelyContext : DbContext
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("id");
+            entity.Property(e => e.AutoApply).HasColumnName("auto_apply");
             entity.Property(e => e.Name).HasColumnName("name");
             entity.Property(e => e.Pattern).HasColumnName("pattern");
             entity.Property(e => e.ProducerId).HasColumnName("producer_id");

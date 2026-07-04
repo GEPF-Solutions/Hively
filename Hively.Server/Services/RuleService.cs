@@ -10,10 +10,14 @@ namespace Hively.Server.Services
     public class RuleService : IRuleService
     {
         private readonly IRuleRepository _ruleRepository;
+        private readonly IRuleNotifier _ruleNotifier;
+        private readonly IAutoRuleApplier _autoRuleApplier;
 
-        public RuleService(IRuleRepository ruleRepository)
+        public RuleService(IRuleRepository ruleRepository, IRuleNotifier ruleNotifier, IAutoRuleApplier autoRuleApplier)
         {
             _ruleRepository = ruleRepository;
+            _ruleNotifier = ruleNotifier;
+            _autoRuleApplier = autoRuleApplier;
         }
 
         /// <inheritdoc />
@@ -34,6 +38,8 @@ namespace Hively.Server.Services
         public async Task<RuleDto> InsertRuleAsync(RuleDto rule, CancellationToken cancellationToken)
         {
             var createdRule = await _ruleRepository.InsertRuleAsync(rule, cancellationToken);
+            await _autoRuleApplier.SweepUntrackedTopicsAsync(cancellationToken);
+            await _ruleNotifier.NotifyRulesChangedAsync(cancellationToken);
             return new RuleDto(createdRule);
         }
 
@@ -41,13 +47,16 @@ namespace Hively.Server.Services
         public async Task<RuleDto> UpdateRuleAsync(RuleDto rule, CancellationToken cancellationToken)
         {
             var updatedRule = await _ruleRepository.UpdateRuleAsync(rule, cancellationToken);
+            await _autoRuleApplier.SweepUntrackedTopicsAsync(cancellationToken);
+            await _ruleNotifier.NotifyRulesChangedAsync(cancellationToken);
             return new RuleDto(updatedRule);
         }
 
         /// <inheritdoc />
-        public Task RemoveRuleAsync(Guid ruleId, CancellationToken cancellationToken)
+        public async Task RemoveRuleAsync(Guid ruleId, CancellationToken cancellationToken)
         {
-            return _ruleRepository.RemoveRuleAsync(ruleId, cancellationToken);
+            await _ruleRepository.RemoveRuleAsync(ruleId, cancellationToken);
+            await _ruleNotifier.NotifyRulesChangedAsync(cancellationToken);
         }
     }
 }

@@ -13,6 +13,8 @@ public partial class Rule
 
     public string? Name { get; set; }
 
+    public bool AutoApply { get; set; }
+
     public virtual Producer? Producer { get; set; }
 
     public virtual ICollection<Tag> Tags { get; set; } = new List<Tag>();
