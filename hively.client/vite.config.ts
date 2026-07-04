@@ -56,6 +56,24 @@ export default defineConfig({
                 target,
                 secure: false,
                 ws: true
+            },
+            // OIDC/OAuth callback paths (ASP.NET Core defaults: Google's CallbackPath
+            // is /signin-google, OpenID Connect's is /signin-oidc) — these are
+            // full-page browser redirects landing on this dev server's own origin,
+            // so without proxying them through, Vite's SPA fallback swallows the
+            // auth code and the backend middleware that exchanges it/sets the
+            // cookie never runs.
+            '^/signin-google': {
+                target,
+                secure: false
+            },
+            '^/signin-oidc': {
+                target,
+                secure: false
+            },
+            '^/signout-callback-oidc': {
+                target,
+                secure: false
             }
         },
         port: parseInt(env.DEV_SERVER_PORT || '52015'),
