@@ -51,7 +51,14 @@ namespace Hively.Server.Repository
             };
 
             await _dbContext.Tags.AddAsync(newTag, cancellationToken);
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await _dbContext.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex) when (ex.IsUniqueViolation())
+            {
+                throw new DuplicateEntityException($"A tag with id '{tagDto.Id}' already exists.");
+            }
 
             return newTag;
         }

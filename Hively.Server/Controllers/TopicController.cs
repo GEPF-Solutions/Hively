@@ -81,6 +81,11 @@ namespace Hively.Server.Controllers
                 _logger.LogInformation("Created topic {TopicId} ({TopicPath}).", createdTopic.Id, createdTopic.Path);
                 return Ok(createdTopic);
             }
+            catch (DuplicateEntityException ex)
+            {
+                _logger.LogWarning(ex, "Duplicate topic path {TopicPath}.", topic.Path);
+                return StatusCode(StatusCodes.Status409Conflict, ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while inserting topic {TopicPath}.", topic.Path);

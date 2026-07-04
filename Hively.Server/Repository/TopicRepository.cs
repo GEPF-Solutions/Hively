@@ -65,7 +65,14 @@ namespace Hively.Server.Repository
             };
 
             await _dbContext.Topics.AddAsync(newTopic, cancellationToken);
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await _dbContext.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex) when (ex.IsUniqueViolation())
+            {
+                throw new DuplicateEntityException($"A topic with path '{topicDto.Path}' already exists.");
+            }
 
             return newTopic.Id;
         }

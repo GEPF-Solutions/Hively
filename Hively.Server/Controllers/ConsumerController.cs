@@ -79,6 +79,11 @@ namespace Hively.Server.Controllers
                 _logger.LogInformation("Created consumer {ConsumerId} ({ConsumerName}).", createdConsumer.Id, createdConsumer.Name);
                 return Ok(createdConsumer);
             }
+            catch (DuplicateEntityException ex)
+            {
+                _logger.LogWarning(ex, "Duplicate consumer name {ConsumerName}.", consumer.Name);
+                return StatusCode(StatusCodes.Status409Conflict, ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while inserting consumer {ConsumerName}.", consumer.Name);
@@ -103,6 +108,11 @@ namespace Hively.Server.Controllers
             {
                 _logger.LogWarning(ex, "Consumer {ConsumerId} not found.", consumer.Id);
                 return StatusCode(StatusCodes.Status404NotFound, ex.Message);
+            }
+            catch (DuplicateEntityException ex)
+            {
+                _logger.LogWarning(ex, "Duplicate consumer name {ConsumerName}.", consumer.Name);
+                return StatusCode(StatusCodes.Status409Conflict, ex.Message);
             }
             catch (Exception ex)
             {

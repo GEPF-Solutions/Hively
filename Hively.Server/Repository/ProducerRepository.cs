@@ -50,7 +50,14 @@ namespace Hively.Server.Repository
             };
 
             await _dbContext.Producers.AddAsync(newProducer, cancellationToken);
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await _dbContext.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex) when (ex.IsUniqueViolation())
+            {
+                throw new DuplicateEntityException($"A producer named '{producerDto.Name}' already exists.");
+            }
 
             return newProducer;
         }
@@ -69,7 +76,14 @@ namespace Hively.Server.Repository
             producerToUpdate.Name = producerDto.Name;
             producerToUpdate.Description = producerDto.Description;
 
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await _dbContext.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex) when (ex.IsUniqueViolation())
+            {
+                throw new DuplicateEntityException($"A producer named '{producerDto.Name}' already exists.");
+            }
         }
 
         /// <inheritdoc />

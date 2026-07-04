@@ -79,6 +79,11 @@ namespace Hively.Server.Controllers
                 _logger.LogInformation("Created producer {ProducerId} ({ProducerName}).", createdProducer.Id, createdProducer.Name);
                 return Ok(createdProducer);
             }
+            catch (DuplicateEntityException ex)
+            {
+                _logger.LogWarning(ex, "Duplicate producer name {ProducerName}.", producer.Name);
+                return StatusCode(StatusCodes.Status409Conflict, ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while inserting producer {ProducerName}.", producer.Name);
@@ -103,6 +108,11 @@ namespace Hively.Server.Controllers
             {
                 _logger.LogWarning(ex, "Producer {ProducerId} not found.", producer.Id);
                 return StatusCode(StatusCodes.Status404NotFound, ex.Message);
+            }
+            catch (DuplicateEntityException ex)
+            {
+                _logger.LogWarning(ex, "Duplicate producer name {ProducerName}.", producer.Name);
+                return StatusCode(StatusCodes.Status409Conflict, ex.Message);
             }
             catch (Exception ex)
             {

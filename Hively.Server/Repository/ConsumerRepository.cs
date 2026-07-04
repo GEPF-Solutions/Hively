@@ -50,7 +50,14 @@ namespace Hively.Server.Repository
             };
 
             await _dbContext.Consumers.AddAsync(newConsumer, cancellationToken);
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await _dbContext.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex) when (ex.IsUniqueViolation())
+            {
+                throw new DuplicateEntityException($"A consumer named '{consumerDto.Name}' already exists.");
+            }
 
             return newConsumer;
         }
@@ -69,7 +76,14 @@ namespace Hively.Server.Repository
             consumerToUpdate.Name = consumerDto.Name;
             consumerToUpdate.Description = consumerDto.Description;
 
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await _dbContext.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex) when (ex.IsUniqueViolation())
+            {
+                throw new DuplicateEntityException($"A consumer named '{consumerDto.Name}' already exists.");
+            }
         }
 
         /// <inheritdoc />

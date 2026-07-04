@@ -79,6 +79,11 @@ namespace Hively.Server.Controllers
                 _logger.LogInformation("Created tag {TagId} ({TagLabel}).", createdTag.Id, createdTag.Label);
                 return Ok(createdTag);
             }
+            catch (DuplicateEntityException ex)
+            {
+                _logger.LogWarning(ex, "Duplicate tag id {TagId}.", tag.Id);
+                return StatusCode(StatusCodes.Status409Conflict, ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while inserting tag {TagId}.", tag.Id);

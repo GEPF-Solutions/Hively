@@ -1,6 +1,0 @@
-@Hively.Server_HostAddress = http://localhost:5012
-
-GET {{Hively.Server_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
