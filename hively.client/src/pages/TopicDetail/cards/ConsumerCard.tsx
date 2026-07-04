@@ -1,17 +1,28 @@
 import { useState } from 'react';
 import Button from '../../../components/ui/Button';
-import { MultiSelectPills } from '../../../components/shared';
+import { MultiSelectCombobox } from '../../../components/shared';
+import { useConsumers } from '../../../hooks/data/useConsumers';
+import { consumerService } from '../../../services/consumerService';
+import { useToast } from '../../../contexts/ToastContext';
 import type { Consumer } from '../../../types';
 
 interface ConsumerCardProps {
   consumers: Consumer[];
-  allConsumers: Consumer[];
   canEdit: boolean;
   onToggle: (consumerId: string) => void;
 }
 
-export default function ConsumerCard({ consumers, allConsumers, canEdit, onToggle }: ConsumerCardProps) {
+export default function ConsumerCard({ consumers, canEdit, onToggle }: ConsumerCardProps) {
+  const { consumers: allConsumers, refetch } = useConsumers();
+  const toast = useToast();
   const [pickerOpen, setPickerOpen] = useState(false);
+
+  async function handleCreateConsumer(name: string) {
+    const created = await consumerService.insertConsumer({ name });
+    toast.success(`Created consumer "${created.name}".`);
+    refetch();
+    return { id: created.id, label: created.name };
+  }
 
   return (
     <div className="rounded-[10px] border border-border bg-panel p-4">
@@ -36,11 +47,12 @@ export default function ConsumerCard({ consumers, allConsumers, canEdit, onToggl
 
       {pickerOpen && (
         <div className="mt-2.5 border-t border-border pt-2.5">
-          <MultiSelectPills
+          <MultiSelectCombobox
             options={allConsumers.map((c) => ({ id: c.id, label: c.name }))}
             selectedIds={consumers.map((c) => c.id)}
             onToggle={onToggle}
             placeholder="type to search consumers…"
+            onCreate={handleCreateConsumer}
           />
         </div>
       )}

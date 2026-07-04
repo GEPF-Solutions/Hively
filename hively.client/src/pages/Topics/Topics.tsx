@@ -50,8 +50,6 @@ function TopicCatalog() {
           onViewModeChange={filters.setViewMode}
           producerById={filters.producerById}
           tagById={filters.tagById}
-          producers={producers}
-          consumers={consumers}
           schemas={schemas}
           tags={tags}
           rules={rules}

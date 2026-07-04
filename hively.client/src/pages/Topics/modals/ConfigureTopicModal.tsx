@@ -1,32 +1,28 @@
 import { useEffect, useState } from 'react';
 import Modal from '../../../components/ui/Modal';
 import Button from '../../../components/ui/Button';
-import { MultiSelectPills, SearchableCombobox, TagPill } from '../../../components/shared';
+import { MultiSelectCombobox, SearchableCombobox, TagPill } from '../../../components/shared';
 import { topicService } from '../../../services/topicService';
+import { producerService } from '../../../services/producerService';
+import { consumerService } from '../../../services/consumerService';
+import { useProducers } from '../../../hooks/data/useProducers';
+import { useConsumers } from '../../../hooks/data/useConsumers';
 import { useToast } from '../../../contexts/ToastContext';
 import { relativeTimeFromMinutes } from '../../../utils/relativeTime';
-import type { Consumer, Producer, RelinkCandidate, RuleMatch, Schema, Tag, Topic } from '../../../types';
+import type { RelinkCandidate, RuleMatch, Schema, Tag, Topic } from '../../../types';
 
 interface ConfigureTopicModalProps {
   topic: Topic;
-  producers: Producer[];
-  consumers: Consumer[];
   schemas: Schema[];
   tags: Tag[];
   onClose: () => void;
   onSaved: (topic: Topic) => void;
 }
 
-export default function ConfigureTopicModal({
-  topic,
-  producers,
-  consumers,
-  schemas,
-  tags,
-  onClose,
-  onSaved,
-}: ConfigureTopicModalProps) {
+export default function ConfigureTopicModal({ topic, schemas, tags, onClose, onSaved }: ConfigureTopicModalProps) {
   const toast = useToast();
+  const { producers, refetch: refetchProducers } = useProducers();
+  const { consumers, refetch: refetchConsumers } = useConsumers();
   const [producerId, setProducerId] = useState(topic.producerId);
   const [consumerIds, setConsumerIds] = useState(topic.consumerIds);
   const [schemaId, setSchemaId] = useState(topic.schemaId);
@@ -46,6 +42,20 @@ export default function ConfigureTopicModal({
 
   function toggleTag(id: string) {
     setTagIds((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]));
+  }
+
+  async function handleCreateProducer(name: string) {
+    const created = await producerService.insertProducer({ name });
+    toast.success(`Created producer "${created.name}".`);
+    refetchProducers();
+    return { id: created.id, label: created.name };
+  }
+
+  async function handleCreateConsumer(name: string) {
+    const created = await consumerService.insertConsumer({ name });
+    toast.success(`Created consumer "${created.name}".`);
+    refetchConsumers();
+    return { id: created.id, label: created.name };
   }
 
   async function handleApplyRule(ruleId: string) {
@@ -170,16 +180,18 @@ export default function ConfigureTopicModal({
             onSelect={setProducerId}
             placeholder="type to search producers…"
             noneLabel="Unknown"
+            onCreate={handleCreateProducer}
           />
         </div>
 
         <div>
           <div className="mb-1.5 text-[11.5px] font-semibold text-muted">Consumers</div>
-          <MultiSelectPills
+          <MultiSelectCombobox
             options={consumers.map((c) => ({ id: c.id, label: c.name }))}
             selectedIds={consumerIds}
             onToggle={toggleConsumer}
             placeholder="type to search consumers…"
+            onCreate={handleCreateConsumer}
           />
         </div>
 

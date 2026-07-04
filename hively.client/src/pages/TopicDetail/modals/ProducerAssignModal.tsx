@@ -2,23 +2,20 @@ import { useState } from 'react';
 import Modal from '../../../components/ui/Modal';
 import Button from '../../../components/ui/Button';
 import { SearchableCombobox } from '../../../components/shared';
-import type { Producer } from '../../../types';
+import { useProducers } from '../../../hooks/data/useProducers';
+import { producerService } from '../../../services/producerService';
+import { useToast } from '../../../contexts/ToastContext';
 
 interface ProducerAssignModalProps {
   path: string;
-  producers: Producer[];
   currentProducerId: string | null;
   onClose: () => void;
   onSave: (producerId: string | null) => Promise<void>;
 }
 
-export default function ProducerAssignModal({
-  path,
-  producers,
-  currentProducerId,
-  onClose,
-  onSave,
-}: ProducerAssignModalProps) {
+export default function ProducerAssignModal({ path, currentProducerId, onClose, onSave }: ProducerAssignModalProps) {
+  const { producers, refetch } = useProducers();
+  const toast = useToast();
   const [producerId, setProducerId] = useState(currentProducerId);
   const [saving, setSaving] = useState(false);
 
@@ -30,6 +27,13 @@ export default function ProducerAssignModal({
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handleCreateProducer(name: string) {
+    const created = await producerService.insertProducer({ name });
+    toast.success(`Created producer "${created.name}".`);
+    refetch();
+    return { id: created.id, label: created.name };
   }
 
   return (
@@ -57,6 +61,7 @@ export default function ProducerAssignModal({
         placeholder="type to search producers…"
         noneLabel="Unknown"
         maxHeight={260}
+        onCreate={handleCreateProducer}
       />
     </Modal>
   );

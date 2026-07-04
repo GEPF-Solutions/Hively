@@ -8,7 +8,7 @@ import { useDisplayGroups } from '../hooks/useDisplayGroups';
 import { findMatchingRules } from '../../../utils/ruleMatch';
 import { useToast } from '../../../contexts/ToastContext';
 import { topicService } from '../../../services/topicService';
-import type { Consumer, Producer, Rule, Schema, Tag, Topic, TopicViewMode } from '../../../types';
+import type { Producer, Rule, Schema, Tag, Topic, TopicViewMode } from '../../../types';
 
 const COLUMN_HEADERS = ['Topic', 'Producer', 'Consumers', 'Tags', 'Last Message', 'Compliance'];
 
@@ -18,8 +18,6 @@ interface TopicListViewProps {
   onViewModeChange: (mode: TopicViewMode) => void;
   producerById: Map<string, Producer>;
   tagById: Map<string, Tag>;
-  producers: Producer[];
-  consumers: Consumer[];
   schemas: Schema[];
   tags: Tag[];
   rules: Rule[];
@@ -32,8 +30,6 @@ export default function TopicListView({
   onViewModeChange,
   producerById,
   tagById,
-  producers,
-  consumers,
   schemas,
   tags,
   rules,
@@ -118,8 +114,6 @@ export default function TopicListView({
       {configuringTopic && (
         <ConfigureTopicModal
           topic={configuringTopic}
-          producers={producers}
-          consumers={consumers}
           schemas={schemas}
           tags={tags}
           onClose={() => setConfiguringTopic(null)}

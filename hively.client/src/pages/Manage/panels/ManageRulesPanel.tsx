@@ -8,13 +8,14 @@ import { useProducers } from '../../../hooks/data/useProducers';
 import { useTags } from '../../../hooks/data/useTags';
 import { useTopics } from '../../../hooks/data/useTopics';
 import { ruleService } from '../../../services/ruleService';
+import { producerService } from '../../../services/producerService';
 import { useToast } from '../../../contexts/ToastContext';
 import { matchTopicPattern } from '../../../utils/searchMatch';
 import type { Rule } from '../../../types';
 
 export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
   const { rules, refetch } = useRules();
-  const { producers } = useProducers();
+  const { producers, refetch: refetchProducers } = useProducers();
   const { tags } = useTags();
   const { topics, refetch: refetchTopics } = useTopics();
   const toast = useToast();
@@ -40,6 +41,13 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
 
   function toggleTag(id: string) {
     setTagIds((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]));
+  }
+
+  async function handleCreateProducer(producerName: string) {
+    const created = await producerService.insertProducer({ name: producerName });
+    toast.success(`Created producer "${created.name}".`);
+    refetchProducers();
+    return { id: created.id, label: created.name };
   }
 
   function startEdit(rule: Rule) {
@@ -153,6 +161,7 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
             placeholder="type to search producers…"
             noneLabel="Unknown"
             maxHeight={120}
+            onCreate={handleCreateProducer}
           />
         </div>
         <div className="mb-3 flex flex-wrap gap-1.5">
