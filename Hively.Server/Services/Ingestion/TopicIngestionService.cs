@@ -11,10 +11,12 @@ namespace Hively.Server.Services.Ingestion
     public class TopicIngestionService : ITopicIngestionService
     {
         private readonly ITopicRepository _topicRepository;
+        private readonly ITopicNotifier _topicNotifier;
 
-        public TopicIngestionService(ITopicRepository topicRepository)
+        public TopicIngestionService(ITopicRepository topicRepository, ITopicNotifier topicNotifier)
         {
             _topicRepository = topicRepository;
+            _topicNotifier = topicNotifier;
         }
 
         /// <inheritdoc />
@@ -26,6 +28,7 @@ namespace Hively.Server.Services.Ingestion
             CancellationToken cancellationToken)
         {
             var topic = await _topicRepository.FindTopicByPathAsync(topicPath, cancellationToken);
+            var isNewTopic = topic == null;
             if (topic == null)
             {
                 var newTopicId = await _topicRepository.InsertTopicAsync(new TopicDto { Path = topicPath }, cancellationToken);
@@ -48,6 +51,18 @@ namespace Hively.Server.Services.Ingestion
                 violationCount,
                 JsonSerializer.Serialize(newHistogram),
                 cancellationToken);
+
+            var updatedTopic = await _topicRepository.GetTopicAsync(topic.Id, cancellationToken);
+            var dto = TopicDtoBuilder.Build(updatedTopic);
+
+            if (isNewTopic)
+            {
+                await _topicNotifier.NotifyTopicUntrackedAsync(dto, cancellationToken);
+            }
+            else
+            {
+                await _topicNotifier.NotifyTopicUpdatedAsync(dto, cancellationToken);
+            }
         }
 
         // MQTT payloads are arbitrary bytes, but last_payload is a jsonb column and

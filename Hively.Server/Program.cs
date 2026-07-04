@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Hively.Server.DbModel;
+using Hively.Server.Hubs;
 using Hively.Server.Infrastructure;
 using Hively.Server.Repository;
 using Hively.Server.Repository.Abstractions;
@@ -50,12 +51,15 @@ public class Program
         builder.Services.AddScoped<IRuleService, RuleService>();
         builder.Services.AddScoped<ITopicRepository, TopicRepository>();
         builder.Services.AddScoped<ITopicService, TopicService>();
+        builder.Services.AddScoped<ITopicNotifier, TopicNotifier>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IUserService, UserService>();
 
         builder.Services.Configure<MqttBrokerSettings>(builder.Configuration.GetSection("MqttBroker"));
         builder.Services.AddScoped<ITopicIngestionService, TopicIngestionService>();
         builder.Services.AddHostedService<MqttIngestionService>();
+
+        builder.Services.AddSignalR();
 
         builder.Services.AddAuthentication(options =>
         {
@@ -147,6 +151,7 @@ public class Program
 
 
         app.MapControllers();
+        app.MapHub<TopicHub>("/hubs/topic");
         app.MapFallbackToFile("/index.html");
 
         app.Run();

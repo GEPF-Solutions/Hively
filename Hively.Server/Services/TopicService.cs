@@ -12,25 +12,27 @@ namespace Hively.Server.Services
     {
         private readonly ITopicRepository _topicRepository;
         private readonly IRuleRepository _ruleRepository;
+        private readonly ITopicNotifier _topicNotifier;
 
-        public TopicService(ITopicRepository topicRepository, IRuleRepository ruleRepository)
+        public TopicService(ITopicRepository topicRepository, IRuleRepository ruleRepository, ITopicNotifier topicNotifier)
         {
             _topicRepository = topicRepository;
             _ruleRepository = ruleRepository;
+            _topicNotifier = topicNotifier;
         }
 
         /// <inheritdoc />
         public async Task<IEnumerable<TopicDto>> GetTopicsAsync(CancellationToken cancellationToken)
         {
             var topics = await _topicRepository.GetTopicsAsync(cancellationToken);
-            return topics.Select(BuildDto);
+            return topics.Select(TopicDtoBuilder.Build);
         }
 
         /// <inheritdoc />
         public async Task<TopicDto> GetTopicAsync(Guid topicId, CancellationToken cancellationToken)
         {
             var topic = await _topicRepository.GetTopicAsync(topicId, cancellationToken);
-            return BuildDto(topic);
+            return TopicDtoBuilder.Build(topic);
         }
 
         /// <inheritdoc />
@@ -38,7 +40,18 @@ namespace Hively.Server.Services
         {
             var createdTopicId = await _topicRepository.InsertTopicAsync(topic, cancellationToken);
             var createdTopic = await _topicRepository.GetTopicAsync(createdTopicId, cancellationToken);
-            return BuildDto(createdTopic);
+            var dto = TopicDtoBuilder.Build(createdTopic);
+
+            if (dto.Tracked)
+            {
+                await _topicNotifier.NotifyTopicUpdatedAsync(dto, cancellationToken);
+            }
+            else
+            {
+                await _topicNotifier.NotifyTopicUntrackedAsync(dto, cancellationToken);
+            }
+
+            return dto;
         }
 
         /// <inheritdoc />
@@ -46,7 +59,9 @@ namespace Hively.Server.Services
         {
             await _topicRepository.UpdateTopicAsync(topic, cancellationToken);
             var updatedTopic = await _topicRepository.GetTopicAsync(topic.Id, cancellationToken);
-            return BuildDto(updatedTopic);
+            var dto = TopicDtoBuilder.Build(updatedTopic);
+            await _topicNotifier.NotifyTopicUpdatedAsync(dto, cancellationToken);
+            return dto;
         }
 
         /// <inheritdoc />
@@ -54,13 +69,16 @@ namespace Hively.Server.Services
         {
             await _topicRepository.ClearViolationsAsync(topicId, cancellationToken);
             var updatedTopic = await _topicRepository.GetTopicAsync(topicId, cancellationToken);
-            return BuildDto(updatedTopic);
+            var dto = TopicDtoBuilder.Build(updatedTopic);
+            await _topicNotifier.NotifyTopicUpdatedAsync(dto, cancellationToken);
+            return dto;
         }
 
         /// <inheritdoc />
-        public Task RemoveTopicAsync(Guid topicId, CancellationToken cancellationToken)
+        public async Task RemoveTopicAsync(Guid topicId, CancellationToken cancellationToken)
         {
-            return _topicRepository.RemoveTopicAsync(topicId, cancellationToken);
+            await _topicRepository.RemoveTopicAsync(topicId, cancellationToken);
+            await _topicNotifier.NotifyTopicRemovedAsync(topicId, cancellationToken);
         }
 
         /// <inheritdoc />
@@ -83,7 +101,9 @@ namespace Hively.Server.Services
         {
             await _topicRepository.ApplyRuleAsync(topicId, ruleId, cancellationToken);
             var updatedTopic = await _topicRepository.GetTopicAsync(topicId, cancellationToken);
-            return BuildDto(updatedTopic);
+            var dto = TopicDtoBuilder.Build(updatedTopic);
+            await _topicNotifier.NotifyTopicUpdatedAsync(dto, cancellationToken);
+            return dto;
         }
 
         /// <inheritdoc />
@@ -98,6 +118,8 @@ namespace Hively.Server.Services
             foreach (var topic in matchingUntracked)
             {
                 await _topicRepository.ApplyRuleAsync(topic.Id, ruleId, cancellationToken);
+                var updatedTopic = await _topicRepository.GetTopicAsync(topic.Id, cancellationToken);
+                await _topicNotifier.NotifyTopicUpdatedAsync(TopicDtoBuilder.Build(updatedTopic), cancellationToken);
             }
 
             return matchingUntracked.Count;
@@ -126,14 +148,16 @@ namespace Hively.Server.Services
         public async Task<TopicDto> AcceptRelinkAsync(Guid topicId, Guid oldTopicId, CancellationToken cancellationToken)
         {
             await _topicRepository.AcceptRelinkAsync(topicId, oldTopicId, cancellationToken);
-            var updatedTopic = await _topicRepository.GetTopicAsync(topicId, cancellationToken);
-            return BuildDto(updatedTopic);
-        }
 
-        private static TopicDto BuildDto(Topic topic)
-        {
-            var dto = new TopicDto(topic);
-            (dto.Compliant, dto.Mismatches) = SchemaComplianceValidator.Validate(topic.Schema?.Definition, dto.LastPayload);
+            var updatedTopic = await _topicRepository.GetTopicAsync(topicId, cancellationToken);
+            var dto = TopicDtoBuilder.Build(updatedTopic);
+            await _topicNotifier.NotifyTopicUpdatedAsync(dto, cancellationToken);
+
+            // The old topic was retired (RetiredAt/MergedIntoTopicId set) as part of the
+            // same mutation — push it too so any view still showing it stops looking stale.
+            var oldTopic = await _topicRepository.GetTopicAsync(oldTopicId, cancellationToken);
+            await _topicNotifier.NotifyTopicUpdatedAsync(TopicDtoBuilder.Build(oldTopic), cancellationToken);
+
             return dto;
         }
     }
