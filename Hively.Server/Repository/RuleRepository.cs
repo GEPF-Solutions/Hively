@@ -51,6 +51,7 @@ namespace Hively.Server.Repository
 
             var newRule = new Rule
             {
+                Name = ruleDto.Name,
                 Pattern = ruleDto.Pattern,
                 ProducerId = ruleDto.ProducerId,
                 Tags = tags
@@ -74,6 +75,7 @@ namespace Hively.Server.Repository
                 throw new EntityNotFoundException($"Rule id {ruleDto.Id} did not reference a valid rule.");
             }
 
+            ruleToUpdate.Name = ruleDto.Name;
             ruleToUpdate.Pattern = ruleDto.Pattern;
             ruleToUpdate.ProducerId = ruleDto.ProducerId;
 

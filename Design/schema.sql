@@ -95,8 +95,12 @@ CREATE TABLE topic_tags (
 );
 
 -- Bulk-assignment rule: MQTT-pattern (+/# wildcards) -> producer + tags to apply.
+-- name is optional — an admin managing a handful of rules can just read the
+-- pattern, but it's easy to lose track once there are many; falls back to
+-- showing the pattern when not set.
 CREATE TABLE rules (
     id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    name        text,
     pattern     text NOT NULL,
     producer_id uuid,
     CONSTRAINT fk_rules_producer FOREIGN KEY (producer_id) REFERENCES producers (id) ON DELETE SET NULL

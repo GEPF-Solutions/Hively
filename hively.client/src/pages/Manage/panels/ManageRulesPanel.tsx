@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Modal from '../../../components/ui/Modal';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
-import { SearchableCombobox, TagPill } from '../../../components/shared';
+import { ManageList, SearchableCombobox, TagPill } from '../../../components/shared';
 import { useRules } from '../../../hooks/data/useRules';
 import { useProducers } from '../../../hooks/data/useProducers';
 import { useTags } from '../../../hooks/data/useTags';
@@ -10,6 +10,7 @@ import { useTopics } from '../../../hooks/data/useTopics';
 import { ruleService } from '../../../services/ruleService';
 import { useToast } from '../../../contexts/ToastContext';
 import { matchTopicPattern } from '../../../utils/searchMatch';
+import type { Rule } from '../../../types';
 
 export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
   const { rules, refetch } = useRules();
@@ -18,6 +19,9 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
   const { topics, refetch: refetchTopics } = useTopics();
   const toast = useToast();
 
+  const [search, setSearch] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [name, setName] = useState('');
   const [pattern, setPattern] = useState('');
   const [producerId, setProducerId] = useState<string | null>(null);
   const [tagIds, setTagIds] = useState<string[]>([]);
@@ -25,6 +29,10 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
   const producerById = new Map(producers.map((p) => [p.id, p]));
   const tagById = new Map(tags.map((t) => [t.id, t]));
   const untrackedTopics = topics.filter((t) => !t.tracked);
+  const filtered = rules.filter((r) => {
+    const q = search.trim().toLowerCase();
+    return (r.name ?? '').toLowerCase().includes(q) || r.pattern.toLowerCase().includes(q);
+  });
 
   function matchCount(rulePattern: string) {
     return untrackedTopics.filter((t) => matchTopicPattern(rulePattern, t.path)).length;
@@ -34,16 +42,34 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
     setTagIds((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]));
   }
 
-  async function handleAdd() {
+  function startEdit(rule: Rule) {
+    setEditingId(rule.id);
+    setName(rule.name ?? '');
+    setPattern(rule.pattern);
+    setProducerId(rule.producerId);
+    setTagIds(rule.tagIds);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setName('');
+    setPattern('');
+    setProducerId(null);
+    setTagIds([]);
+  }
+
+  async function handleSave() {
     if (!pattern.trim()) return;
     try {
-      await ruleService.insertRule({ pattern: pattern.trim(), producerId, tagIds });
-      setPattern('');
-      setProducerId(null);
-      setTagIds([]);
+      if (editingId) {
+        await ruleService.updateRule({ id: editingId, name: name.trim() || null, pattern: pattern.trim(), producerId, tagIds });
+      } else {
+        await ruleService.insertRule({ name: name.trim() || null, pattern: pattern.trim(), producerId, tagIds });
+      }
+      cancelEdit();
       refetch();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to add rule');
+      toast.error(err instanceof Error ? err.message : 'Failed to save rule');
     }
   }
 
@@ -73,13 +99,16 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
         bulk-managing many topics from the same producer, or to survive a namespace reshuffle.
       </div>
 
-      <div className="mb-5 flex max-h-56 flex-col gap-2 overflow-y-auto">
-        {rules.map((rule) => {
+      <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="filter rules…" className="mb-3" />
+
+      <ManageList>
+        {filtered.map((rule) => {
           const count = matchCount(rule.pattern);
           return (
             <div key={rule.id} className="flex items-center gap-2.5 rounded-md bg-bg px-2.5 py-2.5">
               <div className="min-w-0 flex-1">
-                <div className="truncate font-mono text-[12.5px] text-text">{rule.pattern}</div>
+                <div className="truncate text-[13px] font-semibold text-text">{rule.name ?? rule.pattern}</div>
+                {rule.name && <div className="truncate font-mono text-[11px] text-muted">{rule.pattern}</div>}
                 <div className="mt-0.5 text-[11.5px] text-muted">
                   producer: {rule.producerId ? (producerById.get(rule.producerId)?.name ?? 'Unknown') : 'Unknown'}
                 </div>
@@ -95,16 +124,21 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
                   Apply to {count} now
                 </Button>
               )}
+              <Button variant="secondary" size="sm" onClick={() => startEdit(rule)}>
+                Edit
+              </Button>
               <button onClick={() => handleDelete(rule.id)} className="text-base leading-none text-muted hover:text-text">
                 ×
               </button>
             </div>
           );
         })}
-      </div>
+        {filtered.length === 0 && <div className="px-1 py-1 text-[12.5px] italic text-muted">No rules match.</div>}
+      </ManageList>
 
       <div className="border-t border-border pt-4">
-        <div className="mb-1.5 text-[11.5px] font-semibold text-muted">New rule</div>
+        <div className="mb-1.5 text-[11.5px] font-semibold text-muted">{editingId ? 'Edit rule' : 'New rule'}</div>
+        <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="name (optional)" className="mb-2.5" />
         <Input
           value={pattern}
           onChange={(e) => setPattern(e.target.value)}
@@ -126,9 +160,16 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
             <TagPill key={tag.id} tag={tag} active={tagIds.includes(tag.id)} onClick={() => toggleTag(tag.id)} />
           ))}
         </div>
-        <Button variant="primary" className="w-full" onClick={handleAdd}>
-          Add rule
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="primary" className="flex-1" onClick={handleSave}>
+            {editingId ? 'Save changes' : 'Add rule'}
+          </Button>
+          {editingId && (
+            <Button variant="secondary" onClick={cancelEdit}>
+              Cancel
+            </Button>
+          )}
+        </div>
       </div>
     </Modal>
   );

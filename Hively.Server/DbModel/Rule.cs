@@ -11,6 +11,8 @@ public partial class Rule
 
     public Guid? ProducerId { get; set; }
 
+    public string? Name { get; set; }
+
     public virtual Producer? Producer { get; set; }
 
     public virtual ICollection<Tag> Tags { get; set; } = new List<Tag>();

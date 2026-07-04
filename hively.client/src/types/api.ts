@@ -36,6 +36,8 @@ export interface SchemaVersion {
 
 export interface Rule {
   id: string;
+  /** Optional label — falls back to showing the pattern when not set. */
+  name: string | null;
   pattern: string;
   producerId: string | null;
   tagIds: string[];
