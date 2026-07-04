@@ -115,8 +115,10 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
           <div key={rule.id} className="flex items-center gap-2.5 rounded-md bg-bg px-2.5 py-2.5">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <div className="truncate text-[13px] font-semibold text-text">{rule.name ?? rule.pattern}</div>
-                {rule.autoApply && <Badge tone="cyan">auto</Badge>}
+                <div className={`min-w-0 flex-1 truncate text-[13px] font-semibold text-text ${rule.name ? '' : 'font-mono'}`}>
+                  {rule.name ?? rule.pattern}
+                </div>
+                {rule.autoApply && <Badge tone="cyan" className="shrink-0">auto</Badge>}
               </div>
               {rule.name && <div className="truncate font-mono text-[11px] text-muted">{rule.pattern}</div>}
               <div className="mt-0.5 text-[11.5px] text-muted">
