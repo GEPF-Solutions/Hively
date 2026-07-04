@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
-import { TagPill } from '../../components/shared';
+import { ConfirmModal, TagPill } from '../../components/shared';
 import ProducerCard from './cards/ProducerCard';
 import ConsumerCard from './cards/ConsumerCard';
 import SchemaCard from './cards/SchemaCard';
@@ -42,6 +42,8 @@ export default function TopicDetail() {
   const [changingSchema, setChangingSchema] = useState(false);
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
   const [configuring, setConfiguring] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   if (!topic) {
     return <div className="p-6 text-muted">Loading topic…</div>;
@@ -93,11 +95,30 @@ export default function TopicDetail() {
     }
   }
 
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      await topicService.deleteTopic(topic!.id);
+      toast.success('Topic deleted.');
+      navigate('/topics');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete topic');
+      setDeleting(false);
+    }
+  }
+
   return (
     <div className="h-full overflow-y-auto px-8 py-6" style={{ maxWidth: 1180 }}>
-      <Button variant="secondary" size="sm" onClick={() => navigate('/topics')} className="mb-4">
-        ← Back to topics
-      </Button>
+      <div className="mb-4 flex items-center justify-between">
+        <Button variant="secondary" size="sm" onClick={() => navigate('/topics')}>
+          ← Back to topics
+        </Button>
+        {isAdmin && (
+          <Button variant="danger" size="sm" onClick={() => setConfirmingDelete(true)}>
+            Delete Topic
+          </Button>
+        )}
+      </div>
 
       {!topic.tracked && (
         <div className="mb-4 rounded-lg border border-amber/50 bg-amber/15 px-3.5 py-2.5 text-[12.5px] text-amber">
@@ -143,7 +164,7 @@ export default function TopicDetail() {
 
       <div className="grid grid-cols-2 gap-4">
         <ProducerCard producer={producer} canChange={isAdmin} onChangeClick={() => setChangingProducer(true)} />
-        <ConsumerCard consumers={topicConsumers} allConsumers={consumers} canEdit={isAdmin} onToggle={toggleConsumer} />
+        <ConsumerCard consumers={topicConsumers} canEdit={isAdmin} onToggle={toggleConsumer} />
         <SchemaCard schema={schema} canChange={isAdmin} onChangeClick={() => setChangingSchema(true)} />
         <LastMessageCard topic={topic} />
         <ComplianceCard topic={topic} canClear={isAdmin} onClear={handleClearViolations} />
@@ -154,7 +175,6 @@ export default function TopicDetail() {
       {changingProducer && (
         <ProducerAssignModal
           path={topic.path}
-          producers={producers}
           currentProducerId={topic.producerId}
           onClose={() => setChangingProducer(false)}
           onSave={(producerId) => saveTopic({ producerId })}
@@ -174,8 +194,6 @@ export default function TopicDetail() {
       {configuring && (
         <ConfigureTopicModal
           topic={topic}
-          producers={producers}
-          consumers={consumers}
           schemas={schemas}
           tags={tags}
           onClose={() => setConfiguring(false)}
@@ -183,6 +201,17 @@ export default function TopicDetail() {
             setConfiguring(false);
             refetch();
           }}
+        />
+      )}
+
+      {confirmingDelete && (
+        <ConfirmModal
+          title="Delete Topic"
+          message={`Delete "${topic.path}"? This permanently removes its message history, violation count, and assignments. This can't be undone.`}
+          confirmLabel="Delete"
+          confirming={deleting}
+          onConfirm={handleDelete}
+          onClose={() => setConfirmingDelete(false)}
         />
       )}
     </div>
