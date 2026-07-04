@@ -144,7 +144,7 @@ CREATE TABLE users (
 CREATE TABLE user_identities (
     id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id          uuid NOT NULL,
-    auth_provider    text NOT NULL CHECK (auth_provider IN ('entra', 'google')),
+    auth_provider    text NOT NULL CHECK (auth_provider IN ('entra', 'google', 'basic')),
     external_subject text NOT NULL,
     created_at       timestamptz NOT NULL DEFAULT now(),
     UNIQUE (auth_provider, external_subject),
