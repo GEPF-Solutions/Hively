@@ -70,11 +70,11 @@ A **globally-defined, reusable** schema — NOT per-topic. Admins define schemas
 |---|---|---|
 | `id` | `Guid`/`string` | |
 | `name` | `string` | e.g. "Sensor Reading (value+unit+quality)" |
-| `definition` | `json` (field → type map) | Simple `{ "value": "number", "unit": "string" }` shape in the prototype. A real implementation may want JSON Schema instead of this simplified map — evaluate with the team. |
+| `definition` | `json` (field → type map, nestable) | Simple `{ "value": "number", "unit": "string" }` shape in the prototype. **Hively's implementation diverges from the prototype here**: the definition can nest — a field's value is either a leaf type name or another field→type object, mirroring the payload's own shape so a nested object gets its own sub-fields checked. Leaf type names: `"string"`, `"number"`, `"boolean"`, plus `"object"`/`"array"`/`"null"` to require a field exist as that JSON kind without checking inside it (for payloads whose nested shape varies between messages). A trailing `?` on a leaf type (e.g. `"string?"`) marks the field optional: missing or explicitly `null` is fine, but a present non-null value still has to match the base type — required fields (no `?`) keep the old missing-is-a-violation behavior. No dotted-path keys — nesting is expressed as real nested JSON, not `"a.b.c"` strings, since that reads as a literal mirror of the payload. |
 | `version` | `string` | e.g. `v2`, auto-incremented on edit. |
 | `history` | `[{version, date}]` | Every edit creates a new version entry; old versions are kept for audit/traceability. |
 
-Validation logic (`validateSchema`): for each key in the schema definition, check the key exists in the payload and `typeof payload[key] === definition[key]`. Collect all mismatches (don't short-circuit on first failure) so the compliance card can list every violated field.
+Validation logic (`SchemaComplianceValidator`, `Hively.Server/Services/SchemaComplianceValidator.cs`): walks the definition tree alongside the payload. For each key: if the definition value there is a nested object, recurse (the payload value must also be an object, and nesting is always required — `?` only applies to leaf types); if it's a string, strip a trailing `?` (if present) to get the base type and treat the field as optional, then check `typeof payload[key]` matches that base type — unless the field is optional and absent/null, which is never a violation. Collect all mismatches (don't short-circuit on first failure) so the compliance card can list every violated field, using dotted paths (e.g. `Metadata.Name`) only in the mismatch *messages*, not in how the definition itself is authored.
 
 ### Tag
 Freely admin-defined colored pill.

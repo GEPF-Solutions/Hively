@@ -8,12 +8,29 @@ import { useTopics } from '../../../hooks/data/useTopics';
 import { schemaService } from '../../../services/schemaService';
 import { useToast } from '../../../contexts/ToastContext';
 
+// Definitions can nest (a field's value is either a leaf type name or another
+// field->type object to recurse into) — flatten to dot-paths for this one-line
+// summary; the actual stored definition keeps its real nested shape.
+function flattenFields(value: unknown, prefix: string, out: string[]): void {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return;
+  }
+  for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+    const path = prefix ? `${prefix}.${key}` : key;
+    if (typeof child === 'string') {
+      out.push(`${path}: ${child}`);
+    } else {
+      flattenFields(child, path, out);
+    }
+  }
+}
+
 function fieldsPreview(definition: string): string {
   try {
-    const parsed = JSON.parse(definition) as Record<string, string>;
-    return Object.entries(parsed)
-      .map(([k, v]) => `${k}: ${v}`)
-      .join(', ');
+    const parsed = JSON.parse(definition);
+    const fields: string[] = [];
+    flattenFields(parsed, '', fields);
+    return fields.join(', ');
   } catch {
     return definition;
   }
@@ -65,7 +82,7 @@ export default function ManageSchemasPanel({ onClose }: { onClose: () => void })
       return;
     }
     if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-      setDefError('Definition must be a flat object of field -> type');
+      setDefError('Definition must be an object of field -> type (nest an object to check its sub-fields)');
       return;
     }
     setDefError(null);
@@ -95,6 +112,18 @@ export default function ManageSchemasPanel({ onClose }: { onClose: () => void })
 
   return (
     <Modal isOpen onClose={onClose} title="Manage Schemas" maxWidth="md" footer={<Button onClick={onClose}>Done</Button>}>
+      <div className="mb-4 text-xs leading-relaxed text-muted">
+        Definitions mirror the payload's shape — replace each value with its expected type:{' '}
+        <span className="font-mono text-text/80">"string"</span>,{' '}
+        <span className="font-mono text-text/80">"number"</span>,{' '}
+        <span className="font-mono text-text/80">"boolean"</span>. Nest an object to check its sub-fields, or use{' '}
+        <span className="font-mono text-text/80">"object"</span>/<span className="font-mono text-text/80">"array"</span>/
+        <span className="font-mono text-text/80">"null"</span> to require a field exist as that kind without checking
+        inside it. Add <span className="font-mono text-text/80">"?"</span> (e.g.{' '}
+        <span className="font-mono text-text/80">"string?"</span>) to make a field optional — missing or null is fine,
+        but a present value still has to match the type.
+      </div>
+
       <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="filter schemas…" className="mb-3 font-mono" />
 
       <ManageList>
@@ -124,8 +153,8 @@ export default function ManageSchemasPanel({ onClose }: { onClose: () => void })
         <textarea
           value={defText}
           onChange={(e) => setDefText(e.target.value)}
-          placeholder='{ "value": "number", "unit": "string" }'
-          rows={5}
+          placeholder='{ "value": "number", "unit": "string", "meta": { "name": "string" } }'
+          rows={7}
           className="mb-2.5 w-full resize-y rounded-md border border-border-strong bg-bg px-2.5 py-2 font-mono text-xs text-cyan outline-none placeholder:text-muted focus:border-cyan"
         />
         {defError && <div className="mb-2.5 text-xs text-red">{defError}</div>}
