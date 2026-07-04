@@ -119,9 +119,11 @@ export default function ManageSchemasPanel({ onClose }: { onClose: () => void })
         <span className="font-mono text-text/80">"boolean"</span>. Nest an object to check its sub-fields, or use{' '}
         <span className="font-mono text-text/80">"object"</span>/<span className="font-mono text-text/80">"array"</span>/
         <span className="font-mono text-text/80">"null"</span> to require a field exist as that kind without checking
-        inside it. Add <span className="font-mono text-text/80">"?"</span> (e.g.{' '}
-        <span className="font-mono text-text/80">"string?"</span>) to make a field optional — missing or null is fine,
-        but a present value still has to match the type.
+        inside it, or <span className="font-mono text-text/80">"any"</span> for any kind at all. Combine types with{' '}
+        <span className="font-mono text-text/80">"|"</span> for a field that's genuinely one of a few (e.g.{' '}
+        <span className="font-mono text-text/80">"string|number"</span>). Add{' '}
+        <span className="font-mono text-text/80">"?"</span> (e.g. <span className="font-mono text-text/80">"string?"</span>)
+        to make a field optional — missing or null is fine, but a present value still has to match.
       </div>
 
       <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="filter schemas…" className="mb-3 font-mono" />

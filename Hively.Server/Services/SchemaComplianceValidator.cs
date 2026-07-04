@@ -11,6 +11,10 @@ namespace Hively.Server.Services
     /// check these specific sub-fields" instead. A trailing '?' on a leaf type
     /// (e.g. "string?") marks the field optional: absent or explicitly null is
     /// fine, but a present, non-null value must still match the base type.
+    /// Leaf types can also be a '|'-separated union (e.g. "string|number", for a
+    /// field that's genuinely one of a few types depending on the message —
+    /// some KNX datapoints report as a string sometimes and a number other
+    /// times) or "any" for a field that must exist but can hold any JSON value.
     /// </summary>
     public static class SchemaComplianceValidator
     {
@@ -72,7 +76,8 @@ namespace Hively.Server.Services
                 {
                     var declaredType = property.Value.GetString()!;
                     var optional = declaredType.EndsWith('?');
-                    var expectedType = optional ? declaredType[..^1] : declaredType;
+                    var typeExpression = optional ? declaredType[..^1] : declaredType;
+                    var candidateTypes = typeExpression.Split('|', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
                     if (!hasValue)
                     {
@@ -88,9 +93,9 @@ namespace Hively.Server.Services
                         continue;
                     }
 
-                    if (!MatchesType(value, expectedType))
+                    if (!candidateTypes.Any(candidate => MatchesType(value, candidate)))
                     {
-                        mismatches.Add($"'{fieldPath}' expected {expectedType}, got {DescribeType(value)}");
+                        mismatches.Add($"'{fieldPath}' expected {typeExpression}, got {DescribeType(value)}");
                     }
                 }
                 // Any other declared shape (number/bool/array/null literal as the
@@ -107,6 +112,7 @@ namespace Hively.Server.Services
             "object" => value.ValueKind == JsonValueKind.Object,
             "array" => value.ValueKind == JsonValueKind.Array,
             "null" => value.ValueKind == JsonValueKind.Null,
+            "any" => true, // field must exist (or be present per '?'), but its JSON kind is unconstrained
             _ => true // unrecognized declared type — a schema-authoring issue, not a payload compliance failure
         };
 
