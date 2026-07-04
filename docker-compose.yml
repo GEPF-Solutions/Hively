@@ -16,5 +16,13 @@ services:
       timeout: 5s
       retries: 10
 
+  mosquitto:
+    image: docker.io/eclipse-mosquitto:2
+    restart: unless-stopped
+    ports:
+      - "${MQTT_PORT:-1883}:1883"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+
 volumes:
   hively-postgres-data:
