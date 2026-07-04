@@ -34,6 +34,20 @@ body {
   min-height: 100svh;
 }
 
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 /* Graph view: traveling dash overlay indicating producer -> topic -> consumer
    dataflow direction (see pages/Graph/hooks/useGraphLayout.ts's `reversed` flag). */
 @keyframes graph-flow {

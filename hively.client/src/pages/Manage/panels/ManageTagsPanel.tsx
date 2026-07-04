@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Modal from '../../../components/ui/Modal';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
-import { TagPill } from '../../../components/shared';
+import { ManageList, TagPill } from '../../../components/shared';
 import { tagColor } from '../../../utils/tagColor';
 import { useTags } from '../../../hooks/data/useTags';
 import { tagService } from '../../../services/tagService';
@@ -22,8 +22,11 @@ function slugify(label: string): string {
 export default function ManageTagsPanel({ onClose }: { onClose: () => void }) {
   const { tags, refetch } = useTags();
   const toast = useToast();
+  const [search, setSearch] = useState('');
   const [newLabel, setNewLabel] = useState('');
   const [newHue, setNewHue] = useState<number | null>(COLOR_SWATCHES[1]);
+
+  const filtered = tags.filter((t) => t.label.toLowerCase().includes(search.trim().toLowerCase()));
 
   async function handleAdd() {
     const label = newLabel.trim();
@@ -48,8 +51,10 @@ export default function ManageTagsPanel({ onClose }: { onClose: () => void }) {
 
   return (
     <Modal isOpen onClose={onClose} title="Manage Tags" maxWidth="sm" footer={<Button onClick={onClose}>Done</Button>}>
-      <div className="mb-5 flex max-h-60 flex-col gap-2 overflow-y-auto">
-        {tags.map((tag) => (
+      <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="filter tags…" className="mb-3" />
+
+      <ManageList>
+        {filtered.map((tag) => (
           <div key={tag.id} className="flex items-center gap-2.5 rounded-md bg-bg px-2.5 py-2">
             <TagPill tag={tag} />
             <div className="flex-1" />
@@ -58,7 +63,8 @@ export default function ManageTagsPanel({ onClose }: { onClose: () => void }) {
             </button>
           </div>
         ))}
-      </div>
+        {filtered.length === 0 && <div className="px-1 py-1 text-[12.5px] italic text-muted">No tags match.</div>}
+      </ManageList>
 
       <div className="border-t border-border pt-4">
         <div className="mb-1.5 text-[11.5px] font-semibold text-muted">New tag</div>

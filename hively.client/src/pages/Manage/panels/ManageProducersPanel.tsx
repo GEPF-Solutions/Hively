@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Modal from '../../../components/ui/Modal';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
+import { ManageList } from '../../../components/shared';
 import { useProducers } from '../../../hooks/data/useProducers';
 import { useTopics } from '../../../hooks/data/useTopics';
 import { producerService } from '../../../services/producerService';
@@ -63,7 +64,7 @@ export default function ManageProducersPanel({ onClose }: { onClose: () => void 
     <Modal isOpen onClose={onClose} title="Manage Producers" maxWidth="sm" footer={<Button onClick={onClose}>Done</Button>}>
       <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="filter producers…" className="mb-3 font-mono" />
 
-      <div className="mb-5 flex max-h-56 flex-col gap-1.5 overflow-y-auto">
+      <ManageList>
         {filtered.map((p) => (
           <div key={p.id} className="flex items-center gap-2.5 rounded-md bg-bg px-2.5 py-2">
             <div className="min-w-0 flex-1">
@@ -79,7 +80,8 @@ export default function ManageProducersPanel({ onClose }: { onClose: () => void 
             </button>
           </div>
         ))}
-      </div>
+        {filtered.length === 0 && <div className="px-1 py-1 text-[12.5px] italic text-muted">No producers match.</div>}
+      </ManageList>
 
       <div className="border-t border-border pt-4">
         <div className="mb-1.5 text-[11.5px] font-semibold text-muted">{editingId ? 'Edit producer' : 'New producer'}</div>
