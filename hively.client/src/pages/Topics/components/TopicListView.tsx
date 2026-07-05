@@ -63,7 +63,7 @@ export default function TopicListView({
             <button
               onClick={() => onViewModeChange('hierarchy')}
               className={`border-b-2 pb-1 text-xs font-medium ${
-                viewMode === 'hierarchy' ? 'border-gold text-gold font-semibold' : 'border-transparent text-muted'
+                viewMode === 'hierarchy' ? 'border-brand text-brand font-semibold' : 'border-transparent text-muted'
               }`}
             >
               Hierarchy
@@ -71,7 +71,7 @@ export default function TopicListView({
             <button
               onClick={() => onViewModeChange('list')}
               className={`border-b-2 pb-1 text-xs font-medium ${
-                viewMode === 'list' ? 'border-gold text-gold font-semibold' : 'border-transparent text-muted'
+                viewMode === 'list' ? 'border-brand text-brand font-semibold' : 'border-transparent text-muted'
               }`}
             >
               List
@@ -87,7 +87,7 @@ export default function TopicListView({
       {groups.map((group) => (
         <div key={group.label} className="mb-5">
           {group.showLabel && <div className="mb-2 pl-1 font-mono text-xs text-muted">{group.label}</div>}
-          <div className="overflow-hidden rounded-[10px] border border-border">
+          <div className="hv-card overflow-hidden">
             <div className="grid grid-cols-[2.2fr_1fr_0.9fr_1.3fr_1fr_1fr] gap-3 bg-panel px-4 py-2.5 text-[10.5px] font-semibold uppercase tracking-wide text-muted">
               {COLUMN_HEADERS.map((h) => (
                 <div key={h}>{h}</div>

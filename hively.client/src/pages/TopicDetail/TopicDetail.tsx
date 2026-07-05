@@ -121,7 +121,7 @@ export default function TopicDetail() {
       </div>
 
       {!topic.tracked && (
-        <div className="mb-4 rounded-lg border border-amber/50 bg-amber/15 px-3.5 py-2.5 text-[12.5px] text-amber">
+        <div className="facet-md facet-border-amber mb-4 bg-amber/15 px-3.5 py-2.5 text-[12.5px] text-amber">
           This topic is untracked — seen on the broker but not yet catalogued.
           {isAdmin && (
             <Button variant="primary" size="sm" className="ml-3" onClick={() => setConfiguring(true)}>
@@ -154,7 +154,7 @@ export default function TopicDetail() {
       </div>
 
       {tagPickerOpen && (
-        <div className="-mt-4 mb-6 flex flex-wrap gap-1.5 rounded-lg border border-border bg-panel p-2.5">
+        <div className="hv-card -mt-4 mb-6 flex flex-wrap gap-1.5 p-2.5">
           {tags.map((tag) => (
             <TagPill key={tag.id} tag={tag} active={topic.tagIds.includes(tag.id)} onClick={() => toggleTag(tag.id)} />
           ))}

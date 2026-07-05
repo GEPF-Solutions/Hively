@@ -9,7 +9,7 @@ interface ProducerCardProps {
 
 export default function ProducerCard({ producer, canChange, onChangeClick }: ProducerCardProps) {
   return (
-    <div className="rounded-[10px] border border-border bg-panel p-4">
+    <div className="hv-card p-4">
       <div className="mb-2.5 flex items-center justify-between">
         <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">Producer</div>
         {canChange && (

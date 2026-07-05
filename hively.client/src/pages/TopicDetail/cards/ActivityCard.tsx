@@ -41,7 +41,7 @@ export default function ActivityCard({ activityHistogram }: { activityHistogram:
   const [hovered, setHovered] = useState<number | null>(null);
 
   return (
-    <div className="flex h-full flex-col rounded-[10px] border border-border bg-panel p-4">
+    <div className="hv-card flex h-full flex-col p-4">
       <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-muted">
         Activity · msgs/hr, last 24h
       </div>
@@ -77,7 +77,7 @@ export default function ActivityCard({ activityHistogram }: { activityHistogram:
                   className="absolute bottom-0 left-0 block w-full rounded-t-[3px]"
                   style={{
                     height: `${barHeight}%`,
-                    background: isCurrent ? 'var(--color-gold)' : 'var(--color-cyan)',
+                    background: isCurrent ? 'var(--color-brand)' : 'var(--color-cyan)',
                     opacity: isCurrent ? 1 : 0.4,
                     filter: isHovered && !isCurrent ? 'brightness(1.6)' : undefined,
                   }}

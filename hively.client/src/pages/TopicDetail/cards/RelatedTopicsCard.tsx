@@ -12,7 +12,7 @@ export default function RelatedTopicsCard({ topic, allTopics }: { topic: Topic; 
   );
 
   return (
-    <div className="col-span-full rounded-[10px] border border-border bg-panel p-4">
+    <div className="hv-card col-span-full p-4">
       <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
         Related topics · same parent
       </div>

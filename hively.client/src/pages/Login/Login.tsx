@@ -46,10 +46,10 @@ export default function Login() {
   return (
     <div className="relative flex h-screen items-center justify-center overflow-hidden bg-bg text-text">
       <HiveWatermark />
-      <div className="relative w-full max-w-sm rounded-xl border border-border bg-panel p-8 text-center">
+      <div className="relative w-full max-w-sm facet-lg facet-border bg-panel p-8 text-center">
         <div className="mb-8 flex items-center justify-center gap-2.5">
           <HiveLogo size={36} />
-          <span className="font-brand text-xl font-semibold tracking-wide text-text/90">HIVELY</span>
+          <span className="font-mono text-xl font-bold tracking-wider text-logo-yellow">HIVELY</span>
         </div>
         <div className="flex flex-col gap-2.5">
           {providers?.google.enabled && (

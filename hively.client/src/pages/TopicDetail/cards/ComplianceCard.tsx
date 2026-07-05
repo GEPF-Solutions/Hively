@@ -12,7 +12,7 @@ export default function ComplianceCard({ topic, canClear, onClear }: ComplianceC
   const violationColor = topic.violationCount > 0 ? 'oklch(0.7 0.18 25)' : 'oklch(0.75 0.13 200)';
 
   return (
-    <div className="rounded-[10px] border border-border bg-panel p-4">
+    <div className="hv-card p-4">
       <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted">Compliance</div>
       <div className="flex items-center gap-4">
         <div>

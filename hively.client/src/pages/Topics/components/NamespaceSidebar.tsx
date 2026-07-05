@@ -51,13 +51,13 @@ export default function NamespaceSidebar({
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="search topics, producers, tags…"
-          className="w-full rounded-md border border-border-strong bg-bg px-2.5 py-2 font-mono text-[12.5px] text-text outline-none placeholder:text-muted focus:border-gold"
+          className="w-full facet-sm facet-border-strong bg-bg px-2.5 py-2 font-mono text-[12.5px] text-text outline-none placeholder:text-muted focus:facet-accent"
         />
         <div className="flex flex-wrap items-center gap-1.5">
           <button
             onClick={() => onTagFilterChange(null)}
             className={`whitespace-nowrap rounded-md border px-2.5 py-1 text-[11px] font-medium ${
-              !tagFilter ? 'border-gold/50 text-gold' : 'border-border-strong text-muted'
+              !tagFilter ? 'border-brand/50 text-brand' : 'border-border-strong text-muted'
             }`}
           >
             all
@@ -82,7 +82,7 @@ export default function NamespaceSidebar({
       {untrackedCount > 0 && (
         <button
           onClick={() => onTagFilterChange(UNTRACKED_FILTER)}
-          className="mx-3.5 mt-3 rounded-lg border border-amber/50 bg-amber/20 p-2.5 text-left"
+          className="facet-md facet-border-amber mx-3.5 mt-3 bg-amber/20 p-2.5 text-left"
         >
           <div className="text-[12.5px] font-semibold text-amber">⚠ {untrackedCount} untracked topics</div>
           <div className="mt-0.5 text-[11px] text-amber/80">seen on broker, not yet catalogued</div>
@@ -92,7 +92,7 @@ export default function NamespaceSidebar({
       <div className="flex items-center justify-between px-3.5 pb-1.5 pt-3.5">
         <div className="text-[10.5px] font-semibold uppercase tracking-wide text-muted">Namespace</div>
         {hasFolderFilter && (
-          <button onClick={onResetFolder} className="text-[11px] text-gold">
+          <button onClick={onResetFolder} className="text-[11px] text-brand">
             reset
           </button>
         )}
@@ -101,7 +101,7 @@ export default function NamespaceSidebar({
       <div className="flex flex-wrap items-center gap-0.5 px-3.5 pb-2 font-mono text-[11.5px]">
         {folderPath.map((seg, i) => (
           <span key={i} className="flex items-center gap-0.5">
-            <button onClick={() => onDrillTo(i)} className="px-0.5 py-0.5 font-medium text-gold">
+            <button onClick={() => onDrillTo(i)} className="px-0.5 py-0.5 font-medium text-brand">
               {seg}
             </button>
             <span className="text-muted">/</span>
@@ -113,7 +113,7 @@ export default function NamespaceSidebar({
         <div className="px-3.5 pb-2.5">
           <button
             onClick={onConfigureBranch}
-            className="w-full rounded-md border border-border-strong px-2.5 py-1.5 text-[11.5px] font-medium text-text/90 hover:border-gold hover:text-gold"
+            className="w-full facet-sm facet-border-strong px-2.5 py-1.5 text-[11.5px] font-medium text-text/90 hover:facet-accent hover:text-brand"
           >
             Configure {folderPath.join('/')}/…
           </button>

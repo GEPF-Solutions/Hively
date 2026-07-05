@@ -25,7 +25,7 @@ export default function ManageMenu() {
     <div className="relative">
       <button
         onClick={() => setMenuOpen((v) => !v)}
-        className="flex items-center gap-1.5 rounded-md border border-border-strong px-3 py-1.5 text-[13px] text-text/90"
+        className="flex items-center gap-1.5 facet-sm facet-border-strong px-3 py-1.5 text-[13px] text-text/90"
       >
         Manage <span className="text-[10px]">▾</span>
       </button>
@@ -33,7 +33,7 @@ export default function ManageMenu() {
       {menuOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-          <div className="absolute right-0 top-[calc(100%+6px)] z-50 min-w-[170px] rounded-lg border border-border-strong bg-panel p-1.5 shadow-2xl">
+          <div className="hv-card absolute right-0 top-[calc(100%+6px)] z-50 min-w-[170px] p-1.5 shadow-2xl">
             {MENU_ITEMS.map((item) => (
               <button
                 key={item.key}

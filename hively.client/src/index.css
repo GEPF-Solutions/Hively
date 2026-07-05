@@ -1,10 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 @theme {
   /* True neutral — no hue tint at all, so there's no "which accent hue"
-     to read as a template default. See --color-gold below for the one
-     deliberate accent. */
+     to read as a template default. See --color-brand below for the one
+     deliberate interactive accent. */
   --color-bg: oklch(0.13 0 0);
   --color-panel: oklch(0.17 0 0);
   --color-header: oklch(0.10 0 0);
@@ -13,11 +13,24 @@
   --color-text: oklch(0.95 0 0);
   --color-muted: oklch(0.58 0 0);
 
-  /* The honeycomb logo's gold — the one brand accent, scoped to active-state
-     underlines, the primary button, the logo mark and the empty-state
-     watermark. Never used as a general background/fill tint. */
-  --color-gold: oklch(0.80 0.15 92);
-  --color-gold-ink: oklch(0.16 0.02 92);
+  /* The one interactive brand accent — active-state underlines, the primary
+     button, focus borders. Deliberately NOT the logo's yellow (see
+     --color-logo-yellow below): the logomark keeps its own color, but
+     spreading that yellow across every button/nav/focus state read as the
+     same warm palette as the amber "untracked" status color, so interactive
+     chrome gets its own distinct hue instead. Never used as a general
+     background/fill tint. */
+  --color-brand: oklch(0.68 0.11 240);
+  --color-brand-ink: oklch(0.15 0.02 245);
+  /* Low-saturation dark wash for a "this row is selected" background in the
+     comboboxes — same role the old flat gold-tinted background played. */
+  --color-brand-wash: oklch(0.30 0.07 240);
+
+  /* The honeycomb logo's own color — scoped to the logo mark, the empty-state
+     watermark, and the HIVELY wordmark sitting next to the logo. Never used
+     for interactive chrome (that's --color-brand above). Matches HiveLogo's
+     mid-ring hex fill exactly, so the wordmark reads as part of the same mark. */
+  --color-logo-yellow: oklch(0.83 0.17 95);
 
   --color-cyan: oklch(0.75 0.13 200);
   --color-amber: oklch(0.78 0.15 80);
@@ -25,7 +38,6 @@
 
   --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-  --font-brand: 'Space Grotesk', var(--font-sans);
 }
 
 :root {
@@ -77,4 +89,50 @@ body {
   box-shadow:
     inset 0 1px 0 oklch(1 0 0 / 0.35),
     0 1px 2px oklch(0 0 0 / 0.35);
+}
+
+/* Structural signature: two opposite corners cut on a diagonal, echoing a
+   honeycomb cell's edge, in place of border-radius. clip-path removes the
+   corner pixels entirely, so a real `border` won't follow the cut edge —
+   use the facet-border(-strong) companion utilities (an inset box-shadow,
+   which IS clipped along with everything else) instead of `border` on any
+   element carrying one of these. Three sizes mirror the app's existing
+   card/chip/modal scale, not an arbitrary set. Registered via @utility
+   (not a plain class) so hover:/focus: variants work on them like any
+   other Tailwind utility — needed for Button's hover state. */
+@utility facet-sm {
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+@utility facet-md {
+  clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+}
+@utility facet-lg {
+  clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
+}
+@utility facet-border {
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+@utility facet-border-strong {
+  box-shadow: inset 0 0 0 1px var(--color-border-strong);
+}
+@utility facet-border-muted {
+  box-shadow: inset 0 0 0 1px var(--color-muted);
+}
+@utility facet-accent {
+  box-shadow: inset 0 0 0 1px var(--color-brand);
+}
+@utility facet-border-red {
+  box-shadow: inset 0 0 0 1px var(--color-red);
+}
+@utility facet-border-amber {
+  box-shadow: inset 0 0 0 1px oklch(0.78 0.15 80 / 0.5);
+}
+
+/* The recurring "content card" shell (TopicDetail's cards, list/table
+   wrappers) — bundles the chamfer, its border, and the panel fill in one
+   utility instead of repeating all three on every card. */
+@utility hv-card {
+  background: var(--color-panel);
+  clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+  box-shadow: inset 0 0 0 1px var(--color-border);
 }

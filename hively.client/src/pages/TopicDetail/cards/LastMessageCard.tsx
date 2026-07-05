@@ -13,7 +13,7 @@ function formatPayload(payload: string | null): string {
 
 export default function LastMessageCard({ topic }: { topic: Topic }) {
   return (
-    <div className="rounded-[10px] border border-border bg-panel p-4">
+    <div className="hv-card p-4">
       <div className="mb-2.5 flex items-center justify-between">
         <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">Last Message</div>
         {topic.retained && (

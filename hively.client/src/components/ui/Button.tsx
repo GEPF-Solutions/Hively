@@ -12,9 +12,9 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * override via `className`, not a third variant.
  */
 const variantClasses: Record<NonNullable<ButtonProps['variant']>, string> = {
-  primary: 'btn-primary-shadow bg-gold text-[oklch(0.16_0.02_92)] font-semibold hover:opacity-90 disabled:opacity-50',
+  primary: 'btn-primary-shadow bg-brand text-brand-ink font-semibold hover:opacity-90 disabled:opacity-50',
   secondary:
-    'bg-white/[0.06] border border-border-strong text-text/90 shadow-[0_1px_2px_oklch(0_0_0/0.25)] hover:bg-white/10 hover:border-muted disabled:opacity-50',
+    'bg-white/[0.06] facet-border-strong text-text/90 shadow-[0_1px_2px_oklch(0_0_0/0.25)] hover:bg-white/10 hover:facet-border-muted disabled:opacity-50',
 };
 
 const sizeClasses: Record<NonNullable<ButtonProps['size']>, string> = {
@@ -33,7 +33,7 @@ export default function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`rounded-md transition-colors cursor-pointer disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`facet-sm transition-colors cursor-pointer disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       disabled={disabled || isLoading}
       {...props}
     >

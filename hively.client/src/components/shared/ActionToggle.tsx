@@ -12,9 +12,9 @@ const OPTIONS: { value: MatchFieldAction; label: string }[] = [
 ];
 
 const ACTIVE_CLASSES: Record<MatchFieldAction, string> = {
-  inherit: 'border-border-strong text-text/90',
-  set: 'border-gold text-gold',
-  exclude: 'border-red text-red',
+  inherit: 'facet-border-strong text-text/90',
+  set: 'facet-accent text-brand',
+  exclude: 'facet-border-red text-red',
 };
 
 /**
@@ -34,8 +34,8 @@ export default function ActionToggle({ value, onChange }: ActionToggleProps) {
             key={opt.value}
             type="button"
             onClick={() => onChange(opt.value)}
-            className={`rounded-md border px-2.5 py-1 text-[11px] font-semibold ${
-              active ? ACTIVE_CLASSES[opt.value] : 'border-border-strong text-muted hover:text-text/80'
+            className={`facet-sm px-2.5 py-1 text-[11px] font-semibold ${
+              active ? ACTIVE_CLASSES[opt.value] : 'facet-border-strong text-muted hover:text-text/80'
             }`}
           >
             {opt.label}

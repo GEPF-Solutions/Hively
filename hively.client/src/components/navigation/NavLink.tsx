@@ -15,7 +15,7 @@ export default function NavLink({ href, children }: NavLinkProps) {
     <Link
       to={href}
       className={`border-b-2 pb-1.5 text-xs font-medium transition-colors ${
-        isActive ? 'border-gold text-gold font-semibold' : 'border-transparent text-muted hover:text-text'
+        isActive ? 'border-brand text-brand font-semibold' : 'border-transparent text-muted hover:text-text'
       }`}
     >
       {children}

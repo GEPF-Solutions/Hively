@@ -106,13 +106,13 @@ export default function ConfigureTopicModal({ topic, schemas, tags, onClose, onS
         </>
       }
     >
-      <div className="mb-3.5 rounded-md border border-amber/40 bg-amber/15 px-2.5 py-2 font-mono text-[12.5px] text-amber">
+      <div className="facet-sm facet-border-amber mb-3.5 bg-amber/15 px-2.5 py-2 font-mono text-[12.5px] text-amber">
         {topic.path}
       </div>
 
       {relinkCandidate && (
-        <div className="mb-3 rounded-lg border border-gold/40 bg-gold/15 p-3">
-          <div className="text-[12.5px] leading-snug text-gold">
+        <div className="facet-md facet-accent mb-3 bg-brand/15 p-3">
+          <div className="text-[12.5px] leading-snug text-brand">
             🔗 Looks like a relocation of {relinkCandidate.topic.path} (silent{' '}
             {relativeTimeFromMinutes(relinkCandidate.silentForMinutes)}) — inherit its producer, schema, tags &
             history?

@@ -14,7 +14,7 @@ export default function Header() {
     <header className="flex h-[52px] min-h-[52px] items-center gap-3.5 border-b border-border bg-header px-5">
       <Link to="/topics" className="flex items-center gap-2.5">
         <HiveLogo />
-        <span className="font-brand text-base font-semibold tracking-wide text-text/90">HIVELY</span>
+        <span className="font-mono text-base font-bold tracking-wider text-logo-yellow">HIVELY</span>
       </Link>
 
       <div className="h-4 w-px bg-border" />

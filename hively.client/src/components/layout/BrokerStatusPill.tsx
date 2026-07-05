@@ -24,7 +24,7 @@ export default function BrokerStatusPill() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-[calc(100%+6px)] z-50 min-w-[220px] rounded-lg border border-border-strong bg-panel p-3 text-xs shadow-2xl">
+          <div className="hv-card absolute right-0 top-[calc(100%+6px)] z-50 min-w-[220px] p-3 text-xs shadow-2xl">
             <div className="mb-2 flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full" style={{ background: status ? dotColor : 'var(--color-muted)' }} />
               <span className="font-semibold text-text/90">MQTT broker {connected ? 'connected' : 'disconnected'}</span>

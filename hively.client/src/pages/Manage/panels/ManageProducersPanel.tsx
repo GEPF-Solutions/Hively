@@ -91,7 +91,7 @@ export default function ManageProducersPanel({ onClose }: { onClose: () => void 
           onChange={(e) => setDescription(e.target.value)}
           placeholder="description (optional)"
           rows={2}
-          className="mb-2.5 w-full resize-y rounded-md border border-border-strong bg-bg px-2.5 py-2 text-xs text-text/90 outline-none placeholder:text-muted focus:border-gold"
+          className="mb-2.5 w-full resize-y facet-sm facet-border-strong bg-bg px-2.5 py-2 text-xs text-text/90 outline-none placeholder:text-muted focus:facet-accent"
         />
         <div className="flex gap-2">
           <Button variant="primary" className="flex-1" onClick={handleSave}>

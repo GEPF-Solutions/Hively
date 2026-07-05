@@ -37,7 +37,7 @@ export default function Modal({ isOpen, onClose, title, children, footer, maxWid
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div
-        className={`relative bg-panel border border-border-strong rounded-xl shadow-2xl ${maxWidthClasses[maxWidth]} w-full max-h-[85vh] flex flex-col`}
+        className={`relative bg-panel facet-lg facet-border-strong shadow-2xl ${maxWidthClasses[maxWidth]} w-full max-h-[85vh] flex flex-col`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 pt-4 pb-3">

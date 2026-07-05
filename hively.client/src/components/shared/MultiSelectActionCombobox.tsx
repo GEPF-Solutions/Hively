@@ -15,7 +15,7 @@ interface MultiSelectActionComboboxProps {
 }
 
 const STATE_STYLE: Record<ItemAction, { mark: string; className: string }> = {
-  set: { mark: '✓', className: 'border-gold bg-gold text-[oklch(0.18_0.03_92)]' },
+  set: { mark: '✓', className: 'border-brand bg-brand text-brand-ink' },
   exclude: { mark: '⊘', className: 'border-red bg-transparent text-red' },
 };
 
@@ -59,14 +59,14 @@ export default function MultiSelectActionCombobox({
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-t-md border border-border-strong bg-bg px-2.5 py-2 font-mono text-xs text-text outline-none placeholder:text-muted focus:border-gold"
+        className="w-full rounded-t-md border border-border-strong bg-bg px-2.5 py-2 font-mono text-xs text-text outline-none placeholder:text-muted focus:border-brand"
       />
       <div className="flex flex-col gap-1 overflow-y-auto rounded-b-md border border-t-0 border-border-strong p-1.5" style={{ maxHeight }}>
         {showCreate && (
           <button
             onClick={handleCreate}
             disabled={creating}
-            className="flex items-center gap-2 rounded-md border border-dashed border-gold/50 px-2.5 py-1.5 text-left text-gold disabled:opacity-60"
+            className="flex items-center gap-2 rounded-md border border-dashed border-brand/50 px-2.5 py-1.5 text-left text-brand disabled:opacity-60"
           >
             <span className="text-[12.5px]">{creating ? 'Creating…' : `+ Create "${trimmed}"`}</span>
           </button>
@@ -80,7 +80,7 @@ export default function MultiSelectActionCombobox({
               onClick={() => onCycle(opt.id)}
               title={action === 'exclude' ? 'Excluded — click to clear' : action === 'set' ? 'Set — click to exclude instead' : 'Inherited — click to set'}
               className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-left"
-              style={{ background: action === 'set' ? 'oklch(0.30 0.05 92)' : action === 'exclude' ? 'oklch(0.30 0.08 25)' : 'transparent' }}
+              style={{ background: action === 'set' ? 'var(--color-brand-wash)' : action === 'exclude' ? 'oklch(0.30 0.08 25)' : 'transparent' }}
             >
               <span
                 className={`flex h-3 w-3 flex-shrink-0 items-center justify-center rounded-[3px] border-[1.5px] text-[9px] leading-none ${

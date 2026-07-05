@@ -157,7 +157,7 @@ export default function ManageSchemasPanel({ onClose }: { onClose: () => void })
           onChange={(e) => setDefText(e.target.value)}
           placeholder='{ "value": "number", "unit": "string", "meta": { "name": "string" } }'
           rows={7}
-          className="mb-2.5 w-full resize-y rounded-md border border-border-strong bg-bg px-2.5 py-2 font-mono text-xs text-cyan outline-none placeholder:text-muted focus:border-gold"
+          className="mb-2.5 w-full resize-y facet-sm facet-border-strong bg-bg px-2.5 py-2 font-mono text-xs text-cyan outline-none placeholder:text-muted focus:facet-accent"
         />
         {defError && <div className="mb-2.5 text-xs text-red">{defError}</div>}
         <div className="flex gap-2">

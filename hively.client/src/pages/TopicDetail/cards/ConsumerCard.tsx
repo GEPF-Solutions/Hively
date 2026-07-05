@@ -25,7 +25,7 @@ export default function ConsumerCard({ consumers, canEdit, onToggle }: ConsumerC
   }
 
   return (
-    <div className="rounded-[10px] border border-border bg-panel p-4">
+    <div className="hv-card p-4">
       <div className="mb-2.5 flex items-center justify-between">
         <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">
           Consumers ({consumers.length})
@@ -39,10 +39,14 @@ export default function ConsumerCard({ consumers, canEdit, onToggle }: ConsumerC
 
       <div
         className="max-h-32 overflow-y-auto"
-        style={{
-          maskImage: 'linear-gradient(to bottom, black calc(100% - 14px), transparent 100%)',
-          WebkitMaskImage: 'linear-gradient(to bottom, black calc(100% - 14px), transparent 100%)',
-        }}
+        style={
+          consumers.length > 0
+            ? {
+                maskImage: 'linear-gradient(to bottom, black calc(100% - 14px), transparent 100%)',
+                WebkitMaskImage: 'linear-gradient(to bottom, black calc(100% - 14px), transparent 100%)',
+              }
+            : undefined
+        }
       >
         {consumers.map((c) => (
           <div key={c.id} title={c.description ?? undefined} className="flex items-center gap-2 py-0.5 text-sm">

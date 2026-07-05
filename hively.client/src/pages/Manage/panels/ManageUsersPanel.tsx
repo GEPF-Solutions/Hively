@@ -42,7 +42,7 @@ export default function ManageUsersPanel({ onClose }: { onClose: () => void }) {
             key={role ?? 'all'}
             onClick={() => setRoleFilter(role)}
             className={`rounded-md border px-2.5 py-1 text-[11px] font-medium ${
-              roleFilter === role ? 'border-gold/50 text-gold' : 'border-border-strong text-muted'
+              roleFilter === role ? 'border-brand/50 text-brand' : 'border-border-strong text-muted'
             }`}
           >
             {role ?? 'all'}

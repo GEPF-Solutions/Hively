@@ -31,7 +31,7 @@ function SkeletonGroup({ rows, delay }: { rows: number; delay: number }) {
       <div className="mb-2 pl-1">
         <Bar width="w-56" delay={delay} />
       </div>
-      <div className="overflow-hidden rounded-[10px] border border-border">
+      <div className="hv-card overflow-hidden">
         <div className={`grid ${ROW_GRID} gap-3 bg-panel px-4 py-2.5`}>
           {[2.2, 1, 0.9, 1.3, 1, 1].map((_, i) => (
             <Bar key={i} width="w-12" height="h-2.5" delay={delay} />

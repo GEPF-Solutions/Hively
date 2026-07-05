@@ -29,7 +29,7 @@ export default function SchemaCard({ schema, canChange, onChangeClick }: SchemaC
   }, [schema]);
 
   return (
-    <div className="rounded-[10px] border border-border bg-panel p-4">
+    <div className="hv-card p-4">
       <div className="mb-2.5 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-baseline gap-2">
           <div className="flex-shrink-0 text-[11px] font-semibold uppercase tracking-wide text-muted">Schema</div>

@@ -64,22 +64,22 @@ export default function Graph() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="search a producer, consumer, or topic…"
-          className="min-w-[280px] flex-1 rounded-md border border-border-strong bg-bg px-2.5 py-2 font-mono text-[12.5px] text-text outline-none placeholder:text-muted focus:border-gold"
+          className="min-w-[280px] flex-1 facet-sm facet-border-strong bg-bg px-2.5 py-2 font-mono text-[12.5px] text-text outline-none placeholder:text-muted focus:facet-accent"
         />
         {history.length > 0 && (
-          <button onClick={handleBack} className="whitespace-nowrap rounded-md border border-border-strong px-3 py-2 text-[12.5px] text-text/80">
+          <button onClick={handleBack} className="whitespace-nowrap facet-sm facet-border-strong px-3 py-2 text-[12.5px] text-text/80">
             ← back
           </button>
         )}
         {focal && (
-          <button onClick={handleClear} className="whitespace-nowrap rounded-md border border-border-strong px-3 py-2 text-[12.5px] text-text/80">
+          <button onClick={handleClear} className="whitespace-nowrap facet-sm facet-border-strong px-3 py-2 text-[12.5px] text-text/80">
             clear
           </button>
         )}
       </div>
 
       {showResults && (
-        <div className="flex max-h-60 flex-col gap-0.5 overflow-y-auto rounded-lg border border-border bg-panel p-1.5">
+        <div className="hv-card flex max-h-60 flex-col gap-0.5 overflow-y-auto p-1.5">
           {filteredOptions.map((opt) => (
             <button
               key={`${opt.type}-${opt.id}`}
@@ -102,15 +102,15 @@ export default function Graph() {
             centered on <span className="font-semibold text-text">{graph.focalLabel}</span> ({focal.type})
           </div>
 
-          <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-auto rounded-xl border border-border bg-panel p-2.5">
-            <div className="absolute right-3 top-3 z-10 flex items-center gap-1 rounded-lg border border-border bg-bg p-1">
-              <button onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.25).toFixed(2)))} className="h-[26px] w-[26px] rounded-md text-text/80">
+          <div className="hv-card relative flex min-h-0 flex-1 items-center justify-center overflow-auto p-2.5">
+            <div className="facet-md facet-border absolute right-3 top-3 z-10 flex items-center gap-1 bg-bg p-1">
+              <button onClick={() => setZoom((z) => Math.max(0.5, +(z - 0.25).toFixed(2)))} className="h-[26px] w-[26px] facet-sm text-text/80">
                 −
               </button>
               <button onClick={() => setZoom(1)} className="min-w-[42px] font-mono text-[11px] text-muted">
                 {Math.round(zoom * 100)}%
               </button>
-              <button onClick={() => setZoom((z) => Math.min(3, +(z + 0.25).toFixed(2)))} className="h-[26px] w-[26px] rounded-md text-text/80">
+              <button onClick={() => setZoom((z) => Math.min(3, +(z + 0.25).toFixed(2)))} className="h-[26px] w-[26px] facet-sm text-text/80">
                 +
               </button>
             </div>
