@@ -3,7 +3,7 @@ namespace Hively.Server.Services
     /// <summary>
     /// Pure function matching an MQTT-style topic filter ('+' single-level, '#'
     /// multi-level wildcard) against a topic path. Ported from the prototype's
-    /// matchTopic — shared by Rule matching and (eventually) wildcard search.
+    /// matchTopic — shared by Match matching and (eventually) wildcard search.
     /// </summary>
     public static class TopicPatternMatcher
     {

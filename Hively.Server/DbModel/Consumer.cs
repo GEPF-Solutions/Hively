@@ -11,5 +11,7 @@ public partial class Consumer
 
     public string? Description { get; set; }
 
+    public virtual ICollection<MatchConsumerAction> MatchConsumerActions { get; set; } = new List<MatchConsumerAction>();
+
     public virtual ICollection<Topic> Topics { get; set; } = new List<Topic>();
 }

@@ -11,7 +11,7 @@ public partial class Tag
 
     public int? Hue { get; set; }
 
-    public virtual ICollection<Rule> Rules { get; set; } = new List<Rule>();
+    public virtual ICollection<MatchTagAction> MatchTagActions { get; set; } = new List<MatchTagAction>();
 
     public virtual ICollection<Topic> Topics { get; set; } = new List<Topic>();
 }

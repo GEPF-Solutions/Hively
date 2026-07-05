@@ -94,35 +94,58 @@ CREATE TABLE topic_tags (
     CONSTRAINT fk_topic_tags_tag FOREIGN KEY (tag_id) REFERENCES tags (id) ON DELETE CASCADE
 );
 
--- Bulk-assignment rule: MQTT-pattern (+/# wildcards) -> producer + schema + tags
--- to apply. Consumers are deliberately not assignable by rule — unlike
--- producer/schema, which physical device/measurement produces a topic is
--- determined by its pattern, but who *consumes* it doesn't follow from the
--- pattern the same way, so that stays a manual per-topic decision.
--- name is optional — an admin managing a handful of rules can just read the
--- pattern, but it's easy to lose track once there are many; falls back to
--- showing the pattern when not set.
--- auto_apply: when a newly-untracked topic matches exactly one rule overall,
--- and that rule has this set, apply it immediately instead of waiting for an
--- admin. Per-rule rather than a single global toggle — lets an admin opt in
--- a specific, well-trusted pattern without auto-applying every rule.
-CREATE TABLE rules (
-    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    name        text,
-    pattern     text NOT NULL,
-    producer_id uuid,
-    schema_id   uuid,
-    auto_apply  boolean NOT NULL DEFAULT false,
-    CONSTRAINT fk_rules_producer FOREIGN KEY (producer_id) REFERENCES producers (id) ON DELETE SET NULL,
-    CONSTRAINT fk_rules_schema FOREIGN KEY (schema_id) REFERENCES schemas (id) ON DELETE SET NULL
+-- An MQTT-pattern match that can SET or EXCLUDE each of
+-- producer/schema/tags/consumers, resolved automatically (the most-specific
+-- applicable match wins per field, and per tag/consumer id independently for
+-- the multi-valued fields) instead of forcing an admin to pick one whole
+-- bundle when several match — replaces the earlier flat `rules`/`rule_tags`
+-- design, which could only ever set a value, never exclude one, and had no
+-- way to combine two single-purpose matches on the same topic. A branch
+-- config from the namespace sidebar and an advanced wildcard pattern are both
+-- just a `matches` row — the only difference is whether the admin authored
+-- the pattern by drilling into the sidebar (fully-literal segments ending in
+-- '#') or by typing wildcards. topic_id is non-null only for the single
+-- private per-topic override a manual TopicDetail edit creates — its pattern
+-- is that topic's own literal path, so it can only ever match that one topic.
+CREATE TABLE matches (
+    id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    name              text,
+    pattern           text NOT NULL,
+    topic_id          uuid,
+    producer_id       uuid,
+    exclude_producer  boolean NOT NULL DEFAULT false,
+    schema_id         uuid,
+    exclude_schema    boolean NOT NULL DEFAULT false,
+    auto_apply        boolean NOT NULL DEFAULT false,
+    updated_at        timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT fk_matches_topic FOREIGN KEY (topic_id) REFERENCES topics (id) ON DELETE CASCADE,
+    CONSTRAINT fk_matches_producer FOREIGN KEY (producer_id) REFERENCES producers (id) ON DELETE SET NULL,
+    CONSTRAINT fk_matches_schema FOREIGN KEY (schema_id) REFERENCES schemas (id) ON DELETE SET NULL,
+    CONSTRAINT chk_matches_producer_action CHECK (NOT (producer_id IS NOT NULL AND exclude_producer)),
+    CONSTRAINT chk_matches_schema_action CHECK (NOT (schema_id IS NOT NULL AND exclude_schema))
 );
 
-CREATE TABLE rule_tags (
-    rule_id uuid NOT NULL,
-    tag_id  text NOT NULL,
-    PRIMARY KEY (rule_id, tag_id),
-    CONSTRAINT fk_rule_tags_rule FOREIGN KEY (rule_id) REFERENCES rules (id) ON DELETE CASCADE,
-    CONSTRAINT fk_rule_tags_tag FOREIGN KEY (tag_id) REFERENCES tags (id) ON DELETE CASCADE
+CREATE UNIQUE INDEX uq_matches_topic_id ON matches (topic_id) WHERE topic_id IS NOT NULL;
+-- Not unique: two admin-authored matches may legitimately share a pattern
+-- (e.g. one only sets a producer, another only sets a tag on the same filter).
+CREATE INDEX idx_matches_pattern ON matches (pattern);
+
+CREATE TABLE match_tag_actions (
+    match_id   uuid NOT NULL,
+    tag_id     text NOT NULL,
+    is_exclude boolean NOT NULL DEFAULT false,
+    PRIMARY KEY (match_id, tag_id),
+    CONSTRAINT fk_match_tag_actions_match FOREIGN KEY (match_id) REFERENCES matches (id) ON DELETE CASCADE,
+    CONSTRAINT fk_match_tag_actions_tag FOREIGN KEY (tag_id) REFERENCES tags (id) ON DELETE CASCADE
+);
+
+CREATE TABLE match_consumer_actions (
+    match_id    uuid NOT NULL,
+    consumer_id uuid NOT NULL,
+    is_exclude  boolean NOT NULL DEFAULT false,
+    PRIMARY KEY (match_id, consumer_id),
+    CONSTRAINT fk_match_consumer_actions_match FOREIGN KEY (match_id) REFERENCES matches (id) ON DELETE CASCADE,
+    CONSTRAINT fk_match_consumer_actions_consumer FOREIGN KEY (consumer_id) REFERENCES consumers (id) ON DELETE CASCADE
 );
 
 -- App-level account. One row per human, independent of which OIDC provider they

@@ -13,7 +13,7 @@ public partial class Schema
 
     public string Version { get; set; } = null!;
 
-    public virtual ICollection<Rule> Rules { get; set; } = new List<Rule>();
+    public virtual ICollection<Match> Matches { get; set; } = new List<Match>();
 
     public virtual ICollection<SchemaVersion> SchemaVersions { get; set; } = new List<SchemaVersion>();
 

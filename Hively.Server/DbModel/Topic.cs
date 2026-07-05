@@ -33,6 +33,8 @@ public partial class Topic
 
     public virtual ICollection<Topic> InverseMergedIntoTopic { get; set; } = new List<Topic>();
 
+    public virtual Match? Match { get; set; }
+
     public virtual Topic? MergedIntoTopic { get; set; }
 
     public virtual Producer? Producer { get; set; }

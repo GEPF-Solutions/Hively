@@ -13,9 +13,13 @@ public partial class HivelyContext : DbContext
 
     public virtual DbSet<Consumer> Consumers { get; set; }
 
-    public virtual DbSet<Producer> Producers { get; set; }
+    public virtual DbSet<Match> Matches { get; set; }
 
-    public virtual DbSet<Rule> Rules { get; set; }
+    public virtual DbSet<MatchConsumerAction> MatchConsumerActions { get; set; }
+
+    public virtual DbSet<MatchTagAction> MatchTagActions { get; set; }
+
+    public virtual DbSet<Producer> Producers { get; set; }
 
     public virtual DbSet<Schema> Schemas { get; set; }
 
@@ -46,6 +50,87 @@ public partial class HivelyContext : DbContext
             entity.Property(e => e.Name).HasColumnName("name");
         });
 
+        modelBuilder.Entity<Match>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("matches_pkey");
+
+            entity.ToTable("matches");
+
+            entity.HasIndex(e => e.Pattern, "idx_matches_pattern");
+
+            entity.HasIndex(e => e.TopicId, "uq_matches_topic_id")
+                .IsUnique()
+                .HasFilter("(topic_id IS NOT NULL)");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("id");
+            entity.Property(e => e.AutoApply).HasColumnName("auto_apply");
+            entity.Property(e => e.ExcludeProducer).HasColumnName("exclude_producer");
+            entity.Property(e => e.ExcludeSchema).HasColumnName("exclude_schema");
+            entity.Property(e => e.Name).HasColumnName("name");
+            entity.Property(e => e.Pattern).HasColumnName("pattern");
+            entity.Property(e => e.ProducerId).HasColumnName("producer_id");
+            entity.Property(e => e.SchemaId).HasColumnName("schema_id");
+            entity.Property(e => e.TopicId).HasColumnName("topic_id");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("updated_at");
+
+            entity.HasOne(d => d.Producer).WithMany(p => p.Matches)
+                .HasForeignKey(d => d.ProducerId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("fk_matches_producer");
+
+            entity.HasOne(d => d.Schema).WithMany(p => p.Matches)
+                .HasForeignKey(d => d.SchemaId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("fk_matches_schema");
+
+            entity.HasOne(d => d.Topic).WithOne(p => p.Match)
+                .HasForeignKey<Match>(d => d.TopicId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("fk_matches_topic");
+        });
+
+        modelBuilder.Entity<MatchConsumerAction>(entity =>
+        {
+            entity.HasKey(e => new { e.MatchId, e.ConsumerId }).HasName("match_consumer_actions_pkey");
+
+            entity.ToTable("match_consumer_actions");
+
+            entity.Property(e => e.MatchId).HasColumnName("match_id");
+            entity.Property(e => e.ConsumerId).HasColumnName("consumer_id");
+            entity.Property(e => e.IsExclude).HasColumnName("is_exclude");
+
+            entity.HasOne(d => d.Consumer).WithMany(p => p.MatchConsumerActions)
+                .HasForeignKey(d => d.ConsumerId)
+                .HasConstraintName("fk_match_consumer_actions_consumer");
+
+            entity.HasOne(d => d.Match).WithMany(p => p.MatchConsumerActions)
+                .HasForeignKey(d => d.MatchId)
+                .HasConstraintName("fk_match_consumer_actions_match");
+        });
+
+        modelBuilder.Entity<MatchTagAction>(entity =>
+        {
+            entity.HasKey(e => new { e.MatchId, e.TagId }).HasName("match_tag_actions_pkey");
+
+            entity.ToTable("match_tag_actions");
+
+            entity.Property(e => e.MatchId).HasColumnName("match_id");
+            entity.Property(e => e.TagId).HasColumnName("tag_id");
+            entity.Property(e => e.IsExclude).HasColumnName("is_exclude");
+
+            entity.HasOne(d => d.Match).WithMany(p => p.MatchTagActions)
+                .HasForeignKey(d => d.MatchId)
+                .HasConstraintName("fk_match_tag_actions_match");
+
+            entity.HasOne(d => d.Tag).WithMany(p => p.MatchTagActions)
+                .HasForeignKey(d => d.TagId)
+                .HasConstraintName("fk_match_tag_actions_tag");
+        });
+
         modelBuilder.Entity<Producer>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("producers_pkey");
@@ -59,49 +144,6 @@ public partial class HivelyContext : DbContext
                 .HasColumnName("id");
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.Name).HasColumnName("name");
-        });
-
-        modelBuilder.Entity<Rule>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("rules_pkey");
-
-            entity.ToTable("rules");
-
-            entity.Property(e => e.Id)
-                .HasDefaultValueSql("gen_random_uuid()")
-                .HasColumnName("id");
-            entity.Property(e => e.AutoApply).HasColumnName("auto_apply");
-            entity.Property(e => e.Name).HasColumnName("name");
-            entity.Property(e => e.Pattern).HasColumnName("pattern");
-            entity.Property(e => e.ProducerId).HasColumnName("producer_id");
-            entity.Property(e => e.SchemaId).HasColumnName("schema_id");
-
-            entity.HasOne(d => d.Producer).WithMany(p => p.Rules)
-                .HasForeignKey(d => d.ProducerId)
-                .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("fk_rules_producer");
-
-            entity.HasOne(d => d.Schema).WithMany(p => p.Rules)
-                .HasForeignKey(d => d.SchemaId)
-                .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("fk_rules_schema");
-
-            entity.HasMany(d => d.Tags).WithMany(p => p.Rules)
-                .UsingEntity<Dictionary<string, object>>(
-                    "RuleTag",
-                    r => r.HasOne<Tag>().WithMany()
-                        .HasForeignKey("TagId")
-                        .HasConstraintName("fk_rule_tags_tag"),
-                    l => l.HasOne<Rule>().WithMany()
-                        .HasForeignKey("RuleId")
-                        .HasConstraintName("fk_rule_tags_rule"),
-                    j =>
-                    {
-                        j.HasKey("RuleId", "TagId").HasName("rule_tags_pkey");
-                        j.ToTable("rule_tags");
-                        j.IndexerProperty<Guid>("RuleId").HasColumnName("rule_id");
-                        j.IndexerProperty<string>("TagId").HasColumnName("tag_id");
-                    });
         });
 
         modelBuilder.Entity<Schema>(entity =>

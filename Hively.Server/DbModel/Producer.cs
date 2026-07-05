@@ -11,7 +11,7 @@ public partial class Producer
 
     public string? Description { get; set; }
 
-    public virtual ICollection<Rule> Rules { get; set; } = new List<Rule>();
+    public virtual ICollection<Match> Matches { get; set; } = new List<Match>();
 
     public virtual ICollection<Topic> Topics { get; set; } = new List<Topic>();
 }
