@@ -17,7 +17,7 @@ namespace Hively.Server.Hubs
 
         /// <summary>
         /// An existing topic's fields changed — last message/compliance from
-        /// ingestion, or a configure/apply-rule/accept-relink/clear-violations mutation.
+        /// ingestion, or a configure/match-recompute/accept-relink/clear-violations mutation.
         /// </summary>
         Task TopicUpdated(TopicDto topic, CancellationToken cancellationToken);
 
@@ -35,11 +35,11 @@ namespace Hively.Server.Hubs
         Task BrokerStatusChanged(MqttStatusDto status, CancellationToken cancellationToken);
 
         /// <summary>
-        /// A rule was created, edited, or deleted. No payload — clients just
-        /// refetch their rules list, since what changed (specificity ordering,
+        /// A match was created, edited, or deleted. No payload — clients just
+        /// refetch their matches list, since what changed (specificity ordering,
         /// which untracked topics now match) is cheaper to recompute client-side
         /// than to model here.
         /// </summary>
-        Task RulesChanged(CancellationToken cancellationToken);
+        Task MatchesChanged(CancellationToken cancellationToken);
     }
 }

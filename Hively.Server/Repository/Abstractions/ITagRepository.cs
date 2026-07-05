@@ -31,8 +31,8 @@ namespace Hively.Server.Repository.Abstractions
         Task UpdateTagAsync(TagDto tag, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Deletes a tag. Topics/Rules referencing it have the association
-        /// removed by the database (ON DELETE CASCADE on topic_tags/rule_tags)
+        /// Deletes a tag. Topics/Matches referencing it have the association
+        /// removed by the database (ON DELETE CASCADE on topic_tags/match_tag_actions)
         /// — no in-use check here, deletion is never blocked.
         /// </summary>
         /// <exception cref="EntityNotFoundException">Thrown when tag is not found.</exception>

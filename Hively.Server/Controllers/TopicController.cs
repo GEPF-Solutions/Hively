@@ -8,8 +8,9 @@ namespace Hively.Server.Controllers
 {
     /// <summary>
     /// Controller for managing Topic entities: CRUD, relationship assignment,
-    /// rule matching/application, and relocation-relink suggestions. MQTT
-    /// ingestion is a separate, not-yet-built subsystem.
+    /// and relocation-relink suggestions. Match-driven assignment resolves
+    /// automatically (see <see cref="MatchController"/>/<see cref="Services.MatchResolver"/>),
+    /// no per-topic pick step. MQTT ingestion is a separate subsystem.
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
@@ -164,55 +165,6 @@ namespace Hively.Server.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while removing topic {TopicId}.", topicId);
-                return StatusCode(StatusCodes.Status500InternalServerError);
-            }
-        }
-
-        /// <summary>
-        /// Finds rules matching this topic's path, ranked by specificity (most specific first, marked recommended).
-        /// </summary>
-        [HttpGet("{topicId}/matching-rules")]
-        public async Task<IActionResult> GetMatchingRulesAsync(Guid topicId)
-        {
-            try
-            {
-                var matches = (await _topicService.FindMatchingRulesAsync(topicId, CancellationToken.None)).ToList();
-                _logger.LogInformation("Found {MatchCount} matching rules for topic {TopicId}.", matches.Count, topicId);
-                return Ok(matches);
-            }
-            catch (EntityNotFoundException ex)
-            {
-                _logger.LogWarning(ex, "Topic {TopicId} not found.", topicId);
-                return StatusCode(StatusCodes.Status404NotFound, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "An error occurred while finding matching rules for topic {TopicId}.", topicId);
-                return StatusCode(StatusCodes.Status500InternalServerError);
-            }
-        }
-
-        /// <summary>
-        /// Applies a rule's producer/tag assignment to a topic and marks it tracked ("⚡ Apply rule").
-        /// </summary>
-        [Authorize(Roles = "Admin")]
-        [HttpPost("{topicId}/apply-rule/{ruleId}")]
-        public async Task<IActionResult> ApplyRuleAsync(Guid topicId, Guid ruleId)
-        {
-            try
-            {
-                var updatedTopic = await _topicService.ApplyRuleAsync(topicId, ruleId, CancellationToken.None);
-                _logger.LogInformation("Applied rule {RuleId} to topic {TopicId}.", ruleId, topicId);
-                return Ok(updatedTopic);
-            }
-            catch (EntityNotFoundException ex)
-            {
-                _logger.LogWarning(ex, "Topic {TopicId} or rule {RuleId} not found.", topicId, ruleId);
-                return StatusCode(StatusCodes.Status404NotFound, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "An error occurred while applying rule {RuleId} to topic {TopicId}.", ruleId, topicId);
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
         }

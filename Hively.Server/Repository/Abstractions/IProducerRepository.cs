@@ -31,7 +31,7 @@ namespace Hively.Server.Repository.Abstractions
         Task UpdateProducerAsync(ProducerDto producer, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Deletes a producer. Topics/Rules referencing it have their producer
+        /// Deletes a producer. Topics/Matches referencing it have their producer
         /// reference set to null by the database (ON DELETE SET NULL) — no
         /// in-use check here, deletion is never blocked.
         /// </summary>

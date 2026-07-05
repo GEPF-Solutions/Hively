@@ -38,28 +38,27 @@ namespace Hively.Server.Services.Abstractions
         Task RemoveTopicAsync(Guid topicId, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Finds rules whose pattern matches this topic's path, ranked by
-        /// specificity (see <see cref="Services.RuleMatcher"/>); the most specific
-        /// match is flagged <see cref="Dto.RuleMatchDto.Recommended"/>.
+        /// Re-resolves and re-tracks every topic matching a Match's pattern (tracked
+        /// or not), using the full current Match set. Called automatically by
+        /// <see cref="IMatchService.InsertMatchAsync"/>/<see cref="IMatchService.UpdateMatchAsync"/>
+        /// right after a match is saved, so an already-tracked topic immediately picks
+        /// up a change to whatever matched it (e.g. a schema added after the fact)
+        /// instead of only ever being resolved once, at first tracking. No separate
+        /// manual trigger exists — re-saving the match (even with no field actually
+        /// changed) re-runs this the same way a dedicated button would. Returns the
+        /// number of topics touched.
         /// </summary>
-        Task<IEnumerable<RuleMatchDto>> FindMatchingRulesAsync(Guid topicId, CancellationToken cancellationToken);
+        Task<int> ApplyMatchToAllMatchingAsync(Guid matchId, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Applies a single rule to a topic (the "⚡ Apply rule" one-click action).
+        /// Re-resolves every currently-tracked topic matching <paramref name="pattern"/>
+        /// against the full current Match set, without tracking/untracking anything.
+        /// Called by <see cref="IMatchService.RemoveMatchAsync"/> right after a match
+        /// is deleted (with its now-gone pattern), so topics that lose their only
+        /// setter for a field actually see it clear instead of keeping a stale value
+        /// forever. Returns the number of topics touched.
         /// </summary>
-        Task<TopicDto> ApplyRuleAsync(Guid topicId, Guid ruleId, CancellationToken cancellationToken);
-
-        /// <summary>
-        /// Applies a rule to every topic matching its pattern, tracked or not. Called
-        /// automatically by <see cref="IRuleService.InsertRuleAsync"/>/<see cref="IRuleService.UpdateRuleAsync"/>
-        /// right after a rule is saved, so an already-tracked topic immediately picks
-        /// up a change to the rule that configured it (e.g. a schema added after the
-        /// fact) instead of only ever being touched once, at first tracking. No
-        /// separate manual trigger exists — re-saving the rule (even with no field
-        /// actually changed) re-runs this the same way a dedicated button would.
-        /// Returns the number applied.
-        /// </summary>
-        Task<int> ApplyRuleToAllMatchingAsync(Guid ruleId, CancellationToken cancellationToken);
+        Task<int> RecomputeTopicsMatchingPatternAsync(string pattern, CancellationToken cancellationToken);
 
         /// <summary>
         /// Looks for a stale, tracked topic that looks like this untracked topic's

@@ -12,13 +12,13 @@ namespace Hively.Server.Services.Ingestion
     {
         private readonly ITopicRepository _topicRepository;
         private readonly ITopicNotifier _topicNotifier;
-        private readonly IAutoRuleApplier _autoRuleApplier;
+        private readonly IAutoMatchApplier _autoMatchApplier;
 
-        public TopicIngestionService(ITopicRepository topicRepository, ITopicNotifier topicNotifier, IAutoRuleApplier autoRuleApplier)
+        public TopicIngestionService(ITopicRepository topicRepository, ITopicNotifier topicNotifier, IAutoMatchApplier autoMatchApplier)
         {
             _topicRepository = topicRepository;
             _topicNotifier = topicNotifier;
-            _autoRuleApplier = autoRuleApplier;
+            _autoMatchApplier = autoMatchApplier;
         }
 
         /// <inheritdoc />
@@ -34,7 +34,7 @@ namespace Hively.Server.Services.Ingestion
             if (topic == null)
             {
                 var newTopicId = await _topicRepository.InsertTopicAsync(new TopicDto { Path = topicPath }, cancellationToken);
-                await _autoRuleApplier.TryAutoApplyAsync(newTopicId, topicPath, cancellationToken);
+                await _autoMatchApplier.TryAutoApplyAsync(newTopicId, topicPath, cancellationToken);
                 topic = await _topicRepository.GetTopicAsync(newTopicId, cancellationToken);
             }
 

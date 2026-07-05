@@ -48,15 +48,15 @@ public class Program
         builder.Services.AddScoped<ITagService, TagService>();
         builder.Services.AddScoped<ISchemaRepository, SchemaRepository>();
         builder.Services.AddScoped<ISchemaService, SchemaService>();
-        builder.Services.AddScoped<IRuleRepository, RuleRepository>();
-        builder.Services.AddScoped<IRuleService, RuleService>();
-        builder.Services.AddScoped<IRuleNotifier, RuleNotifier>();
+        builder.Services.AddScoped<IMatchRepository, MatchRepository>();
+        builder.Services.AddScoped<IMatchService, MatchService>();
+        builder.Services.AddScoped<IMatchNotifier, MatchNotifier>();
         builder.Services.AddScoped<ITopicRepository, TopicRepository>();
         builder.Services.AddScoped<ITopicService, TopicService>();
         builder.Services.AddScoped<ITopicNotifier, TopicNotifier>();
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IUserService, UserService>();
-        builder.Services.AddScoped<IAutoRuleApplier, AutoRuleApplier>();
+        builder.Services.AddScoped<IAutoMatchApplier, AutoMatchApplier>();
 
         builder.Services.Configure<MqttBrokerSettings>(builder.Configuration.GetSection("MqttBroker"));
         builder.Services.AddScoped<ITopicIngestionService, TopicIngestionService>();

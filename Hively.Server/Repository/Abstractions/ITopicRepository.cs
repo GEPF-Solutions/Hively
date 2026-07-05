@@ -4,8 +4,9 @@ using Hively.Server.Dto;
 namespace Hively.Server.Repository.Abstractions
 {
     /// <summary>
-    /// Repository interface for managing Topic entities: CRUD, relationship
-    /// assignment, rule application, relink acceptance, and MQTT ingestion writes.
+    /// Repository interface for managing Topic entities: CRUD, resolved
+    /// producer/schema/consumer/tag assignment, relink acceptance, and MQTT
+    /// ingestion writes.
     /// </summary>
     public interface ITopicRepository
     {
@@ -36,12 +37,23 @@ namespace Hively.Server.Repository.Abstractions
         Task<Guid> InsertTopicAsync(TopicDto topic, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Updates the admin-editable fields of a topic — tracked, producer, schema,
-        /// consumer/tag assignment. Does not touch ingestion-owned fields (last
+        /// Persists a resolved producer/schema/consumer/tag assignment (the output of
+        /// <see cref="Services.MatchResolver.Resolve"/>) onto a topic. <paramref name="tracked"/>
+        /// is <c>null</c> to leave the flag untouched (a Match-deletion recompute never
+        /// tracks/untracks anything), or an explicit value to set it (a direct admin
+        /// edit always pins it; a Match insert/update sweep or first-sighting auto-apply
+        /// always sets it <c>true</c>). Does not touch ingestion-owned fields (last
         /// payload/seen-at/retained/violation count/activity histogram).
         /// </summary>
         /// <exception cref="EntityNotFoundException">Thrown when topic is not found.</exception>
-        Task UpdateTopicAsync(TopicConfigureDto topic, CancellationToken cancellationToken);
+        Task ApplyResolvedAssignmentAsync(
+            Guid topicId,
+            Guid? producerId,
+            Guid? schemaId,
+            List<Guid> consumerIds,
+            List<string> tagIds,
+            bool? tracked,
+            CancellationToken cancellationToken);
 
         /// <summary>
         /// Resets the violation counter and stamps LastClearedAt to now.
@@ -56,18 +68,10 @@ namespace Hively.Server.Repository.Abstractions
         Task RemoveTopicAsync(Guid topicId, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Applies a rule's producer/tag assignment to a topic and marks it tracked
-        /// (the "⚡ Apply rule" one-click action, and the per-topic step of the bulk
-        /// "Apply to N now" action). Tags are unioned with the topic's existing tags,
-        /// not replaced.
-        /// </summary>
-        /// <exception cref="EntityNotFoundException">Thrown when the topic or rule is not found.</exception>
-        Task ApplyRuleAsync(Guid topicId, Guid ruleId, CancellationToken cancellationToken);
-
-        /// <summary>
-        /// Accepts a relink suggestion: inherits producer, schema, tags, violation
-        /// count, and LastClearedAt from <paramref name="oldTopicId"/> onto
-        /// <paramref name="topicId"/>, marks the target tracked, then retires the
+        /// Marks the target tracked, copies violation count/LastClearedAt from
+        /// <paramref name="oldTopicId"/> (producer/schema/tags are not copied here —
+        /// the caller re-keys the old topic's private Match, if any, and re-resolves
+        /// via <see cref="ApplyResolvedAssignmentAsync"/> instead), then retires the
         /// old topic (stamps RetiredAt/MergedIntoTopicId) rather than deleting it.
         /// </summary>
         /// <exception cref="EntityNotFoundException">Thrown when either topic is not found.</exception>

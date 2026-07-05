@@ -78,22 +78,33 @@ namespace Hively.Server.Repository
         }
 
         /// <inheritdoc />
-        public async Task UpdateTopicAsync(TopicConfigureDto topicDto, CancellationToken cancellationToken)
+        public async Task ApplyResolvedAssignmentAsync(
+            Guid topicId,
+            Guid? producerId,
+            Guid? schemaId,
+            List<Guid> consumerIds,
+            List<string> tagIds,
+            bool? tracked,
+            CancellationToken cancellationToken)
         {
             var topicToUpdate = await TopicsWithRelations(asNoTracking: false)
-                .FirstOrDefaultAsync(x => x.Id == topicDto.Id, cancellationToken);
+                .FirstOrDefaultAsync(x => x.Id == topicId, cancellationToken);
 
             if (topicToUpdate == null)
             {
-                throw new EntityNotFoundException($"Topic id {topicDto.Id} did not reference a valid topic.");
+                throw new EntityNotFoundException($"Topic id {topicId} did not reference a valid topic.");
             }
 
-            topicToUpdate.Tracked = topicDto.Tracked;
-            topicToUpdate.ProducerId = topicDto.ProducerId;
-            topicToUpdate.SchemaId = topicDto.SchemaId;
+            if (tracked.HasValue)
+            {
+                topicToUpdate.Tracked = tracked.Value;
+            }
+
+            topicToUpdate.ProducerId = producerId;
+            topicToUpdate.SchemaId = schemaId;
 
             var consumers = await _dbContext.Consumers
-                .Where(c => topicDto.ConsumerIds.Contains(c.Id))
+                .Where(c => consumerIds.Contains(c.Id))
                 .ToListAsync(cancellationToken);
             topicToUpdate.Consumers.Clear();
             foreach (var consumer in consumers)
@@ -102,7 +113,7 @@ namespace Hively.Server.Repository
             }
 
             var tags = await _dbContext.Tags
-                .Where(t => topicDto.TagIds.Contains(t.Id))
+                .Where(t => tagIds.Contains(t.Id))
                 .ToListAsync(cancellationToken);
             topicToUpdate.Tags.Clear();
             foreach (var tag in tags)
@@ -145,32 +156,6 @@ namespace Hively.Server.Repository
         }
 
         /// <inheritdoc />
-        public async Task ApplyRuleAsync(Guid topicId, Guid ruleId, CancellationToken cancellationToken)
-        {
-            var topic = await TopicsWithRelations(asNoTracking: false)
-                .FirstOrDefaultAsync(x => x.Id == topicId, cancellationToken);
-            if (topic == null)
-            {
-                throw new EntityNotFoundException($"Topic id {topicId} did not reference a valid topic.");
-            }
-
-            var rule = await _dbContext.Rules
-                .Include(r => r.Tags)
-                .FirstOrDefaultAsync(r => r.Id == ruleId, cancellationToken);
-            if (rule == null)
-            {
-                throw new EntityNotFoundException($"Rule id {ruleId} did not reference a valid rule.");
-            }
-
-            topic.Tracked = true;
-            topic.ProducerId = rule.ProducerId;
-            topic.SchemaId = rule.SchemaId;
-            UnionTags(topic, rule.Tags);
-
-            await _dbContext.SaveChangesAsync(cancellationToken);
-        }
-
-        /// <inheritdoc />
         public async Task AcceptRelinkAsync(Guid topicId, Guid oldTopicId, CancellationToken cancellationToken)
         {
             var topic = await TopicsWithRelations(asNoTracking: false)
@@ -187,12 +172,13 @@ namespace Hively.Server.Repository
                 throw new EntityNotFoundException($"Topic id {oldTopicId} did not reference a valid topic.");
             }
 
+            // Producer/schema/tags are NOT copied here — the service layer re-keys
+            // oldTopic's private Match (if any) onto this topic's id/path and
+            // re-resolves via ApplyResolvedAssignmentAsync, which also naturally
+            // picks up any branch/pattern match now covering the new path.
             topic.Tracked = true;
-            topic.ProducerId = oldTopic.ProducerId;
-            topic.SchemaId = oldTopic.SchemaId;
             topic.ViolationCount = oldTopic.ViolationCount;
             topic.LastClearedAt = oldTopic.LastClearedAt;
-            UnionTags(topic, oldTopic.Tags);
 
             oldTopic.RetiredAt = DateTime.UtcNow;
             oldTopic.MergedIntoTopicId = topic.Id;
@@ -223,17 +209,6 @@ namespace Hively.Server.Repository
             topic.ActivityHistogram = activityHistogramJson;
 
             await _dbContext.SaveChangesAsync(cancellationToken);
-        }
-
-        private static void UnionTags(Topic topic, IEnumerable<Tag> tagsToAdd)
-        {
-            foreach (var tag in tagsToAdd)
-            {
-                if (topic.Tags.All(t => t.Id != tag.Id))
-                {
-                    topic.Tags.Add(tag);
-                }
-            }
         }
     }
 }
