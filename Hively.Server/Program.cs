@@ -123,9 +123,6 @@ public class Program
                 var allowedHostedDomain = builder.Configuration["Authentication:Google:AllowedHostedDomain"];
                 if (!string.IsNullOrEmpty(allowedHostedDomain))
                 {
-                    // Pre-fills Google's account chooser to this domain. A UX nicety
-                    // only, NOT the actual security control — a client could strip this
-                    // query param, which is why OnCreatingTicket below re-checks server-side.
                     options.Events.OnRedirectToAuthorizationEndpoint = ctx =>
                     {
                         var uri = QueryHelpers.AddQueryString(ctx.RedirectUri, "hd", allowedHostedDomain);
@@ -138,8 +135,6 @@ public class Program
                 {
                     if (!string.IsNullOrEmpty(allowedHostedDomain))
                     {
-                        // 'hd' (hosted domain) is only present on Workspace accounts, never
-                        // on personal @gmail.com ones — absent or mismatched both fail.
                         var hostedDomain = ctx.User.TryGetProperty("hd", out var hd) ? hd.GetString() : null;
                         if (!string.Equals(hostedDomain, allowedHostedDomain, StringComparison.OrdinalIgnoreCase))
                         {
@@ -175,12 +170,6 @@ public class Program
                 options.ClientId = builder.Configuration["Authentication:Entra:ClientId"];
                 options.ClientSecret = builder.Configuration["Authentication:Entra:ClientSecret"];
                 options.ResponseType = "code";
-                // Force a GET callback (?code=...&state=...) instead of the handler's
-                // form_post default — a POST landing on /signin-oidc through the local
-                // dev proxy chain (Vite -> SpaProxy -> Kestrel) is far more fragile than
-                // a plain GET, and was the actual cause of "message.State is null or
-                // empty" (the form body wasn't arriving intact). Google's OAuth handler
-                // never hit this since it already defaults to a query-string callback.
                 options.ResponseMode = "query";
                 options.SaveTokens = false;
                 options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
