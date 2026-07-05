@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
 import NamespaceSidebar from './components/NamespaceSidebar';
 import TopicListView from './components/TopicListView';
+import TopicListSkeleton from './components/TopicListSkeleton';
 import { useTopicFilters } from './hooks/useTopicFilters';
 import { useTopics } from '../../hooks/data/useTopics';
 import { useProducers } from '../../hooks/data/useProducers';
@@ -23,7 +24,7 @@ function TopicCatalog() {
   const filters = useTopicFilters({ topics, producers, consumers, tags });
 
   if (loading) {
-    return <div className="p-6 text-muted">Loading topics…</div>;
+    return <TopicListSkeleton />;
   }
 
   return (
