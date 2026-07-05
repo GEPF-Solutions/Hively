@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import ManageTagsPanel from './panels/ManageTagsPanel';
 import ManageSchemasPanel from './panels/ManageSchemasPanel';
-import ManageRulesPanel from './panels/ManageRulesPanel';
+import ManageMatchesPanel from './panels/ManageMatchesPanel';
 import ManageProducersPanel from './panels/ManageProducersPanel';
 import ManageConsumersPanel from './panels/ManageConsumersPanel';
 import ManageUsersPanel from './panels/ManageUsersPanel';
 
-type PanelName = 'tags' | 'schemas' | 'rules' | 'producers' | 'consumers' | 'users';
+type PanelName = 'tags' | 'schemas' | 'matches' | 'producers' | 'consumers' | 'users';
 
 const MENU_ITEMS: { key: PanelName; label: string }[] = [
   { key: 'tags', label: 'Tags' },
   { key: 'schemas', label: 'Schemas' },
-  { key: 'rules', label: 'Rules' },
+  { key: 'matches', label: 'Matches' },
   { key: 'producers', label: 'Producers' },
   { key: 'consumers', label: 'Consumers' },
   { key: 'users', label: 'Users' },
@@ -52,7 +52,7 @@ export default function ManageMenu() {
 
       {openPanel === 'tags' && <ManageTagsPanel onClose={() => setOpenPanel(null)} />}
       {openPanel === 'schemas' && <ManageSchemasPanel onClose={() => setOpenPanel(null)} />}
-      {openPanel === 'rules' && <ManageRulesPanel onClose={() => setOpenPanel(null)} />}
+      {openPanel === 'matches' && <ManageMatchesPanel onClose={() => setOpenPanel(null)} />}
       {openPanel === 'producers' && <ManageProducersPanel onClose={() => setOpenPanel(null)} />}
       {openPanel === 'consumers' && <ManageConsumersPanel onClose={() => setOpenPanel(null)} />}
       {openPanel === 'users' && <ManageUsersPanel onClose={() => setOpenPanel(null)} />}

@@ -22,6 +22,9 @@ interface NamespaceSidebarProps {
   currentLevelName: string;
   namespaceChildren: NamespaceChild[];
   onDrillInto: (name: string) => void;
+  isAdmin: boolean;
+  /** Opens Manage Matches pre-seeded with `[...folderPath, '#'].join('/')`. */
+  onConfigureBranch: () => void;
 }
 
 export default function NamespaceSidebar({
@@ -38,6 +41,8 @@ export default function NamespaceSidebar({
   currentLevelName,
   namespaceChildren,
   onDrillInto,
+  isAdmin,
+  onConfigureBranch,
 }: NamespaceSidebarProps) {
   return (
     <div className="flex w-[280px] min-w-[280px] flex-col overflow-hidden border-r border-border bg-panel">
@@ -103,6 +108,17 @@ export default function NamespaceSidebar({
           </span>
         ))}
       </div>
+
+      {isAdmin && folderPath.length > 0 && (
+        <div className="px-3.5 pb-2.5">
+          <button
+            onClick={onConfigureBranch}
+            className="w-full rounded-md border border-border-strong px-2.5 py-1.5 text-[11.5px] font-medium text-text/90 hover:border-gold hover:text-gold"
+          >
+            Configure {folderPath.join('/')}/…
+          </button>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto px-2 pb-3.5">
         <div className="px-2.5 pb-1.5 pt-1 text-[10px] uppercase tracking-wide text-muted/80">{currentLevelName}</div>

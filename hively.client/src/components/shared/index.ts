@@ -1,7 +1,11 @@
+export { default as ActionToggle } from './ActionToggle';
+export type { MatchFieldAction } from './ActionToggle';
 export { default as ComplianceBadge } from './ComplianceBadge';
 export { default as ConfirmModal } from './ConfirmModal';
 export { default as HiveWatermark } from './HiveWatermark';
 export { default as ManageList } from './ManageList';
+export { default as MultiSelectActionCombobox } from './MultiSelectActionCombobox';
+export type { ItemAction } from './MultiSelectActionCombobox';
 export { default as MultiSelectCombobox } from './MultiSelectCombobox';
 export { default as SearchableCombobox } from './SearchableCombobox';
 export { default as TagPill } from './TagPill';

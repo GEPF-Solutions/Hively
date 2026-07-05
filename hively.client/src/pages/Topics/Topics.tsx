@@ -1,14 +1,15 @@
+import { useState } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import NamespaceSidebar from './components/NamespaceSidebar';
 import TopicListView from './components/TopicListView';
 import TopicListSkeleton from './components/TopicListSkeleton';
+import ManageMatchesPanel from '../Manage/panels/ManageMatchesPanel';
 import { useTopicFilters } from './hooks/useTopicFilters';
 import { useTopics } from '../../hooks/data/useTopics';
 import { useProducers } from '../../hooks/data/useProducers';
 import { useConsumers } from '../../hooks/data/useConsumers';
 import { useTags } from '../../hooks/data/useTags';
 import { useSchemas } from '../../hooks/data/useSchemas';
-import { useRules } from '../../hooks/data/useRules';
 import { useAuth } from '../../contexts/AuthContext';
 import TopicDetail from '../TopicDetail';
 
@@ -18,8 +19,8 @@ function TopicCatalog() {
   const { consumers } = useConsumers();
   const { tags } = useTags();
   const { schemas } = useSchemas();
-  const { rules } = useRules();
   const { isAdmin } = useAuth();
+  const [configuringBranchPattern, setConfiguringBranchPattern] = useState<string | null>(null);
 
   const filters = useTopicFilters({ topics, producers, consumers, tags });
 
@@ -43,7 +44,12 @@ function TopicCatalog() {
         currentLevelName={filters.currentLevelName}
         namespaceChildren={filters.namespaceChildren}
         onDrillInto={filters.drillInto}
+        isAdmin={isAdmin}
+        onConfigureBranch={() => setConfiguringBranchPattern([...filters.folderPath, '#'].join('/'))}
       />
+      {configuringBranchPattern !== null && (
+        <ManageMatchesPanel initialPattern={configuringBranchPattern} onClose={() => setConfiguringBranchPattern(null)} />
+      )}
       <div className="min-h-0 flex-1 overflow-y-auto">
         <TopicListView
           filtered={filters.filtered}
@@ -53,7 +59,6 @@ function TopicCatalog() {
           tagById={filters.tagById}
           schemas={schemas}
           tags={tags}
-          rules={rules}
           isAdmin={isAdmin}
         />
       </div>
