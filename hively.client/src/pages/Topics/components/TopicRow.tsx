@@ -1,7 +1,7 @@
 import Button from '../../../components/ui/Button';
 import { ComplianceBadge, TagPill } from '../../../components/shared';
 import { relativeTimeFromDate } from '../../../utils/relativeTime';
-import type { RuleMatch, Tag, Topic } from '../../../types';
+import type { Tag, Topic } from '../../../types';
 
 const ROW_GRID = 'grid-cols-[2.2fr_1fr_0.9fr_1.3fr_1fr_1fr]';
 
@@ -11,27 +11,13 @@ interface TopicRowProps {
   consumerCount: number;
   tagPills: Tag[];
   isAdmin: boolean;
-  matchingRules: RuleMatch[];
   onOpen: () => void;
-  onQuickApplyRule: (ruleId: string) => void;
 }
 
-export default function TopicRow({
-  topic,
-  producerName,
-  consumerCount,
-  tagPills,
-  isAdmin,
-  matchingRules,
-  onOpen,
-  onQuickApplyRule,
-}: TopicRowProps) {
+export default function TopicRow({ topic, producerName, consumerCount, tagPills, isAdmin, onOpen }: TopicRowProps) {
   const lastSeen = relativeTimeFromDate(topic.lastSeenAt) ?? 'never';
 
   if (!topic.tracked) {
-    const hasMatchingRule = matchingRules.length === 1;
-    const hasRuleConflict = matchingRules.length > 1;
-
     return (
       <div
         className={`grid ${ROW_GRID} items-center gap-3 border-t border-border/70 bg-amber/10 py-2.5 pl-4 pr-4`}
@@ -48,24 +34,9 @@ export default function TopicRow({
         <span className="whitespace-nowrap text-xs text-amber/80">{lastSeen}</span>
         <span className="flex items-center justify-start gap-1.5">
           {isAdmin ? (
-            <>
-              {hasMatchingRule && (
-                <Button variant="secondary" size="sm" onClick={() => onQuickApplyRule(matchingRules[0].rule.id)}>
-                  ⚡ Apply rule
-                </Button>
-              )}
-              {hasRuleConflict && (
-                <span
-                  title="Multiple rules match this topic — open Configure to choose"
-                  className="whitespace-nowrap rounded-md border border-red/50 px-2 py-1 text-[11px] font-semibold text-red"
-                >
-                  ⚠ {matchingRules.length} rules match
-                </span>
-              )}
-              <Button variant="primary" size="sm" onClick={onOpen}>
-                Configure →
-              </Button>
-            </>
+            <Button variant="primary" size="sm" onClick={onOpen}>
+              Configure →
+            </Button>
           ) : (
             <span className="text-[11px] text-amber/70">view only</span>
           )}

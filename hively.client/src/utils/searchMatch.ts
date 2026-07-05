@@ -1,6 +1,6 @@
 // Ported from Design/MQTT Data Catalog.dc.html — client-side topic search
 // (see Design/README.md, "Key Behaviors" #5). Backend has its own copy of the
-// MQTT-wildcard matcher (Services/TopicPatternMatcher.cs) for Rule matching;
+// MQTT-wildcard matcher (Services/TopicPatternMatcher.cs) for Match matching;
 // this is the same algorithm, kept separately since it runs client-side.
 
 function wildcardToRegex(pattern: string): RegExp {

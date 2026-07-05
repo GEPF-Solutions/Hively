@@ -34,22 +34,32 @@ export interface SchemaVersion {
   createdAt: string;
 }
 
-export interface Rule {
+export interface MatchTagAction {
+  tagId: string;
+  isExclude: boolean;
+}
+
+export interface MatchConsumerAction {
+  consumerId: string;
+  isExclude: boolean;
+}
+
+export interface Match {
   id: string;
   /** Optional label — falls back to showing the pattern when not set. */
   name: string | null;
   pattern: string;
+  /** Set only for the private per-topic override a manual TopicDetail edit creates. */
+  topicId: string | null;
   producerId: string | null;
+  excludeProducer: boolean;
   schemaId: string | null;
-  tagIds: string[];
-  /** When a newly-untracked topic matches exactly this one rule (and no other), apply it immediately. */
+  excludeSchema: boolean;
+  tagActions: MatchTagAction[];
+  consumerActions: MatchConsumerAction[];
+  /** When a newly-untracked topic matches this pattern (among possibly others), track and resolve it immediately. */
   autoApply: boolean;
-}
-
-export interface RuleMatch {
-  rule: Rule;
-  specificity: number;
-  recommended: boolean;
+  updatedAt: string;
 }
 
 export interface Topic {

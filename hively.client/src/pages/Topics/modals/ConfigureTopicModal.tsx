@@ -9,7 +9,7 @@ import { useProducers } from '../../../hooks/data/useProducers';
 import { useConsumers } from '../../../hooks/data/useConsumers';
 import { useToast } from '../../../contexts/ToastContext';
 import { relativeTimeFromMinutes } from '../../../utils/relativeTime';
-import type { RelinkCandidate, RuleMatch, Schema, Tag, Topic } from '../../../types';
+import type { RelinkCandidate, Schema, Tag, Topic } from '../../../types';
 
 interface ConfigureTopicModalProps {
   topic: Topic;
@@ -27,12 +27,10 @@ export default function ConfigureTopicModal({ topic, schemas, tags, onClose, onS
   const [consumerIds, setConsumerIds] = useState(topic.consumerIds);
   const [schemaId, setSchemaId] = useState(topic.schemaId);
   const [tagIds, setTagIds] = useState(topic.tagIds);
-  const [matchingRules, setMatchingRules] = useState<RuleMatch[]>([]);
   const [relinkCandidate, setRelinkCandidate] = useState<RelinkCandidate | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    topicService.getMatchingRules(topic.id).then(setMatchingRules).catch(() => {});
     topicService.getRelinkCandidate(topic.id).then(setRelinkCandidate).catch(() => {});
   }, [topic.id]);
 
@@ -56,17 +54,6 @@ export default function ConfigureTopicModal({ topic, schemas, tags, onClose, onS
     toast.success(`Created consumer "${created.name}".`);
     refetchConsumers();
     return { id: created.id, label: created.name };
-  }
-
-  async function handleApplyRule(ruleId: string) {
-    try {
-      const updated = await topicService.applyRule(topic.id, ruleId);
-      toast.success('Rule applied.');
-      onSaved(updated);
-      onClose();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to apply rule');
-    }
   }
 
   async function handleRelink() {
@@ -102,9 +89,6 @@ export default function ConfigureTopicModal({ topic, schemas, tags, onClose, onS
     }
   }
 
-  const hasSingleMatch = matchingRules.length === 1;
-  const hasConflict = matchingRules.length > 1;
-
   return (
     <Modal
       isOpen
@@ -136,38 +120,6 @@ export default function ConfigureTopicModal({ topic, schemas, tags, onClose, onS
           <Button variant="primary" size="sm" className="mt-2" onClick={handleRelink}>
             Relink &amp; inherit
           </Button>
-        </div>
-      )}
-
-      {hasSingleMatch && (
-        <div className="mb-3.5 rounded-lg border border-amber/40 bg-amber/20 p-3">
-          <div className="text-[12.5px] leading-snug text-amber">
-            ⚡ Matches rule <span className="font-mono">{matchingRules[0].rule.pattern}</span>
-          </div>
-          <Button variant="primary" size="sm" className="mt-2" onClick={() => handleApplyRule(matchingRules[0].rule.id)}>
-            Apply rule
-          </Button>
-        </div>
-      )}
-
-      {hasConflict && (
-        <div className="mb-3.5 rounded-lg border border-red/40 bg-red/15 p-3">
-          <div className="mb-1.5 text-[12.5px] font-semibold text-red">⚠ Multiple rules match this topic — pick one:</div>
-          <div className="flex flex-col gap-1.5">
-            {matchingRules.map((m) => (
-              <div key={m.rule.id} className="flex items-center justify-between gap-2 rounded-md bg-red/10 px-2.5 py-1.5">
-                <div className="min-w-0">
-                  <div className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[11.5px] text-text/90">
-                    {m.rule.pattern}
-                    {m.recommended && <span className="ml-1 font-semibold text-gold">· most specific</span>}
-                  </div>
-                </div>
-                <Button variant="primary" size="sm" onClick={() => handleApplyRule(m.rule.id)}>
-                  Use this
-                </Button>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 

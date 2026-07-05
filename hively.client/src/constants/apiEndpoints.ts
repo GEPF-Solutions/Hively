@@ -25,8 +25,6 @@ export const apiEndpoints = {
     update: '/api/topic/update',
     delete: (id: string) => `/api/topic/delete?topicId=${id}`,
     clearViolations: (id: string) => `/api/topic/${id}/clear-violations`,
-    matchingRules: (id: string) => `/api/topic/${id}/matching-rules`,
-    applyRule: (id: string, ruleId: string) => `/api/topic/${id}/apply-rule/${ruleId}`,
     relinkCandidate: (id: string) => `/api/topic/${id}/relink-candidate`,
     acceptRelink: (id: string, oldTopicId: string) => `/api/topic/${id}/accept-relink/${oldTopicId}`,
   },
@@ -64,12 +62,12 @@ export const apiEndpoints = {
     delete: (id: string) => `/api/tag/delete?tagId=${id}`,
   },
 
-  rules: {
-    base: '/api/rule',
-    byId: (id: string) => `/api/rule/${id}`,
-    insert: '/api/rule/insert',
-    update: '/api/rule/update',
-    delete: (id: string) => `/api/rule/delete?ruleId=${id}`,
+  matches: {
+    base: '/api/match',
+    byId: (id: string) => `/api/match/${id}`,
+    insert: '/api/match/insert',
+    update: '/api/match/update',
+    delete: (id: string) => `/api/match/delete?matchId=${id}`,
   },
 
   hubs: {

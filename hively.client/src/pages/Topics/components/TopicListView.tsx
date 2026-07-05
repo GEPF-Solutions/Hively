@@ -5,10 +5,8 @@ import ConfigureTopicModal from '../modals/ConfigureTopicModal';
 import AddTopicModal from '../modals/AddTopicModal';
 import Button from '../../../components/ui/Button';
 import { useDisplayGroups } from '../hooks/useDisplayGroups';
-import { findMatchingRules } from '../../../utils/ruleMatch';
 import { useToast } from '../../../contexts/ToastContext';
-import { topicService } from '../../../services/topicService';
-import type { Producer, Rule, Schema, Tag, Topic, TopicViewMode } from '../../../types';
+import type { Producer, Schema, Tag, Topic, TopicViewMode } from '../../../types';
 
 const COLUMN_HEADERS = ['Topic', 'Producer', 'Consumers', 'Tags', 'Last Message', 'Compliance'];
 
@@ -20,7 +18,6 @@ interface TopicListViewProps {
   tagById: Map<string, Tag>;
   schemas: Schema[];
   tags: Tag[];
-  rules: Rule[];
   isAdmin: boolean;
 }
 
@@ -32,7 +29,6 @@ export default function TopicListView({
   tagById,
   schemas,
   tags,
-  rules,
   isAdmin,
 }: TopicListViewProps) {
   const navigate = useNavigate();
@@ -41,32 +37,16 @@ export default function TopicListView({
   const [configuringTopic, setConfiguringTopic] = useState<Topic | null>(null);
   const [addTopicOpen, setAddTopicOpen] = useState(false);
 
-  async function handleQuickApplyRule(topicId: string, ruleId: string) {
-    try {
-      await topicService.applyRule(topicId, ruleId);
-      toast.success('Rule applied.');
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to apply rule');
-    }
-  }
-
-  // InsertTopicAsync already runs auto-apply server-side — if a rule's sole,
-  // AutoApply-enabled match covered this path, the topic comes back already
-  // tracked/configured. Don't send the admin into a manual Configure modal
-  // for something that's already done; just say what covered it.
-  async function handleTopicCreated(created: Topic) {
+  // InsertTopicAsync already runs auto-apply server-side — if an AutoApply-enabled
+  // match covered this path, the topic comes back already tracked/configured. Don't
+  // send the admin into a manual Configure modal for something that's already done.
+  function handleTopicCreated(created: Topic) {
     if (!created.tracked) {
       setConfiguringTopic(created);
       return;
     }
 
-    try {
-      const matches = await topicService.getMatchingRules(created.id);
-      const rule = matches.length === 1 ? matches[0].rule : null;
-      toast.success(rule ? `Automatically configured — matched rule "${rule.name ?? rule.pattern}".` : 'Automatically configured by a matching rule.');
-    } catch {
-      toast.success('Automatically configured by a matching rule.');
-    }
+    toast.success('Automatically configured by a matching pattern.');
   }
 
   return (
@@ -121,9 +101,7 @@ export default function TopicListView({
                 consumerCount={topic.consumerIds.length}
                 tagPills={topic.tagIds.map((id) => tagById.get(id)).filter((t): t is Tag => Boolean(t))}
                 isAdmin={isAdmin}
-                matchingRules={topic.tracked ? [] : findMatchingRules(topic.path, rules)}
                 onOpen={() => (topic.tracked ? navigate(`/topics/${topic.id}`) : setConfiguringTopic(topic))}
-                onQuickApplyRule={(ruleId) => handleQuickApplyRule(topic.id, ruleId)}
               />
             ))}
           </div>

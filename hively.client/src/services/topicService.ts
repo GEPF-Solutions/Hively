@@ -1,6 +1,6 @@
 import { apiRequest } from './apiService';
 import { apiEndpoints } from '../constants/apiEndpoints';
-import type { RelinkCandidate, RuleMatch, Topic, TopicConfigure } from '../types';
+import type { RelinkCandidate, Topic, TopicConfigure } from '../types';
 
 export const topicService = {
   async getTopics(): Promise<Topic[]> {
@@ -31,14 +31,6 @@ export const topicService = {
 
   async deleteTopic(id: string): Promise<void> {
     await apiRequest(apiEndpoints.topics.delete(id), { method: 'DELETE' });
-  },
-
-  async getMatchingRules(id: string): Promise<RuleMatch[]> {
-    return apiRequest<RuleMatch[]>(apiEndpoints.topics.matchingRules(id));
-  },
-
-  async applyRule(id: string, ruleId: string): Promise<Topic> {
-    return apiRequest<Topic>(apiEndpoints.topics.applyRule(id, ruleId), { method: 'POST' });
   },
 
   async getRelinkCandidate(id: string): Promise<RelinkCandidate | null> {
