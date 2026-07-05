@@ -2,7 +2,7 @@
 
 Hively is a data-catalog application for an MQTT Unified Namespace (UNS) — think "Confluent Data Catalog, but for MQTT." It tracks topics, their producers/consumers, assigned schemas + compliance, tags, and bulk-assignment rules, and helps admins recover when a physical relocation makes a whole branch of the namespace go untracked at once.
 
-**Full domain spec, behaviors, and design tokens live in `Design/README.md` — read it before implementing any feature.** This file only covers architecture/conventions; it deliberately does not repeat the domain model, key behaviors (rules, relocation heuristic, search, graph view, etc.), or design tokens documented there. `Design/MQTT Data Catalog.dc.html` is a clickable prototype — open it in a browser to see exact behavior before building a screen.
+**Full domain spec, behaviors, and design tokens live in `Design/README.md` — read it before implementing any feature.** This file only covers architecture/conventions; it deliberately does not repeat the domain model, key behaviors (rules, relocation heuristic, search, graph view, etc.), or design tokens documented there. The original clickable HTML prototype this was built from has since been deleted — everything it speced is now implemented for real, and `Design/README.md` has been updated to describe the actual current behavior/tokens rather than the prototype's.
 
 ## Reference project
 
@@ -82,7 +82,7 @@ Console only for now (the default `ILogger` + Console provider ASP.NET Core wire
 
 - A single `IHostedService` (e.g. `MqttIngestionService`) using `MQTTnet`, subscribed to `#`, injected with a scoped-service-factory (hosted services are singletons; create a scope per message to resolve `ITopicService`/`HivelyContext`).
 - On every message: upsert last payload/timestamp/retained on the matching topic (create an untracked stub if never seen), run schema validation if assigned (increment `violationCount` on failure), roll up the `activityHistogram` bucket.
-- Keep `matchTopic`, `ruleSpecificity`, `findMatchingRules`, `findRelinkCandidate`, and schema `validateSchema` as pure, unit-testable functions — port them from the prototype's `<script>` block in `Design/MQTT Data Catalog.dc.html`, don't reinvent the logic.
+- Keep `matchTopic`, `ruleSpecificity`, `findMatchingRules`, `findRelinkCandidate`, and schema `validateSchema` as pure, unit-testable functions (already ported from the original prototype's logic — see `TopicPatternMatcher`, `RuleMatcher`, `RelinkHeuristic`, `SchemaComplianceValidator` in `Services/`), don't reinvent the logic.
 
 ### Real-time (SignalR)
 

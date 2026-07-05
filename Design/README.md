@@ -10,17 +10,8 @@ Core purpose: let plant/OT engineers and admins understand and govern the topics
 - Free-form, admin-defined **tags** (colored pills) for organizing/filtering topics
 - Survive the fact that in a physical UNS, a machine's topic path encodes its **physical location** in the plant hierarchy — when a machine physically relocates (e.g. moves between plants/countries), all of its topics change path and go "untracked" simultaneously. The catalog needs to help admins recognize and recover from this instead of starting from scratch.
 
-## About the Design Files
-The bundled file (`MQTT Data Catalog.dc.html`) is a **high-fidelity, fully-interactive HTML/React prototype** built as a single self-contained file with an in-memory mock data store (no real backend, no real MQTT connection — all data is hardcoded sample data and all "writes" only mutate in-memory React state). It is a **design reference**, not code to port directly.
-
-Your task is to **recreate this design and its behavior in a real C# + React application**:
-- **Backend**: C# (ASP.NET Core Web API recommended), with a real MQTT client/listener, persistence (e.g. EF Core + SQL), and REST/GraphQL/SignalR APIs for the React frontend.
-- **Frontend**: React (the prototype's component/state shape below is a reasonable starting point, but use the target codebase's existing component library, routing, state management, and styling conventions instead of copying the prototype's inline-style approach).
-
-Open `MQTT Data Catalog.dc.html` directly in a browser to interact with the live prototype — clicking through it is the fastest way to understand exact behavior. It only needs a static file server (or double-click to open); it has no build step and no server dependency.
-
-## Fidelity
-**High-fidelity.** Colors, spacing, typography, copy, and all interaction flows below are final intent, not placeholders. Recreate the UI and behavior precisely using the target codebase's component library/design system if it has one; if the target app has no established visual system yet, this prototype's dark, technical/dev-tool aesthetic (think Grafana/Datadog) should be treated as the visual direction.
+## About this document
+This started as a handoff spec written against a throwaway HTML/React prototype (`MQTT Data Catalog.dc.html`, an in-memory-only mock with hardcoded sample data) — the app has since been fully built for real, and the prototype has been deleted since everything it speced is now implemented (see `../CLAUDE.md`'s Status section for what's built). What's left below is the parts still worth keeping as living documentation: the domain model, key behaviors, and the current visual design tokens (rewritten to match the actual app, not the original prototype's palette). Implementation notes that used to say "port this from the prototype's script" have been reworded to reflect that the port already happened.
 
 ---
 
@@ -154,73 +145,38 @@ A star/ego-graph view, separate from the topic catalog, for visualizing producer
 - Zoom controls (−/reset/+, 50–300%) scale the graph via CSS transform with the container scrollable for panning when zoomed in.
 - **Known scaling limitation, discussed and deliberately deferred**: a literal "every topic as a node" full-UNS graph was considered and explicitly rejected for now due to potential performance/legibility problems at real-world scale (a UNS can have thousands of topics — a full hairball graph doesn't clarify anything). If a full-namespace overview is wanted later, the recommended approach (not yet built) is: show only producers + consumers as nodes (bounded, finite count), with edge thickness/label representing aggregate topic count between them rather than one edge per topic, and clicking a node drills into the existing per-entity star-graph where individual topics do appear. Untracked topics have no producer/consumer, so they'd need to render as a separate, unconnected "orphaned" cluster (e.g. dashed amber, possibly grouped/counted rather than one node per topic) rather than being silently omitted.
 
-**Implementation note for the port**: node label positions are computed in JS (not CSS) as percentages, with a **vertical flip** — labels below the node in the top half of the canvas, above the node in the bottom half — specifically to keep labels from clipping the container edges at the ring's extremes. Preserve this if re-implementing the layout math. Also note labels are rendered as an HTML overlay `<div>` positioned over the SVG rather than as SVG `<text>` — this was a deliberate fix for a real bug (the prototype's templating layer wraps interpolated text in a tracking `<span>`, which is invalid inside SVG `<text>` and silently collapses to zero size in real browsers).
+**Implementation note**: node label positions are computed in JS (not CSS) as percentages, with a **vertical flip** — labels below the node in the top half of the canvas, above the node in the bottom half — specifically to keep labels from clipping the container edges at the ring's extremes (see `useGraphLayout.ts`). Labels are also rendered as an HTML overlay `<div>` positioned over the SVG rather than as SVG `<text>`, working around a real bug in the original prototype (its templating layer wrapped interpolated text in a tracking `<span>`, invalid inside SVG `<text>` and silently collapsing to zero size) — kept in the real implementation since it's simply the more robust approach regardless of the original bug.
 
----
-
-## Suggested C# Backend Architecture
-This is a **suggestion**, not a spec — adapt to the target codebase's existing conventions if one exists.
-
-- **ASP.NET Core Web API** exposing REST (or GraphQL) endpoints for: Topics (list/filter/get/update), Producers, Consumers, Schemas (+ version history), Tags, Rules.
-- **MQTT ingestion service** (background hosted service, e.g. using `MQTTnet`) subscribed to `#` on the broker:
-  - On every message: upsert last payload/timestamp/retained flag on the matching `Topic` (create an untracked stub row if the path has never been seen).
-  - Run schema validation if a schema is assigned; increment `violationCount` on failure.
-  - Roll up `activityHistogram` (e.g. via a time-bucketed counter, Redis, or a simple in-memory ring buffer flushed periodically).
-- **SignalR hub** to push live updates to the React frontend (new untracked topics, updated last-message/compliance, violation count changes) rather than polling.
-- **EF Core** entities mirroring the Domain Model section above; `Topic.Segments` can be stored as a delimited string or a normalized child table if you need to query by depth/segment efficiently.
-- **Rule matching** and **relink heuristic** are pure functions over in-memory topic state — port `matchTopic`, `ruleSpecificity`, `findMatchingRules`, and `findRelinkCandidate` from the prototype's `<script>` block (readable JS, straightforward to transliterate to C#).
-
-## Suggested React Frontend Structure
-The prototype is one big component with inline styles and a flat state object — fine for a prototype, not for production. Recommended decomposition:
-- `TopicListPage` (namespace sidebar + list/hierarchy toggle + row table)
-- `TopicDetailPage` (producer/consumer/schema/compliance/activity cards)
-- `ConfigureTopicModal`, `SchemaAssignModal`, `ProducerAssignModal`
-- `ManageTagsPanel`, `ManageSchemasPanel`, `ManageRulesPanel`, `ManageProducersPanel`, `ManageConsumersPanel`
-- Shared `SearchableCombobox` component (text filter + option list) — used ~7 times in the prototype for producer/schema/consumer pickers; worth extracting as one real reusable component.
-- Global state via whatever the codebase already uses (Redux/Zustand/React Query, etc.) backed by the real API + SignalR live updates instead of the prototype's local `useState`.
+Backend/frontend architecture for all of the above is now documented for real in `../CLAUDE.md` (3-layer backend, modularized React frontend) rather than suggested here — this section used to sketch a target architecture before the app existed; it's been built since, so treat CLAUDE.md as authoritative.
 
 ---
 
 ## Design Tokens
 
-**Logo/brand**: a small honeycomb (7-hexagon flower: 1 center + 6 ring cells) rendered as flat-color SVG polygons — no gradients. Center cell brightest (`oklch(0.9 0.15 98)`), 3 ring cells mid-gold (`oklch(0.83 0.17 95)`), 3 ring cells deeper amber (`oklch(0.68 0.14 85)`), thin dark-amber cell borders (`oklch(0.32 0.05 90)`). Sits next to the wordmark "HIVELY" (monospace, letter-spaced) in the header. See the inline `<svg>` in the header markup for exact hexagon coordinates (a 7-cell honeycomb inscribed in a 100×100 viewBox).
+**These superseded the original prototype's palette during a deliberate visual-identity pass** (the prototype's blue-gray/cyan-pill look read as generic — see git history around the `hively.client/src/index.css` and `Button`/`Badge`/`TagPill` components for the actual diff). Source of truth is always `index.css`'s `@theme` block plus those components; this section is a summary, not the authority.
+
+**Logo/brand**: a small honeycomb (7-hexagon flower: 1 center + 6 ring cells) rendered as flat-color SVG polygons — no gradients. Center cell brightest (`oklch(0.9 0.15 98)`), 3 ring cells mid-gold (`oklch(0.83 0.17 95)`), 3 ring cells deeper amber (`oklch(0.68 0.14 85)`), thin dark-amber cell borders (`oklch(0.32 0.05 90)`). Sits next to the wordmark "HIVELY" (Space Grotesk) in the header. See `hively.client/src/components/layout/HiveLogo.tsx` for the exact hexagon coordinates (a 7-cell honeycomb inscribed in a 100×100 viewBox) — recreate at any size/format from there.
 
 **Palette** (OKLCH, dark theme):
-- Background (page): `oklch(0.17 0.014 254)`
-- Background (panels/header): `oklch(0.20 0.015 254)` / header bar `oklch(0.155 0.012 254)`
-- Borders: `oklch(0.28–0.32 0.02 254)`
-- Primary text: `oklch(0.93 0.006 254)`
-- Muted text: `oklch(0.5–0.6 0.012 254)`
-- Accent (brand/primary actions, "compliant"): cyan, `oklch(0.75 0.13 200)`
-- Warning/untracked/rules: amber, `oklch(0.78 0.15 80)`
-- Danger/violations: red, `oklch(0.7 0.18 25)`
-- Tag hues are arbitrary OKLCH hue angles (200 cyan, 25 red, 300 magenta, 240 blue, 150 green, 80 amber, null = neutral gray) each rendered as a `{color, background, border}` triad at fixed lightness/chroma — see `tagColor()` in the prototype's script.
+- Background/panel/header/border/text/muted are **true neutral gray — zero chroma**, not hue-tinted, so there's no background accent hue to read as a template default: background `oklch(0.13 0 0)`, panel `oklch(0.17 0 0)`, header `oklch(0.10 0 0)`, borders `oklch(0.26–0.36 0 0)`, text `oklch(0.95 0 0)`, muted `oklch(0.58 0 0)`.
+- **Brand/interactive accent** (buttons, active nav/toggle underline, focus rings, links, the logo, the empty-state hex watermark): gold, `oklch(0.80 0.15 92)` — deliberately a different hue from status-amber so brand chrome and a warning badge are never visually confusable.
+- **Status colors**, unchanged from the original prototype and kept semantically pure (never reused for brand/interactive chrome): compliant/cyan `oklch(0.75 0.13 200)`, warning/untracked/amber `oklch(0.78 0.15 80)`, danger/violations/red `oklch(0.7 0.18 25)`.
+- Tag hues are arbitrary OKLCH hue angles chosen per-tag (`null` = neutral gray) — see `tagColor()` in `hively.client/src/utils/tagColor.ts`.
 
 **Typography**:
 - UI text: system font stack (`-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif`)
 - Monospace (topic paths, code, patterns, IDs): `IBM Plex Mono` (weights 400/500/600), loaded from Google Fonts.
-- Header wordmark: 13px, 600 weight, 1.5px letter-spacing, monospace, uppercase with a middle dot separator (`UNS·CATALOG`).
+- Header wordmark: Space Grotesk, a deliberate deviation from the original monospace-wordmark spec (see `CLAUDE.md`'s Frontend conventions).
 
-**Shape**: 6–12px border radii throughout; pill shapes (`border-radius: 99px`) for tags and compliance badges.
-
-## Assets
-No external image/icon assets — the UI uses only typography, color, and simple CSS shapes (dots, bars for the activity sparkline). No icon font or SVG iconography is used; keep it that way unless the target design system mandates otherwise.
+**Shape**: unfilled, outlined chips — status badges and tags are transparent background + neutral border + colored text (never a translucent tinted fill), all at a modest ~6px radius, not full pills. Buttons collapse to exactly two types app-wide: `primary` (solid gold fill, subtle tactile shadow) and `secondary` (quiet outline) — no separate "ghost" or "danger" look; a destructive action is a secondary button with red text, not a third variant. Active nav/view-toggle state is an underline, not a filled pill. The honeycomb motif itself is used sparingly — the logo mark and a faint hex-lattice watermark reserved for empty states — rather than smeared across every component's corners.
 
 ## Logo Assets
 `assets/` contains the Hively honeycomb logo as flat PNGs in a few ratios/uses:
 - `hively-icon-1x1-transparent.png` / `hively-icon-1x1-dark.png` — square icon only (512×512), for app icons/favicons.
 - `hively-lockup-4x1-transparent.png` / `hively-lockup-4x1-dark.png` — icon + "HIVELY" wordmark, wide lockup (1200×300), for headers/nav bars.
 - `hively-banner-1.91x1-dark.png` — icon + wordmark + tagline, social/og-image ratio (1200×628).
-All use flat colors (no gradients): center hex brightest gold, alternating ring hexes in two gold tones, dark amber-brown cell borders. Recreate at any size from the hex polygon coordinates in the header `<svg>` inside `MQTT Data Catalog.dc.html` if you need other sizes/formats (e.g. true vector SVG/ICO).
-
-## Screenshots
-See `screenshots/` for static reference images (the live prototype is more useful, but these help at a glance):
-- `01-topic-list.png` — main topic list, Hierarchy grouping, untracked-topic callout, tag filter chips, namespace drill-down sidebar.
-- `02-topic-detail.png` — topic detail page: producer/consumer/schema/last-message/compliance/activity cards.
-- `03-configure-modal.png` — the "Configure Topic" flow for bringing an untracked topic under management (producer/consumer search-comboboxes, schema/tag assignment).
-- `04-manage-schemas.png` — the global schema catalog (filter box, version badges, usage counts, new/edit schema form).
-- `05-graph-view.png` — the producer/topic/consumer star-graph, centered on a topic (showing the Hively logo/wordmark in the header).
+All use flat colors (no gradients): center hex brightest gold, alternating ring hexes in two gold tones, dark amber-brown cell borders. Recreate at any size from the hex polygon coordinates in `hively.client/src/components/layout/HiveLogo.tsx` if you need other sizes/formats (e.g. true vector SVG/ICO).
 
 ## Files
-- `MQTT Data Catalog.dc.html` — the full interactive prototype. Self-contained (one file, loads its own fonts from Google Fonts, everything else inline). Open directly in any browser.
-- `screenshots/` — static reference images, see above.
+- `schema.sql` — hand-authored DDL, kept drawDB-importable for schema diagramming; the actual source of truth for the Postgres schema (see `CLAUDE.md`'s Database section for the edit → apply → re-scaffold workflow).
+- `assets/` — logo PNGs, see Logo Assets above.
