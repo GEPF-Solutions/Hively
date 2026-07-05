@@ -19,22 +19,42 @@ function hourLabel(hoursAgo: number): string {
   return (h % 12 === 0 ? 12 : h % 12) + (h < 12 ? 'am' : 'pm');
 }
 
+function Stat({ label, value, sub }: { label: string; value: number; sub?: string }) {
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-wide text-muted">{label}</div>
+      <div className="text-lg font-semibold text-text">
+        {value}
+        {sub && <span className="ml-1 text-[11px] font-normal text-muted">{sub}</span>}
+      </div>
+    </div>
+  );
+}
+
 export default function ActivityCard({ activityHistogram }: { activityHistogram: string | null }) {
   const activity = parseHistogram(activityHistogram);
   const max = Math.max(1, ...activity);
   const total = activity.reduce((a, b) => a + b, 0);
+  const peakIndex = activity.reduce((best, count, i) => (count > activity[best] ? i : best), 0);
+  const activeHours = activity.filter((count) => count > 0).length;
+  const currentHour = activity[activity.length - 1];
   const [hovered, setHovered] = useState<number | null>(null);
 
   return (
     <div className="flex h-full flex-col rounded-[10px] border border-border bg-panel p-4">
-      <div className="mb-2.5 flex items-center justify-between">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-          Activity · msgs/hr, last 24h
-        </div>
-        <div className="font-mono text-[11px] text-muted">{total} total</div>
+      <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-muted">
+        Activity · msgs/hr, last 24h
       </div>
-      <div className="flex flex-1 flex-col justify-center">
-        <div className="flex h-[56px] items-end gap-[2px] border-b border-border pb-px">
+
+      <div className="mb-4 grid grid-cols-4 gap-3">
+        <Stat label="Total" value={total} />
+        <Stat label="Peak" value={activity[peakIndex]} sub={hourLabel(activity.length - 1 - peakIndex)} />
+        <Stat label="This hour" value={currentHour} />
+        <Stat label="Active hrs" value={activeHours} sub={`/ ${activity.length}`} />
+      </div>
+
+      <div className="flex flex-1 flex-col justify-end">
+        <div className="flex h-[64px] items-end gap-[2px] border-b border-border pb-px">
           {activity.map((count, i) => {
             const hoursAgo = activity.length - 1 - i;
             const isCurrent = hoursAgo === 0;
