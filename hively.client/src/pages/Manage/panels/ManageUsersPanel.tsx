@@ -41,8 +41,8 @@ export default function ManageUsersPanel({ onClose }: { onClose: () => void }) {
           <button
             key={role ?? 'all'}
             onClick={() => setRoleFilter(role)}
-            className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${
-              roleFilter === role ? 'border-cyan/50 bg-cyan/15 text-cyan' : 'border-border-strong bg-transparent text-muted'
+            className={`rounded-md border px-2.5 py-1 text-[11px] font-medium ${
+              roleFilter === role ? 'border-gold/50 text-gold' : 'border-border-strong text-muted'
             }`}
           >
             {role ?? 'all'}
@@ -59,7 +59,7 @@ export default function ManageUsersPanel({ onClose }: { onClose: () => void }) {
                 <div className="truncate text-[12.5px] text-text">{user.email}</div>
                 <div className="mt-0.5 text-[10.5px] text-muted/70">joined {new Date(user.createdAt).toLocaleDateString()}</div>
               </div>
-              <Badge tone={user.role === 'Admin' ? 'cyan' : 'neutral'}>{user.role}</Badge>
+              <Badge tone={user.role === 'Admin' ? 'plain' : 'neutral'}>{user.role}</Badge>
               {isSelf ? (
                 <span className="text-[10.5px] italic text-muted/70">you</span>
               ) : (

@@ -63,14 +63,14 @@ export default function SearchableCombobox({
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-t-md border border-border-strong bg-bg px-2.5 py-2 font-mono text-xs text-text outline-none placeholder:text-muted focus:border-cyan"
+        className="w-full rounded-t-md border border-border-strong bg-bg px-2.5 py-2 font-mono text-xs text-text outline-none placeholder:text-muted focus:border-gold"
       />
       <div className="flex flex-col gap-1 overflow-y-auto rounded-b-md border border-t-0 border-border-strong p-1.5" style={{ maxHeight }}>
         {showCreate && (
           <button
             onClick={handleCreate}
             disabled={creating}
-            className="flex items-center gap-2 rounded-md border border-dashed border-cyan/50 px-2.5 py-1.5 text-left text-cyan disabled:opacity-60"
+            className="flex items-center gap-2 rounded-md border border-dashed border-gold/50 px-2.5 py-1.5 text-left text-gold disabled:opacity-60"
           >
             <span className="text-[12.5px]">{creating ? 'Creating…' : `+ Create "${trimmed}"`}</span>
           </button>
@@ -79,11 +79,11 @@ export default function SearchableCombobox({
           <button
             onClick={() => onSelect(null)}
             className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-left"
-            style={{ background: selectedId === null ? 'oklch(0.27 0.06 200)' : 'transparent' }}
+            style={{ background: selectedId === null ? 'oklch(0.30 0.05 92)' : 'transparent' }}
           >
             <span
               className="h-3 w-3 flex-shrink-0 rounded-full border-[1.5px] border-muted"
-              style={{ background: selectedId === null ? 'oklch(0.75 0.13 200)' : 'transparent' }}
+              style={{ background: selectedId === null ? 'oklch(0.80 0.15 92)' : 'transparent' }}
             />
             <span className="text-[12.5px] text-text/90">{noneLabel}</span>
           </button>
@@ -93,11 +93,11 @@ export default function SearchableCombobox({
             key={opt.id}
             onClick={() => onSelect(opt.id)}
             className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-left"
-            style={{ background: selectedId === opt.id ? 'oklch(0.27 0.06 200)' : 'transparent' }}
+            style={{ background: selectedId === opt.id ? 'oklch(0.30 0.05 92)' : 'transparent' }}
           >
             <span
               className="h-3 w-3 flex-shrink-0 rounded-full border-[1.5px] border-muted"
-              style={{ background: selectedId === opt.id ? 'oklch(0.75 0.13 200)' : 'transparent' }}
+              style={{ background: selectedId === opt.id ? 'oklch(0.80 0.15 92)' : 'transparent' }}
             />
             <span className="text-[12.5px] text-text/90">{opt.label}</span>
           </button>

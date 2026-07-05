@@ -15,7 +15,7 @@ export default function BrokerStatusPill() {
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-1.5 rounded-full border border-border-strong px-2.5 py-1"
       >
-        <span className="h-1.5 w-1.5 rounded-full" style={{ background: status ? dotColor : 'oklch(0.55 0.012 254)' }} />
+        <span className="h-1.5 w-1.5 rounded-full" style={{ background: status ? dotColor : 'var(--color-muted)' }} />
         <span className="font-mono text-[11.5px] text-muted">
           {status ? (connected ? 'connected' : 'disconnected') : 'checking…'}
         </span>
@@ -26,7 +26,7 @@ export default function BrokerStatusPill() {
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-[calc(100%+6px)] z-50 min-w-[220px] rounded-lg border border-border-strong bg-panel p-3 text-xs shadow-2xl">
             <div className="mb-2 flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full" style={{ background: status ? dotColor : 'oklch(0.55 0.012 254)' }} />
+              <span className="h-2 w-2 rounded-full" style={{ background: status ? dotColor : 'var(--color-muted)' }} />
               <span className="font-semibold text-text/90">MQTT broker {connected ? 'connected' : 'disconnected'}</span>
             </div>
             {status ? (

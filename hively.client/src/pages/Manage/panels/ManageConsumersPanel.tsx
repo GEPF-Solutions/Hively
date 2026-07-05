@@ -91,7 +91,7 @@ export default function ManageConsumersPanel({ onClose }: { onClose: () => void 
           onChange={(e) => setDescription(e.target.value)}
           placeholder="description (optional)"
           rows={2}
-          className="mb-2.5 w-full resize-y rounded-md border border-border-strong bg-bg px-2.5 py-2 text-xs text-text/90 outline-none placeholder:text-muted focus:border-cyan"
+          className="mb-2.5 w-full resize-y rounded-md border border-border-strong bg-bg px-2.5 py-2 text-xs text-text/90 outline-none placeholder:text-muted focus:border-gold"
         />
         <div className="flex gap-2">
           <Button variant="primary" className="flex-1" onClick={handleSave}>

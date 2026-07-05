@@ -7,7 +7,7 @@ export interface TagColorTriad {
 
 export function tagColor(hue: number | null): TagColorTriad {
   if (hue === null) {
-    return { color: 'oklch(0.7 0.01 254)', bg: 'oklch(0.28 0.01 254)', borderColor: 'oklch(0.4 0.012 254)' };
+    return { color: 'oklch(0.7 0 0)', bg: 'oklch(0.28 0 0)', borderColor: 'oklch(0.4 0 0)' };
   }
   return {
     color: `oklch(0.85 0.1 ${hue})`,

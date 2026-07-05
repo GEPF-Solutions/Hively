@@ -64,7 +64,7 @@ export default function Graph() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="search a producer, consumer, or topic…"
-          className="min-w-[280px] flex-1 rounded-md border border-border-strong bg-bg px-2.5 py-2 font-mono text-[12.5px] text-text outline-none placeholder:text-muted focus:border-cyan"
+          className="min-w-[280px] flex-1 rounded-md border border-border-strong bg-bg px-2.5 py-2 font-mono text-[12.5px] text-text outline-none placeholder:text-muted focus:border-gold"
         />
         {history.length > 0 && (
           <button onClick={handleBack} className="whitespace-nowrap rounded-md border border-border-strong px-3 py-2 text-[12.5px] text-text/80">

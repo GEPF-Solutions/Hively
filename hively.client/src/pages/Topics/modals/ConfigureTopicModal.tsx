@@ -127,8 +127,8 @@ export default function ConfigureTopicModal({ topic, schemas, tags, onClose, onS
       </div>
 
       {relinkCandidate && (
-        <div className="mb-3 rounded-lg border border-cyan/40 bg-cyan/15 p-3">
-          <div className="text-[12.5px] leading-snug text-cyan">
+        <div className="mb-3 rounded-lg border border-gold/40 bg-gold/15 p-3">
+          <div className="text-[12.5px] leading-snug text-gold">
             🔗 Looks like a relocation of {relinkCandidate.topic.path} (silent{' '}
             {relativeTimeFromMinutes(relinkCandidate.silentForMinutes)}) — inherit its producer, schema, tags &
             history?
@@ -159,7 +159,7 @@ export default function ConfigureTopicModal({ topic, schemas, tags, onClose, onS
                 <div className="min-w-0">
                   <div className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[11.5px] text-text/90">
                     {m.rule.pattern}
-                    {m.recommended && <span className="ml-1 font-semibold text-cyan">· most specific</span>}
+                    {m.recommended && <span className="ml-1 font-semibold text-gold">· most specific</span>}
                   </div>
                 </div>
                 <Button variant="primary" size="sm" onClick={() => handleApplyRule(m.rule.id)}>

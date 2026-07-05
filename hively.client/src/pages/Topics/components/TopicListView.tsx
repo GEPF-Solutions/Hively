@@ -79,19 +79,19 @@ export default function TopicListView({
               + Add Topic
             </Button>
           )}
-          <div className="flex gap-0.5 rounded-lg border border-border bg-panel p-0.5">
+          <div className="flex items-center gap-3.5">
             <button
               onClick={() => onViewModeChange('hierarchy')}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium ${
-                viewMode === 'hierarchy' ? 'bg-cyan text-[oklch(0.15_0.02_200)]' : 'text-muted'
+              className={`border-b-2 pb-1 text-xs font-medium ${
+                viewMode === 'hierarchy' ? 'border-gold text-gold font-semibold' : 'border-transparent text-muted'
               }`}
             >
               Hierarchy
             </button>
             <button
               onClick={() => onViewModeChange('list')}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium ${
-                viewMode === 'list' ? 'bg-cyan text-[oklch(0.15_0.02_200)]' : 'text-muted'
+              className={`border-b-2 pb-1 text-xs font-medium ${
+                viewMode === 'list' ? 'border-gold text-gold font-semibold' : 'border-transparent text-muted'
               }`}
             >
               List

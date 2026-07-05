@@ -114,7 +114,7 @@ export default function TopicDetail() {
           ← Back to topics
         </Button>
         {isAdmin && (
-          <Button variant="danger" size="sm" onClick={() => setConfirmingDelete(true)}>
+          <Button variant="secondary" size="sm" className="!text-red !border-red/40 hover:!bg-red/10" onClick={() => setConfirmingDelete(true)}>
             Delete Topic
           </Button>
         )}
@@ -146,7 +146,7 @@ export default function TopicDetail() {
         {isAdmin && (
           <button
             onClick={() => setTagPickerOpen((v) => !v)}
-            className="rounded-full border border-dashed border-border-strong px-2.5 py-1 text-[11.5px] text-muted"
+            className="rounded-md border border-dashed border-border-strong px-2.5 py-1 text-[11.5px] text-muted"
           >
             + tag
           </button>

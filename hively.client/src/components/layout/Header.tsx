@@ -21,7 +21,7 @@ export default function Header() {
 
       <BrokerStatusPill />
 
-      <div className="ml-1.5 flex gap-0.5 rounded-lg border border-border bg-bg p-0.5">
+      <div className="ml-1.5 flex h-full items-center gap-4">
         <NavLink href="/topics">Topics</NavLink>
         <NavLink href="/graph">Graph</NavLink>
       </div>
@@ -33,7 +33,7 @@ export default function Header() {
       {user && (
         <div className="flex items-center gap-3">
           <span className="text-sm text-text/80">{user.email}</span>
-          <Badge tone={user.role === 'Admin' ? 'cyan' : 'neutral'}>{user.role}</Badge>
+          <Badge tone={user.role === 'Admin' ? 'plain' : 'neutral'}>{user.role}</Badge>
           <Button variant="secondary" size="sm" onClick={() => logout()}>
             Sign out
           </Button>

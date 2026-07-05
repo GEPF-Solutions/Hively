@@ -14,8 +14,8 @@ export default function NavLink({ href, children }: NavLinkProps) {
   return (
     <Link
       to={href}
-      className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-        isActive ? 'bg-cyan text-[oklch(0.15_0.02_200)]' : 'text-muted hover:text-text'
+      className={`border-b-2 pb-1.5 text-xs font-medium transition-colors ${
+        isActive ? 'border-gold text-gold font-semibold' : 'border-transparent text-muted hover:text-text'
       }`}
     >
       {children}

@@ -3,7 +3,7 @@ import Modal from '../../../components/ui/Modal';
 import Button from '../../../components/ui/Button';
 import Badge from '../../../components/ui/Badge';
 import Input from '../../../components/ui/Input';
-import { ManageList, SearchableCombobox, TagPill } from '../../../components/shared';
+import { HiveWatermark, ManageList, SearchableCombobox, TagPill } from '../../../components/shared';
 import { useRules } from '../../../hooks/data/useRules';
 import { useProducers } from '../../../hooks/data/useProducers';
 import { useSchemas } from '../../../hooks/data/useSchemas';
@@ -142,7 +142,12 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
             </button>
           </div>
         ))}
-        {filtered.length === 0 && <div className="px-1 py-1 text-[12.5px] italic text-muted">No rules match.</div>}
+        {filtered.length === 0 && (
+          <div className="relative overflow-hidden rounded-md px-3 py-6 text-center">
+            <HiveWatermark size={160} />
+            <div className="relative text-[12.5px] italic text-muted">No rules match.</div>
+          </div>
+        )}
       </ManageList>
 
       <div className="border-t border-border pt-4">
@@ -185,7 +190,7 @@ export default function ManageRulesPanel({ onClose }: { onClose: () => void }) {
             type="checkbox"
             checked={autoApply}
             onChange={(e) => setAutoApply(e.target.checked)}
-            className="mt-0.5 accent-cyan"
+            className="mt-0.5 accent-gold"
           />
           <span>
             <span className="font-medium text-text/90">Auto-apply</span> when this is the only rule matching a

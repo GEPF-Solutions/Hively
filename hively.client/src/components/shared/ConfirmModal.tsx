@@ -30,7 +30,7 @@ export default function ConfirmModal({
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="danger" onClick={onConfirm} isLoading={confirming}>
+          <Button variant="secondary" className="!text-red !border-red/40 hover:!bg-red/10" onClick={onConfirm} isLoading={confirming}>
             {confirmLabel}
           </Button>
         </>

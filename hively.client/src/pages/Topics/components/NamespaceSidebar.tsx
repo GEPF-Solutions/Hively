@@ -46,13 +46,13 @@ export default function NamespaceSidebar({
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="search topics, producers, tags…"
-          className="w-full rounded-md border border-border-strong bg-bg px-2.5 py-2 font-mono text-[12.5px] text-text outline-none placeholder:text-muted focus:border-cyan"
+          className="w-full rounded-md border border-border-strong bg-bg px-2.5 py-2 font-mono text-[12.5px] text-text outline-none placeholder:text-muted focus:border-gold"
         />
         <div className="flex flex-wrap items-center gap-1.5">
           <button
             onClick={() => onTagFilterChange(null)}
-            className={`whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-medium ${
-              !tagFilter ? 'border-cyan/50 bg-cyan/15 text-cyan' : 'border-border-strong bg-transparent text-muted'
+            className={`whitespace-nowrap rounded-md border px-2.5 py-1 text-[11px] font-medium ${
+              !tagFilter ? 'border-gold/50 text-gold' : 'border-border-strong text-muted'
             }`}
           >
             all
@@ -64,8 +64,8 @@ export default function NamespaceSidebar({
               <button
                 key={tag.id}
                 onClick={() => onTagFilterChange(active ? null : tag.id)}
-                className="whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-medium"
-                style={active ? { background: c.bg, color: c.color, borderColor: c.borderColor } : { borderColor: 'var(--color-border-strong)', color: 'var(--color-muted)' }}
+                className="whitespace-nowrap rounded-md border border-border-strong px-2.5 py-1 text-[11px] font-medium"
+                style={{ color: active ? c.color : 'var(--color-muted)' }}
               >
                 {tag.label}
               </button>
@@ -87,7 +87,7 @@ export default function NamespaceSidebar({
       <div className="flex items-center justify-between px-3.5 pb-1.5 pt-3.5">
         <div className="text-[10.5px] font-semibold uppercase tracking-wide text-muted">Namespace</div>
         {hasFolderFilter && (
-          <button onClick={onResetFolder} className="text-[11px] text-cyan">
+          <button onClick={onResetFolder} className="text-[11px] text-gold">
             reset
           </button>
         )}
@@ -96,7 +96,7 @@ export default function NamespaceSidebar({
       <div className="flex flex-wrap items-center gap-0.5 px-3.5 pb-2 font-mono text-[11.5px]">
         {folderPath.map((seg, i) => (
           <span key={i} className="flex items-center gap-0.5">
-            <button onClick={() => onDrillTo(i)} className="px-0.5 py-0.5 font-medium text-cyan">
+            <button onClick={() => onDrillTo(i)} className="px-0.5 py-0.5 font-medium text-gold">
               {seg}
             </button>
             <span className="text-muted">/</span>
