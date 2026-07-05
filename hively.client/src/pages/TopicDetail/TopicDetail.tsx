@@ -164,9 +164,9 @@ export default function TopicDetail() {
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-3">
         <ProducerCard producer={producer} canChange={isAdmin} onChangeClick={() => setChangingProducer(true)} />
         <ConsumerCard consumers={topicConsumers} canEdit={isAdmin} onToggle={toggleConsumer} />
-        <SchemaCard schema={schema} canChange={isAdmin} onChangeClick={() => setChangingSchema(true)} />
-        <LastMessageCard topic={topic} />
         <ComplianceCard topic={topic} canClear={isAdmin} onClear={handleClearViolations} />
+        <LastMessageCard topic={topic} />
+        <SchemaCard schema={schema} canChange={isAdmin} onChangeClick={() => setChangingSchema(true)} />
         <ActivityCard activityHistogram={topic.activityHistogram} />
         <RelatedTopicsCard topic={topic} allTopics={allTopics} />
       </div>

@@ -22,7 +22,7 @@ export default function LastMessageCard({ topic }: { topic: Topic }) {
           </Badge>
         )}
       </div>
-      <pre className="overflow-x-auto rounded-md bg-bg p-3 font-mono text-xs leading-relaxed text-[oklch(0.85_0.02_150)]">
+      <pre className="max-h-48 overflow-auto rounded-md bg-bg p-3 font-mono text-xs leading-relaxed text-[oklch(0.85_0.02_150)]">
         {formatPayload(topic.lastPayload)}
       </pre>
       <div className="mt-2 text-[11.5px] text-muted">{relativeTimeFromDate(topic.lastSeenAt) ?? 'never seen'}</div>
