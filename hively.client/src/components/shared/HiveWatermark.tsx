@@ -4,14 +4,19 @@
 // the card. Fill stays almost nonexistent; the stroke is what needs to carry
 // this, since a honeycomb only reads as a honeycomb (a grid of cells) with
 // its cell borders visible — a solid low-opacity fill just blobs together.
-export default function HiveWatermark() {
+// Also reused, smaller, as the one deliberate hex moment in empty states
+// elsewhere (e.g. "no rules match") — pass `size` for that case.
+export default function HiveWatermark({ size }: { size?: number } = {}) {
   return (
     <svg
       viewBox="0 0 100 100"
       aria-hidden="true"
-      className="pointer-events-none absolute left-1/2 top-1/2 h-[640px] w-[640px] -translate-x-1/2 -translate-y-1/2 opacity-[0.07] sm:h-[820px] sm:w-[820px]"
+      className={`pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.07] ${
+        size ? '' : 'h-[640px] w-[640px] sm:h-[820px] sm:w-[820px]'
+      }`}
+      style={size ? { width: size, height: size } : undefined}
     >
-      <g fill="oklch(0.85 0.01 254 / 0.15)" stroke="oklch(0.85 0.01 254)" strokeWidth="0.6">
+      <g fill="oklch(0.82 0.04 92 / 0.15)" stroke="oklch(0.82 0.04 92)" strokeWidth="0.6">
         <polygon points="65.59,20.00 79.88,28.25 79.88,44.75 65.59,53.00 51.30,44.75 51.30,28.25" />
         <polygon points="34.41,20.00 48.70,28.25 48.70,44.75 34.41,53.00 20.12,44.75 20.12,28.25" />
         <polygon points="50.00,60.50 64.29,68.75 64.29,85.25 50.00,93.50 35.71,85.25 35.71,68.75" />

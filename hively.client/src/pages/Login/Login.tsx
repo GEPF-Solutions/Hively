@@ -7,7 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuthProviders } from '../../hooks/data/useAuthProviders';
 import { GoogleIcon, MicrosoftIcon } from './ProviderIcons';
-import HiveWatermark from './HiveWatermark';
+import { HiveWatermark } from '../../components/shared';
 
 export default function Login() {
   const { isAuthenticated, loading, loginWithGoogle, loginWithEntra, loginWithBasic } = useAuth();

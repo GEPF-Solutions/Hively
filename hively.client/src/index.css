@@ -2,13 +2,22 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: oklch(0.17 0.014 254);
-  --color-panel: oklch(0.20 0.015 254);
-  --color-header: oklch(0.155 0.012 254);
-  --color-border: oklch(0.30 0.02 254);
-  --color-border-strong: oklch(0.36 0.02 254);
-  --color-text: oklch(0.93 0.006 254);
-  --color-muted: oklch(0.55 0.012 254);
+  /* True neutral — no hue tint at all, so there's no "which accent hue"
+     to read as a template default. See --color-gold below for the one
+     deliberate accent. */
+  --color-bg: oklch(0.13 0 0);
+  --color-panel: oklch(0.17 0 0);
+  --color-header: oklch(0.10 0 0);
+  --color-border: oklch(0.26 0 0);
+  --color-border-strong: oklch(0.36 0 0);
+  --color-text: oklch(0.95 0 0);
+  --color-muted: oklch(0.58 0 0);
+
+  /* The honeycomb logo's gold — the one brand accent, scoped to active-state
+     underlines, the primary button, the logo mark and the empty-state
+     watermark. Never used as a general background/fill tint. */
+  --color-gold: oklch(0.80 0.15 92);
+  --color-gold-ink: oklch(0.16 0.02 92);
 
   --color-cyan: oklch(0.75 0.13 200);
   --color-amber: oklch(0.78 0.15 80);
@@ -59,4 +68,13 @@ body {
 .graph-flow-edge {
   stroke-dasharray: 4 20;
   animation: graph-flow 1.1s linear infinite;
+}
+
+/* Subtle tactile depth for the primary button — a barely-there ambient
+   shadow plus a soft inset top highlight, so a solid button reads as
+   raised/clickable without a heavy skeuomorphic bevel. */
+.btn-primary-shadow {
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.35),
+    0 1px 2px oklch(0 0 0 / 0.35);
 }

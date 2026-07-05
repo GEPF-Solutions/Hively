@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-type BadgeTone = 'cyan' | 'amber' | 'red' | 'neutral';
+type BadgeTone = 'cyan' | 'amber' | 'red' | 'plain' | 'neutral';
 
 interface BadgeProps {
   tone?: BadgeTone;
@@ -8,17 +8,24 @@ interface BadgeProps {
   className?: string;
 }
 
+/**
+ * Outlined, unfilled — transparent background, neutral border, colored text
+ * only. A solid tinted fill reads as a clickable button; this reads as a
+ * label. `plain` is for badges that need emphasis without being a colored
+ * status (e.g. an Admin-role tag), as opposed to `neutral`'s de-emphasis.
+ */
 const toneClasses: Record<BadgeTone, string> = {
-  cyan: 'text-cyan bg-cyan/15 border-cyan/40',
-  amber: 'text-amber bg-amber/15 border-amber/40',
-  red: 'text-red bg-red/15 border-red/40',
-  neutral: 'text-muted bg-border/30 border-border-strong',
+  cyan: 'text-cyan border-border-strong',
+  amber: 'text-amber border-border-strong',
+  red: 'text-red border-border-strong',
+  plain: 'text-text border-border-strong',
+  neutral: 'text-muted border-border-strong',
 };
 
 export default function Badge({ tone = 'neutral', children, className = '' }: BadgeProps) {
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ${toneClasses[tone]} ${className}`}
+      className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ${toneClasses[tone]} ${className}`}
     >
       {children}
     </span>

@@ -9,14 +9,16 @@ interface TagPillProps {
 }
 
 export default function TagPill({ tag, onRemove, onClick, active = true }: TagPillProps) {
-  const { color, bg, borderColor } = tagColor(tag.hue);
+  const { color } = tagColor(tag.hue);
+  const shownColor = active ? color : 'var(--color-muted)';
 
   return (
     <span
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${onClick ? 'cursor-pointer' : ''}`}
-      style={active ? { color, background: bg, borderColor } : { color: 'var(--color-muted)', borderColor: 'var(--color-border-strong)' }}
+      className={`inline-flex items-center gap-1.5 rounded-md border border-border-strong px-2.5 py-0.5 text-xs font-medium ${onClick ? 'cursor-pointer' : ''}`}
+      style={{ color: shownColor }}
     >
+      <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full" style={{ background: shownColor }} />
       {tag.label}
       {onRemove && (
         <button
