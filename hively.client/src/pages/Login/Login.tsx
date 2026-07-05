@@ -41,7 +41,7 @@ export default function Login() {
     }
   }
 
-  const hasOAuthProvider = providers?.google || providers?.entra;
+  const hasOAuthProvider = providers?.google.enabled || providers?.entra.enabled;
 
   return (
     <div className="relative flex h-screen items-center justify-center overflow-hidden bg-bg text-text">
@@ -52,19 +52,31 @@ export default function Login() {
           <span className="font-brand text-xl font-semibold tracking-wide text-text/90">HIVELY</span>
         </div>
         <div className="flex flex-col gap-2.5">
-          {providers?.google && (
-            <Button variant="secondary" className="flex items-center justify-center gap-2.5" onClick={() => loginWithGoogle()}>
+          {providers?.google.enabled && (
+            <Button
+              variant="secondary"
+              className="flex items-center justify-center gap-2.5"
+              onClick={() => loginWithGoogle()}
+              disabled={!providers.google.configured}
+              title={providers.google.configured ? undefined : 'Enabled but not configured — missing ClientId/ClientSecret'}
+            >
               <GoogleIcon />
               Continue with Google
             </Button>
           )}
-          {providers?.entra && (
-            <Button variant="secondary" className="flex items-center justify-center gap-2.5" onClick={() => loginWithEntra()}>
+          {providers?.entra.enabled && (
+            <Button
+              variant="secondary"
+              className="flex items-center justify-center gap-2.5"
+              onClick={() => loginWithEntra()}
+              disabled={!providers.entra.configured}
+              title={providers.entra.configured ? undefined : 'Enabled but not configured — missing ClientId/ClientSecret/TenantId'}
+            >
               <MicrosoftIcon />
               Continue with Microsoft Entra ID
             </Button>
           )}
-          {providers && !providers.google && !providers.entra && !providers.basic && (
+          {providers && !providers.google.enabled && !providers.entra.enabled && !providers.basic && (
             <p className="text-sm text-muted">No sign-in method is configured.</p>
           )}
         </div>

@@ -103,9 +103,14 @@ export interface CurrentUser {
   role: UserRole;
 }
 
+export interface AuthProviderStatus {
+  enabled: boolean;
+  configured: boolean;
+}
+
 export interface AuthProviders {
-  google: boolean;
-  entra: boolean;
+  google: AuthProviderStatus;
+  entra: AuthProviderStatus;
   basic: boolean;
 }
 

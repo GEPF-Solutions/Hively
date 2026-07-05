@@ -71,6 +71,23 @@ public class Program
         var googleEnabled = builder.Configuration.GetValue<bool>("Authentication:Google:Enabled");
         var entraEnabled = builder.Configuration.GetValue<bool>("Authentication:Entra:Enabled");
 
+        // A provider can be enabled in config without its ClientId/ClientSecret actually
+        // being set yet (e.g. a fresh dev machine with no user-secrets configured) — only
+        // register the handler once both are present. Registering it anyway with an empty
+        // ClientId would make the handler's own option validation throw on every single
+        // request (UseAuthentication resolves every remote-scheme handler per-request to
+        // check its callback path, not just on challenge), taking the whole app down
+        // instead of just leaving that one sign-in option unavailable. AuthController
+        // reports this same "configured" state so the login page can show the button
+        // disabled rather than hiding it outright.
+        var googleConfigured = googleEnabled
+            && !string.IsNullOrEmpty(builder.Configuration["Authentication:Google:ClientId"])
+            && !string.IsNullOrEmpty(builder.Configuration["Authentication:Google:ClientSecret"]);
+        var entraConfigured = entraEnabled
+            && !string.IsNullOrEmpty(builder.Configuration["Authentication:Entra:ClientId"])
+            && !string.IsNullOrEmpty(builder.Configuration["Authentication:Entra:ClientSecret"])
+            && !string.IsNullOrEmpty(builder.Configuration["Authentication:Entra:TenantId"]);
+
         var authBuilder = builder.Services.AddAuthentication(options =>
         {
             options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -92,7 +109,7 @@ public class Program
             };
         });
 
-        if (googleEnabled)
+        if (googleConfigured)
         {
             authBuilder.AddGoogle(options =>
             {
@@ -149,7 +166,7 @@ public class Program
             });
         }
 
-        if (entraEnabled)
+        if (entraConfigured)
         {
             authBuilder.AddOpenIdConnect("Entra", options =>
             {
