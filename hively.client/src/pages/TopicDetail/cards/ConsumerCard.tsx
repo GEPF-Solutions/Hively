@@ -37,13 +37,21 @@ export default function ConsumerCard({ consumers, canEdit, onToggle }: ConsumerC
         )}
       </div>
 
-      {consumers.map((c) => (
-        <div key={c.id} title={c.description ?? undefined} className="flex items-center gap-2 py-0.5 text-sm">
-          <span className="h-1.5 w-1.5 rounded-full bg-cyan" />
-          {c.name}
-        </div>
-      ))}
-      {consumers.length === 0 && <div className="text-[12.5px] italic text-muted">no known consumers</div>}
+      <div
+        className="max-h-32 overflow-y-auto"
+        style={{
+          maskImage: 'linear-gradient(to bottom, black calc(100% - 14px), transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, black calc(100% - 14px), transparent 100%)',
+        }}
+      >
+        {consumers.map((c) => (
+          <div key={c.id} title={c.description ?? undefined} className="flex items-center gap-2 py-0.5 text-sm">
+            <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-cyan" />
+            <span className="truncate">{c.name}</span>
+          </div>
+        ))}
+        {consumers.length === 0 && <div className="text-[12.5px] italic text-muted">no known consumers</div>}
+      </div>
 
       {pickerOpen && (
         <div className="mt-2.5 border-t border-border pt-2.5">
